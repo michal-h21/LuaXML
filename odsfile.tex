@@ -25,11 +25,12 @@ inserting \textsf{opendocument spreadsheet} as \LaTeX\ tables\thanks{Version 0.1
 
 \section{Introduction}
 
-This is \LuaLaTeX{} package and \textsf{lua} library for reading \textsf{opendocument spreadsheet} (\ods) from Open/Libre Office Calc and typeseting them as \LaTeX{} tables. 
+This is \LuaLaTeX{} package and \textsf{lua} library for reading \textsf{opendocument spreadsheet} (\ods) documents from Open/Libre Office Calc and typeseting them as \LaTeX{} tables. 
 \ods format consist of number of |xml| files packed in the |zip| file. This package uses \LuaTeX's zip library and scripting to read |xml| content from this archive, 
-which means that it is not possible to use this package with pdf\LaTeX or \XeLaTeX. On the other side, |odsfile.lua| lubrary
+which means that it is not possible to use this package with pdf\LaTeX or \XeLaTeX. On the other side, |odsfile.lua| library
 can be used from Plain\TeX, Con\TeX{}t or pure |lua| scripts.   
 
+Creation of this package was motivated by question\footnote{\url{http://tex.stackexchange.com/questions/60378/insert-libreoffice-table-as-input}} on site \url{http://tex.stackexchange.com/}. Development version of the package can be found at \url{https://github.com/michal-h21/odsfile}, all contributions and comments are welcome. 
 \section{Usage}
 
 You can load |odsfile| classicaly with
