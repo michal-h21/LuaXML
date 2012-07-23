@@ -1,0 +1,117 @@
+\ProvidesPackage{odsfile.sty}
+\RequirePackage{luacode,xkeyval}
+
+%keyval keys
+
+\define@key{includespread}{file}{\loadodsfile{#1}}
+\define@key{includespread}{sheet}{\luaexec{sheetname = "\luatexluaescapestring{#1}"}}
+\define@key{includespread}{range}{\luaexec{%
+local x1,y1,x2,y2 = odsreader.getRange("\luatexluaescapestring{#1}")%
+range = {x1,y1,x2,y2}%
+}}
+\define@key{includespread}{template}{\luaexec{currenttemplate="\luatexluaescapestring{#1}"}}
+
+\define@choicekey*{includespread}{rowseparator}[\val\nr]{newline,hline}[newline]%
+{%
+\ifcase\nr\relax%
+  \luaexec{rowseparator=""}%
+\or%
+  \luaexec{rowseparator="\\hline "}%
+\fi%
+}
+
+\define@choicekey*+{includespread}{columns}[\val\nr]{head,top,none}{%
+\ifcase\nr\relax%
+  \luaexec{columns=1}%
+\or%
+  \luaexec{columns=2}%
+\fi%
+}{%
+\luaexec{%
+local function split(s,sep)
+        local sep, fields = sep or ":", {}
+        local pattern = string.format("([^\%s]+)", sep)
+        s:gsub(pattern, function(c) fields[\#fields+1] = c end)
+        return fields
+end
+local s="\luatexluaescapestring{#1}"
+columns = split(s,",")
+}%
+}{}%
+
+
+% Variable initialization and helper functions
+\begin{luacode*}
+odsreader = require("odsfile")
+odsfile   = nil
+sheetname = nil
+range     = {nil,nil,nil,nil}
+columns   = nil
+templates = {}
+currenttemplate = "default"
+\end{luacode*}
+
+\newcommand\loadodsfile[2][]{%
+  \setkeys{includespread}{#1}%
+  \luaexec{%
+    odsfile     = "\luatexluaescapestring{#2}"%
+    local ods   = odsreader.load(odsfile)%
+    odsfile, e  = ods:loadContent()%
+  }%
+}
+
+\newcommand\tabletemplate[2]{%
+  \luaexec{%
+    templates["#1"]="#2"
+  }
+}
+
+\newcommand\includespread[1][]{%
+  \luaexec{%
+    range = {nil,nil,nil,nil}
+    rowseparator = ""
+    columns=nil
+    currenttemplate = "default" 
+  }%
+  \setkeys{includespread}{#1}%
+  \luaexec{%
+    local body   = odsreader.getTable(odsfile,sheetname)
+    local values = odsreader.tableValues(body,range[1],range[2],range[3],range[4])
+    %-- Conversion of odsfile table values to LaTeX tabular  
+    local rowValues = function(row)
+      local t={} 
+      for _,column in pairs(row) do table.insert(t,column.value) end
+      return t
+    end
+    content = {}   
+    for i,row in pairs(values) do
+      table.insert(content,table.concat(rowValues(row)," & "))
+    end
+    %-- Column headings handling
+    local colheading=""
+    if type(columns) == "number" and columns == 1 then
+      columns = rowValues(values[1])
+      content = odsreader.table_slice(content,2,nil)
+    elseif type(columns) == "number" and columns == 2 then
+      local t = odsreader.tableValues(body,range[1],1,range[3],2)
+      columns = rowValues(t[1])
+    end  
+    if type(columns) == "table" then colheading = table.concat(columns," & ") .. "\\\\" end
+    coltypes = ""
+    if type(content)== "table" then coltypes= string.rep("l",\#content[1]) end
+    tex.sprint(odsreader.interp(templates[currenttemplate],{content=table.concat(content, "\\\\ "..rowseparator),coltypes=coltypes,colheading=colheading,rowsep=rowseparator}))
+  }
+}
+
+\tabletemplate{default}{-{colheading}-{rowsep}-{content}}
+\tabletemplate{booktabs}{%
+\\begin{tabular}{-{coltypes}}
+\\toprule
+-{colheading}
+\\midrule
+-{content}
+\\\\ \\bottomrule
+\\end{tabular}
+}
+
+\endinput
