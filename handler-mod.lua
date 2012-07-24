@@ -1,4 +1,5 @@
----
+module(...,package.seeall)
+--
 --  Overview:
 --  =========
 --      Standard XML event handler(s) for XML parser module (xml.lua)

@@ -1,19 +1,18 @@
 module(...,package.seeall)
 require "zip"
-dofile("xml.lua")
-dofile("handler.lua")
-
+xmlparser = require ("xml-mod")
+handler = require("handler-mod")
 
 function load(filename)
   local p = {
     file = zip.open(filename),
     content_file_name = "content.xml",
     loadContent = function(self,filename)
-      local treehandler = simpleTreeHandler()
+      local treehandler = handler.simpleTreeHandler()
       local filename = filename or self.content_file_name  
       local xmlfile = self.file:open(filename)
       local text = xmlfile:read("*a")
-      local xml = xmlParser(treehandler)
+      local xml = xmlparser.xmlParser(treehandler)
       xml:parse(text)
       return treehandler
     end
