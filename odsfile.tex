@@ -56,13 +56,13 @@ Options are:
 \includespread[file=pokus.ods,sheet=List2]
 \end{tabular}     
 \end{LTXexample}
-\item[range] Selects range from table to be inserted. Range is specified in format similar to spreadsheet processors, like |a2:c4|, selecting cels starting at first column, second row and ending and third column, fourth row.
+\item[range] Selects range from table to be inserted. Range is specified in format similar to spreadsheet processors, like |a2:c4|, selecting cells starting at first column, second row and ending and third column, fourth row.
 \begin{LTXexample}
 \begin{tabular}{lll}
 \includespread[sheet=List1,range=a2:c4]
 \end{tabular}     
 \end{LTXexample}
-You can ommit some or both of the numbers:
+You can omit some or both of the numbers:
 \begin{LTXexample}
 \begin{tabular}{lll}
 \includespread[range=a:c4]
@@ -101,7 +101,7 @@ in this case you can use
 \includespread[columns=head,range=a:c3]
 \end{tabular}     
 \end{LTXexample}
-\item[manualy specified list] If column headings are not specified in the file, you can set them manualy.
+\item[manually specified list] If column headings are not specified in the file, you can set them manually.
 \begin{LTXexample}
 \begin{tabular}{ll}
 \includespread[columns=head,columns={title,amount},sheet=List2]
@@ -116,7 +116,7 @@ in this case you can use
 \end{tabular}     
 \end{LTXexample} 
 
-\item[template] Templates are simple mechanism to insert whole tabular environment with column specification. All columns are aligned to the left, if you want to do more advanced stuss with column specifications, you must enter them manualy as in all previous examples.
+\item[template] Templates are simple mechanism to insert whole tabular environment with column specification. All columns are aligned to the left, if you want to do more advanced stuff with column specifications, you must enter them manualy as in all previous examples.
 \begin{LTXexample}
 \includespread[columns=top,template=booktabs,range=a3]
 \end{LTXexample}
@@ -145,7 +145,7 @@ It should be possible to use more intelligent method based on types of column co
 \item[content] Tabular data.
 \end{description} 
 
-\paragraph{More powerfull template for booktabs package}
+\paragraph{More powerful template for the \textsc{booktabs} package}
 
 \begin{verbatim}
 \tabletemplate{booktabs}{%
@@ -202,7 +202,7 @@ body= odsfile.getTable(f)
 printable(odsfile.tableValues(body,odsfile.getRange("a4:b5")))
 \end{verbatim}
 
-Run the example with |texlua odsexample.lua| from the command line, you shiuld get following result:
+Run the example with |texlua odsexample.lua| from the command line, you should get following result:
 
 \begin{verbatim}
   1
