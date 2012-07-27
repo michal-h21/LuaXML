@@ -22,16 +22,20 @@ end
 
 function getTable(x,table_name)
   local tables = x.root["office:document-content"]["office:body"]["office:spreadsheet"]["table:table"]
-  if type(tables) == "table" and table_name ~= nil then 
-    for k,v in pairs(tables) do
-      if(v["_attr"]["table:name"]==table_name) then
-        return v
-      end 
+  if #tables > 1 then
+    if type(tables) == "table" and table_name ~= nil then 
+        for k,v in pairs(tables) do
+          if(v["_attr"]["table:name"]==table_name) then
+            return v
+          end 
+        end
+    elseif type(tables) == "table" and table_name == nil then
+      return tables[1]  
+    else 
+      return tables  
     end
-  elseif type(tables) == "table" and table_name == nil then
-    return tables[1]  
   else 
-    return tables  
+    return tables
   end
 end
 
