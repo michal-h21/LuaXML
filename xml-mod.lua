@@ -1,5 +1,5 @@
 module(...,package.seeall)
---
+---
 --  Overview:
 --  =========
 --
@@ -141,6 +141,11 @@ module(...,package.seeall)
 --
 --  History
 --  =======
+--  Fixed some errors in DTD matching
+--  Added functions serialize and xmlEscape
+--  @author Michal Hoftich
+--  2012/07/26
+--
 --  Added parameter parseAttributes (boolean) in xmlParser.parse method
 --  If true, tag attributtes are parsed. The default value is true.
 --  by Manoel Campos (http://manoelcampos.com)
@@ -153,7 +158,7 @@ module(...,package.seeall)
 --
 --@author Paul Chakravarti (paulc@passtheaardvark.com)<p/>
 
-
+local format= string.format
 ---Parses a XML string
 --@param handler Handler object to be used to convert the XML string
 --to another formats. @see handler.lua
@@ -256,7 +261,8 @@ xmlParser = function(handler)
                 end
             elseif string.sub(tagstr,1,8) == "!DOCTYPE" then
                 -- DTD
-                match,endmatch,attrs = self:_parseDTD(string,pos)
+                --match,endmatch,attrs = self:_parseDTD(string,pos)
+                match,endmatch,attrs = self:_parseDTD(str,pos)
                 if not match then 
                     self:_err(self._errstr.dtdErr,pos)
                 end 
@@ -355,6 +361,7 @@ xmlParser = function(handler)
     obj._DTD3       = '<!DOCTYPE%s+(.-)%s*(%b[])%s*>'
     obj._DTD4       = '<!DOCTYPE%s+(.-)%s+(SYSTEM)%s+["\'](.-)["\']%s*>'
     obj._DTD5       = '<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*>'
+    --obj._DTD6       = "<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+[\"'](.-)[\"']%s+[\"'](.-)[\"']%s*>"
 
     obj._ATTRERR1   = '=%s*"[^"]*$'
     obj._ATTRERR2   = '=%s*\'[^\']*$'
@@ -423,7 +430,12 @@ xmlParser = function(handler)
             
     obj._parseDTD = function(self,s,pos)
         -- match,endmatch,root,type,name,uri,internal
+        --print(s.." : "..pos)
         local m,e,r,t,n,u,i
+        m,e,r,t,n,u = string.find(s,self._DTD5,pos)
+        if m then
+            return m,e,{_root=r,_type=t,_name=n,_uri=u} 
+        end
         m,e,r,t,u,i = string.find(s,self._DTD1,pos)
         if m then
             return m,e,{_root=r,_type=t,_uri=u,_internal=i} 
@@ -439,10 +451,6 @@ xmlParser = function(handler)
         m,e,r,t,u = string.find(s,self._DTD4,pos)
         if m then
             return m,e,{_root=r,_type=t,_uri=u} 
-        end
-        m,e,r,t,n,u = string.find(s,self._DTD5,pos)
-        if m then
-            return m,e,{_root=r,_type=t,_name=n,_uri=u} 
         end
         return nil
     end
@@ -470,4 +478,59 @@ xmlParser = function(handler)
 
 end
 
+function xmlEscape(s)
+  local t = {['"']="&quot;",["'"]="&apos;",["&"]="&amp;",["<"]="&lt;",[">"]="&gt;"}
+  return string.gsub(s,"([\"'<>&])",t)
+end
 
+
+
+function serialize(tb)
+local function getAttributes(k,v)
+  local i = ""
+  if(type(v["_attr"])=="table") then
+  --   texio.write_nl("attr")
+    for p,n in pairs(v["_attr"]) do
+      i = i ..' '.. p .. '="'..xmlEscape(n)..'"'
+    end 
+           --table.remove(v,"_attr")
+  end
+  return i
+end
+  local function printable(tb, level,currTag)
+  local r ={}
+  local currTag = currTag or ""
+  level = level or 0
+  local spaces = string.rep(' ', level*2)
+  for k,v in pairs(tb) do
+    if type(v) ~= "table" then
+      local i = getAttributes(k,v)
+      table.insert(r,spaces .. '<'..k..i..'>'..v..'</'..k..'>'.."\n")
+    else
+     if k == "_attr" then
+       --table.insert(r,printable(v, level))
+     else 
+       if type(k)=="string" then
+         --currTag = k
+         if #v > 1 then  
+            table.insert(r,printable(v, level+1,k))
+         else
+           local i = getAttributes(k,v)
+           table.insert(r,spaces.."<"..k..i..">\n") 
+           table.insert(r,printable(v, level+1,k))
+           table.insert(r,spaces.."</"..k..">\n")  
+         end
+       else
+         local i = getAttributes(k,v)
+         table.insert(r,spaces .. "<"..currTag..i..">\n")
+         --level = level + 1
+         table.insert(r,printable(v, level+1))
+         table.insert(r,spaces .. "</"..currTag..">\n")
+       end
+     end
+    end
+  end
+  return table.concat(r,"")
+  end
+  return table.concat({'<?xml version="1.0" encoding="UTF-8"?>',printable(tb)},"\n")
+end
