@@ -505,7 +505,7 @@ end
   for k,v in pairs(tb) do
     if type(v) ~= "table" then
       local i = getAttributes(k,v)
-      table.insert(r,spaces .. '<'..k..i..'>'..v..'</'..k..'>'.."\n")
+      table.insert(r,spaces .. '<'..k..i..'>'..xmlEscape(v)..'</'..k..'>'.."\n")
     else
      if k == "_attr" then
        --table.insert(r,printable(v, level))
