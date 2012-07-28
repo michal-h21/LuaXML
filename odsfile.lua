@@ -26,11 +26,11 @@ function getTable(x,table_name)
     if type(tables) == "table" and table_name ~= nil then 
         for k,v in pairs(tables) do
           if(v["_attr"]["table:name"]==table_name) then
-            return v
+            return v, k
           end 
         end
     elseif type(tables) == "table" and table_name == nil then
-      return tables[1]  
+      return tables[1], 1  
     else 
       return tables  
     end
