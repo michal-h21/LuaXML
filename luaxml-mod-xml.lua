@@ -508,14 +508,21 @@ end
       if type(k)=="number" then
         ct = currTag
       end
-      local i = getAttributes(k,v)
-      table.insert(r,spaces .. '<'..ct..i..'>'..xmlEscape(v)..'</'..ct..'>'.."\n")
+      if ct == "" then
+        table.insert(r,spaces .. xmlEscape(v).."\n")
+      else
+        local i = getAttributes(k,v)
+        table.insert(r,spaces .. '<'..ct..i..'>'..xmlEscape(v)..'</'..ct..'>'.."\n")
+      end
     else
      if k == "_attr" then
        --table.insert(r,printable(v, level))
      else 
        if type(k)=="string" then
          --currTag = k
+         if type(k)=="numeric" then
+           k = currTag
+         end
          if #v > 1 then  
             table.insert(r,printable(v, level+1,k))
          else
@@ -525,7 +532,6 @@ end
            table.insert(r,spaces.."</"..k..">\n")  
          end
        else
-         
          local i = getAttributes(k,v)
          table.insert(r,spaces .. "<"..currTag..i..">\n")
          --level = level + 1
