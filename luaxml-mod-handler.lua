@@ -9,6 +9,7 @@ module(...,package.seeall)
 --      printHandler        - Generate XML event trace
 --      domHandler          - Generate DOM-like node tree
 --      simpleTreeHandler   - Generate 'simple' node tree
+--      simpleTeXhandler    - SAX like handler with support for CSS selectros
 --  
 --  API:
 --  ====
@@ -109,6 +110,9 @@ module(...,package.seeall)
 --Convenience function for printHandler (Does not support recursive tables).
 --@param t Table to be parsed
 --@returns Returns a string representation of table
+
+local stack = require("luaxml-stack")
+
 function showTable(t)
     local sep = ''
     local res = ''
@@ -238,6 +242,8 @@ function simpleTreeHandler()
     return obj
 end
 
+
+
 --- domHandler
 function domHandler() 
     local obj = {}
@@ -304,3 +310,29 @@ function domHandler()
     return obj
 end
 
+--
+simpleTeXhandler=function()
+  local obj={}
+  local _stack=stack.Stack:Create()
+  obj.starttag = function(self,t,a,s,e)
+    local tag = {t}
+    local getAtt = function(att) 
+      if a[att] then
+       return att.."="..a[att]
+      end
+      return nil
+    end
+    if type(a) == "table" then
+      table.insert(tag,getAtt("id"))
+      table.insert(tag,getAtt("class"))
+    end
+    _stack:push("<"..table.concat(tag," ")..">")
+    io.write(_stack:join("").."\n")
+--    io.write("Start "..t.."\n" )
+  end
+  obj.endtag = function(self,t,s,e) 
+    _stack:pop() 
+  --  io.write("End      : "..t.."\n") 
+  end
+  return obj
+end
