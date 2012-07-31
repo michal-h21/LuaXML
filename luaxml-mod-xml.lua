@@ -143,7 +143,7 @@ module(...,package.seeall)
 --  =======
 --  Fixed some errors in DTD matching
 --  Added functions serialize and xmlEscape
---  @author Michal Hoftich
+--  by Michal Hoftich
 --  2012/07/26
 --
 --  Added parameter parseAttributes (boolean) in xmlParser.parse method
