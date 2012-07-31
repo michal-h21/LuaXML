@@ -5,9 +5,74 @@
 \section{Introduction}
 
 LuaXML is pure lua library for reading and serializing of the XML files.
-Current release is aimed mainly as support for the odsfile package.
+Current release is aimed mainly as support for the odsfile package. 
+In first release it was included withe the odsfile package,
+but as it is general library which can be used also with other packages, 
+I decided to distribute it as separate library.
 
-\section{Overview:}
+\noindent Example of the usage:
+
+\begin{verbatim}
+xml = require('luaxml-mod-xml')
+handler = require('luaxml-mod-handler')
+sample = [[
+<a>
+  <d>hello</d>
+  <b>world.</b>
+  <b at="Hi">another</b>
+</a>]]
+treehandler = handler.simpleTreeHandler()
+x = xml.xmlParser(treehandler)
+x:parse(sample)
+
+function printable(tb, level)
+  level = level or 1
+  local spaces = string.rep(' ', level*2)
+  for k,v in pairs(tb) do
+    if type(v) ~= "table" then
+      print(spaces .. k..'='..v)
+    else
+      print(spaces .. k)
+      level = level + 1
+      printable(v, level)
+    end
+  end
+end
+
+-- print table
+printable(treehandler.root)
+-- print xml serialization of table
+print(xml.serialize(treehandler.root))
+-- direct access to the element
+print(treehandler.root["a"]["b"][1])
+
+-- output:
+--   a
+--     d=hello
+--     b
+--       1=world.
+--       2
+--         1=another
+--         _attr
+--           at=Hi
+-- <?xml version="1.0" encoding="UTF-8"?>
+-- <a>
+--   <d>hello</d>
+--     <b>world.</b>
+--     <b at="Hi">
+--       another
+--     </b>
+-- </a>
+-- 
+-- world.
+\end{verbatim}
+
+
+
+Because at the moment it is intendend mainly as support for the odsfile package, there is little documentation, 
+what follows is the original documentation of |LuaXML|, which is little bit obsolete now.
+
+\section{Overview}
 
 
 This module provides a non-validating XML stream parser in Lua. 
@@ -148,7 +213,7 @@ h = { start = function(t,a,s,e) .... end,
       text = function(t,a,s,e) .... end,
       cdata = text }
 \end{verbatim}
-(or use predefined handler - see handler.lua)
+(or use predefined handler - see luaxml-mod-handler.lua)
 
 Create parser instance -
 
@@ -169,7 +234,7 @@ xmlParser:parse("<?xml... ")
 
 \section{Overview:}
 
-Standard XML event handler(s) for XML parser module (xml.lua)
+Standard XML event handler(s) for XML parser module (luaxml-mod-xml.lua)
 
 \section{Features:}
 
