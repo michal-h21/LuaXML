@@ -504,8 +504,12 @@ end
   local spaces = string.rep(' ', level*2)
   for k,v in pairs(tb) do
     if type(v) ~= "table" then
+      local ct = k
+      if type(k)=="number" then
+        ct = currTag
+      end
       local i = getAttributes(k,v)
-      table.insert(r,spaces .. '<'..k..i..'>'..xmlEscape(v)..'</'..k..'>'.."\n")
+      table.insert(r,spaces .. '<'..ct..i..'>'..xmlEscape(v)..'</'..ct..'>'.."\n")
     else
      if k == "_attr" then
        --table.insert(r,printable(v, level))
@@ -521,6 +525,7 @@ end
            table.insert(r,spaces.."</"..k..">\n")  
          end
        else
+         
          local i = getAttributes(k,v)
          table.insert(r,spaces .. "<"..currTag..i..">\n")
          --level = level + 1
