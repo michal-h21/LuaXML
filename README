@@ -1,0 +1,27 @@
+Introduction
+============
+
+LuaXML is pure lua library for reading and serializing of the XML files. Current release is aimed mainly as support 
+for the odsfile package. The documentation was created by automatic conversion of original documentation in the source code. 
+In this version, some files not useful for luaTeX were droped. Original files can be found at
+
+    http://manoelcampos.com/files/LuaXML--0.0.0-lua5.1.tgz 
+
+
+License:
+========
+
+This code is freely distributable under the terms of the Lua license
+    (http://www.lua.org/copyright.html)
+
+
+Author
+------
+Michal Hoftich
+Email: michal.h21@gmail.com
+
+Original authors: Paul Chakravarti and Manoel Campos (http://manoelcampos.com)
+
+If you are interested in the process of development you may observe
+
+    https://github.com/michal-h21/LuaXML 
