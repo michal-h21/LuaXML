@@ -2,19 +2,27 @@
 \usepackage{tgschola,url}
 \usepackage[english]{babel}
 \begin{document}
-\section{Introduction}
+	\title{The \textsc{LuaXML} library}
+	\author{Paul Chakravarti \and Michal Hoftich}
+	\maketitle
+\tableofcontents
+\section*{Introduction}
 
-LuaXML is pure lua library for reading and serializing of the XML files.
+|LuaXML| is pure lua library for reading and serializing of the |xml| files.
 Current release is aimed mainly as support for the odsfile package. 
-In first release it was included withe the odsfile package,
+In first release it was included with the odsfile package,
 but as it is general library which can be used also with other packages, 
 I decided to distribute it as separate library.
 
-\noindent Example of the usage:
+\noindent Example of usage:
 
 \begin{verbatim}
 xml = require('luaxml-mod-xml')
 handler = require('luaxml-mod-handler')
+\end{verbatim} 
+
+First load the libraries. In |luaxml-mod-xml|, there is xml parser and also serializer. In |luaxml-mod-handler|, there are various handlers for dealing with xml data. Handlers are objects with callback functions which are invoked for every type of content in the |xml| file. More information about handlers can be found in the original documentation, section \ref{sec:handlers}.
+\begin{verbatim}
 sample = [[
 <a>
   <d>hello</d>
@@ -24,7 +32,11 @@ sample = [[
 treehandler = handler.simpleTreeHandler()
 x = xml.xmlParser(treehandler)
 x:parse(sample)
+\end{verbatim} 
 
+You have to create handler object, using |handler.simpleTreeHandler()| and xml parser object using |xml.xmlParser(handler object)|. |simpleTreehandler| creates simple table hierarchy, with top root node in |treehandler.root|
+\begin{verbatim}
+-- pretty printing function
 function printable(tb, level)
   level = level or 1
   local spaces = string.rep(' ', level*2)
@@ -67,16 +79,28 @@ print(treehandler.root["a"]["b"][1])
 -- world.
 \end{verbatim}
 
+Note that |simpleTreeHandler| creates tables that can be easily accessed using standard lua functions, but in case of mixed content, like
+\begin{verbatim}
+<a>hello
+  <b>world</b>
+</a>	  
+\end{verbatim}
+it produces wrong results. It is useful mostly for data |xml| files, not for text formats like |xhtml|.
 
+Because at the moment it is intended mainly as support for the odsfile package, there is little documentation, 
+what follows is the original documentation of |LuaXML|, which may be little bit obsolete now.
 
-Because at the moment it is intendend mainly as support for the odsfile package, there is little documentation, 
-what follows is the original documentation of |LuaXML|, which is little bit obsolete now.
+\clearpage
+\noindent{\Huge Original documentation}
+\medskip
+
+\noindent This document was created automatically from original source code comments using Pandoc\footnote{\url{http://johnmacfarlane.net/pandoc/}} 
 
 \section{Overview}
 
 
 This module provides a non-validating XML stream parser in Lua. 
-\section{Features:}
+\section{Features}
 
 \begin{itemize}
 \item
@@ -109,7 +133,7 @@ This module provides a non-validating XML stream parser in Lua.
 \item
   Entity Handling (selectable)
 \end{itemize}
-\section{Limitations:}
+\section{Limitations}
 
 \begin{itemize}
 \item
@@ -122,7 +146,7 @@ This module provides a non-validating XML stream parser in Lua.
   Shallow well-formedness checking only (fails to detect most semantic
   errors)
 \end{itemize}
-\section{API:}
+\section{API}
 
 The parser provides a partially object-oriented API with functionality
 split into tokeniser and hanlder components.
@@ -230,13 +254,13 @@ Parse XML data -
 \begin{verbatim}
 xmlParser:parse("<?xml... ")
 \end{verbatim}
-\section{Handlers}
+\section{Handlers}\label{sec:handlers}
 
-\section{Overview:}
+\subsection{Overview}
 
 Standard XML event handler(s) for XML parser module (luaxml-mod-xml.lua)
 
-\section{Features:}
+\subsection{Features}
 
 \begin{verbatim}
 printHandler        - Generate XML event trace
@@ -244,22 +268,22 @@ domHandler          - Generate DOM-like node tree
 simpleTreeHandler   - Generate 'simple' node tree
 simpleTeXhandler    - SAX like handler with support for CSS selectros
 \end{verbatim}
-\section{API:}
+\subsection{API}
 
 Must be called as handler function from xmlParser and implement XML
 event callbacks (see xmlParser.lua for callback API definition)
 
-\subsection{printHandler:}
+\subsubsection{printHandler}
 
 printHandler prints event trace for debugging
 
-\subsection{domHandler:}
+\subsubsection{domHandler}
 
-\begin{verbatim}
 domHandler generates a DOM-like node tree  structure with 
 a single ROOT node parent - each node is a table comprising 
 fields below.
 
+\begin{verbatim}
 node = { _name = <Element Name>,
         _type = ROOT|ELEMENT|TEXT|COMMENT|PI|DECL|DTD,
         _attr = { Node attributes - see callback API },
@@ -267,9 +291,9 @@ node = { _name = <Element Name>,
         _children = { List of child nodes - ROOT/NODE only }
       }
 
-The dom structure is capable of representing any valid XML document
 \end{verbatim}
-\subsection{simpleTreeHandler}
+The dom structure is capable of representing any valid XML document
+\subsubsection{simpleTreeHandler}
 
 simpleTreeHandler is a simplified handler which attempts to generate a
 more `natural' table based structure which supports many common XML
@@ -289,21 +313,17 @@ Only Tag/Text \& CDATA elements are processed - all others are ignored.
 This format has some limitations - primarily
 
 \begin{itemize}
-\item
-  Mixed-Content behaves unpredictably - the relationship between text
+\item  Mixed-Content behaves unpredictably - the relationship between text
   elements and embedded tags is lost and multiple levels of mixed
   content does not work
-\item
-  If a leaf element has both a text element and attributes then the text
+\item  If a leaf element has both a text element and attributes then the text
   must be accessed through a vector (to provide a container for the
   attribute)
 \end{itemize}
 In general however this format is relatively useful.
 
-It is much easier to understand by running some test data through
-`textxml.lua -simpletree' than to read this)
 
-\section{Options}
+\subsection{Options}
 
 \begin{verbatim}
 simpleTreeHandler.options.noReduce = { <tag> = bool,.. }
@@ -315,7 +335,7 @@ domHandler.options.(comment|pi|dtd|decl)Node = bool
 
     - Include/exclude given node types
 \end{verbatim}
-\section{Usage}
+\subsection{Usage}
 
 Pased as delegate in xmlParser constructor and called as callback by
 xmlParser:parse(xml) method.
@@ -328,7 +348,7 @@ Chakravarti. Its original version can be found at
 needed for use with luatex were droped from the distribution.
 Documentation was converted from original comments in the source code.
 
-\section{License:}
+\section{License}
 
 This code is freely distributable under the terms of the Lua license
 (\url{http://www.lua.org/copyright.html})
