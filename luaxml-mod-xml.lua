@@ -192,7 +192,7 @@ xmlParser = function(handler)
             if not match then 
                 if string.find(str,self._WS,pos) then
                     -- No more text - check document complete
-                    if table.getn(self._stack) ~= 0 then
+                    if #self._stack ~= 0 then
                         self:_err(self._errstr.incompleteXmlErr,pos)
                     else
                         break 
