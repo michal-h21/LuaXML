@@ -90,6 +90,8 @@ it produces wrong results. It is useful mostly for data |xml| files, not for tex
 For complex xml documents with mixed content, |domHandler| is capable of representing any valid XML document:
 
 \begin{verbatim}
+-- dom-sample.lua
+-- next line enables scripts called with texlua to use luatex libraries
 kpse.set_program_name("luatex")
 function traverseDom(parser, current,level)
   local level = level or 0
@@ -121,7 +123,7 @@ parser:parse(x)
 traverseDom(parser)	
 \end{verbatim}
 
-This produces:
+This produces after running with |texlua dom-sample.lua|:
 
 \begin{verbatim}
 ROOT : unnamed
