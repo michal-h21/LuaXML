@@ -1,7 +1,7 @@
 -- Code from http://lua-users.org/wiki/SimpleStack
 --module(...,package.seeall)
 local M={}
-Stack = {}
+local Stack = {}
 M.Stack = Stack
 local unpack = table.unpack
 -- Create a Table with stack functions
