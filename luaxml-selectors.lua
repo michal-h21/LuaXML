@@ -1,7 +1,8 @@
-module(...,package.seeall)
+--module(...,package.seeall)
 
+local M =  {}
 local inside = 0
-function makeTag(s)
+local function makeTag(s)
    local function makeTag(fuf)
      return fuf .. "[^>]*"
    end
@@ -17,38 +18,46 @@ function makeTag(s)
      return f
    --end
 end
-function matchTag(tg)
+
+M.makeTag = makeTag
+local function matchTag(tg)
    return makeTag(tg)
 end
-
-function matchDescendand(a,b)
+M.matchTag=matchTag
+local function matchDescendand(a,b)
    return makeTag(a)..makeTag(b)
 end
+M.matchDescendand = matchDescendand
 
-function matchChild(a,b)
+local function matchChild(a,b)
    return makeTag(a)..".*"..makeTag(b)
 end
+M.matchChild = matchChild
 
-function matchSibling(a,b)
+local function matchSibling(a,b)
    return a .. "[^>]*".."@%("..b.."[^>]*%)"
 end
+M.matchSibling = matchSibling
 
-function matchClass(tg,class)
+local function matchClass(tg,class)
    return tg.."[^>]*class=[|]*[^>]*|"..class.."[^>]*|"
 end
 
-function matchId(tg,id)
+M.matchClass = matchClass
+local function matchId(tg,id)
    return tg.."[^>]*id="..id	
 end
-matcher = {}
-
-function makeElement(s)
+M.matchId = matchId
+local matcher = {}
+M.matcher= matcher
+local function makeElement(s)
   local function makeTag(fuf)
     return fuf .. "[^>]*"
   end
   return "<"..s .. "[^>]*>"
 end
 
+M.makeElement = makeElement
 function matcher.new()
   local self =  {}
   local selectors={}
@@ -64,4 +73,4 @@ function matcher.new()
   end
   return self
 end
-
+return M

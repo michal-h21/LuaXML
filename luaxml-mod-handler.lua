@@ -1,4 +1,4 @@
-module(...,package.seeall)
+--..module(...,package.seeall)
 --
 --  Overview:
 --  =========
@@ -111,9 +111,10 @@ module(...,package.seeall)
 --@param t Table to be parsed
 --@returns Returns a string representation of table
 
+local M = {}
 local stack = require("luaxml-stack")
 
-function showTable(t)
+local function showTable(t)
     local sep = ''
     local res = ''
     if type(t) ~= 'table' then
@@ -129,9 +130,12 @@ function showTable(t)
     res = '{'..res..'}'
     return res
 end
-        
+
+
+M.showTable = showTable        
+
 ---Handler to generate a simple event trace
-printHandler = function()
+local printHandler = function()
     local obj = {}
     obj.starttag = function(self,t,a,s,e) 
         io.write("Start    : "..t.."\n") 
@@ -179,9 +183,9 @@ printHandler = function()
     end
     return obj
 end
-
+M.printHandler = printHandler
 ---Handler to generate a lua table from a XML content string
-function simpleTreeHandler()
+local function simpleTreeHandler()
     local obj = {}
     
     obj.root = {} 
@@ -242,10 +246,10 @@ function simpleTreeHandler()
     return obj
 end
 
-
+M.simpleTreeHandler = simpleTreeHandler
 
 --- domHandler
-function domHandler() 
+local function domHandler() 
     local obj = {}
     obj.options = {commentNode=1,piNode=1,dtdNode=1,declNode=1}
     obj.root = { _children = {n=0}, _type = "ROOT" }
@@ -309,9 +313,10 @@ function domHandler()
     obj.cdata = obj.text
     return obj
 end
+M.domHandler = domHandler
 
 --
-simpleTeXhandler=function()
+local simpleTeXhandler=function()
   local obj={}
   local _stack=stack.Stack:Create()
   obj.starttag = function(self,t,a,s,e)
@@ -336,3 +341,5 @@ simpleTeXhandler=function()
   end
   return obj
 end
+M.simpleTeXhandler = simpleTeXhandler
+return M
