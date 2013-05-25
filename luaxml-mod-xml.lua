@@ -1,4 +1,4 @@
-module(...,package.seeall)
+-- module(...,package.seeall)
 ---
 --  Overview:
 --  =========
@@ -162,7 +162,8 @@ local format= string.format
 ---Parses a XML string
 --@param handler Handler object to be used to convert the XML string
 --to another formats. @see handler.lua
-xmlParser = function(handler)     
+local M={}
+local xmlParser = function(handler)     
     local obj = {}
     -- Public attributes 
 
@@ -477,15 +478,17 @@ xmlParser = function(handler)
     return obj
 
 end
+M.xmlParser = xmlParser
 
-function xmlEscape(s)
+local function xmlEscape(s)
   local t = {['"']="&quot;",["'"]="&apos;",["&"]="&amp;",["<"]="&lt;",[">"]="&gt;"}
   return string.gsub(s,"([\"'<>&])",t)
 end
 
+M.xmlEscape = xmlEscape
 
 
-function serialize(tb)
+local function serialize(tb)
 local function getAttributes(k,v)
   local i = ""
   if(type(v["_attr"])=="table") then
@@ -496,8 +499,9 @@ local function getAttributes(k,v)
            --table.remove(v,"_attr")
   end
   return i
-end
-  local function printable(tb, level,currTag)
+  end
+
+ local function printable(tb, level,currTag)
   local r ={}
   local currTag = currTag or ""
   level = level or 0
@@ -545,3 +549,5 @@ end
   end
   return table.concat({'<?xml version="1.0" encoding="UTF-8"?>',printable(tb)},"\n")
 end
+M.serialize = serialize
+return M
