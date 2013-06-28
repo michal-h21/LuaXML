@@ -1,4 +1,4 @@
-kpse.set_program_name("luatex")
+--kpse.set_program_name("luatex")
 function traverseDom(parser, current,level)
 	local level = level or 0
         local spaces = string.rep(" ",level)
