@@ -200,7 +200,7 @@ local function simpleTreeHandler()
                 self:reduce(v,k,node)
             end
         end
-        if table.getn(node) == 1 and not self.options.noreduce[key] and 
+        if #node == 1 and not self.options.noreduce[key] and 
             node._attr == nil then
             parent[key] = node[1]
         else
@@ -214,7 +214,7 @@ local function simpleTreeHandler()
            node._attr=a
         end
         
-        local current = self.stack[table.getn(self.stack)]
+        local current = self.stack[#self.stack]
         if current[t] then
             table.insert(current[t],node)
         else
@@ -224,8 +224,8 @@ local function simpleTreeHandler()
     end
 
     obj.endtag = function(self,t,s)
-        local current = self.stack[table.getn(self.stack)]
-        local prev = self.stack[table.getn(self.stack)-1]
+        local current = self.stack[#self.stack]
+        local prev = self.stack[#self.stack-1]
         if not prev[t] then
             error("XML Error - Unmatched Tag ["..s..":"..t.."]\n")
         end
@@ -237,7 +237,7 @@ local function simpleTreeHandler()
     end
     
     obj.text = function(self,t)
-        local current = self.stack[table.getn(self.stack)]
+        local current = self.stack[#self.stack]
         table.insert(current,t)
     end
 
