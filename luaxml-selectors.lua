@@ -7,7 +7,7 @@ local function makeTag(s)
      return fuf .. "[^>]*"
    end
    local print = texio.write_nl
-   if inside > 0 then print ("inside "..inside) else print("outside") end
+   -- if inside > 0 then print ("inside "..inside) else print("outside") end
    --[[if inside then
      return s .. "[^>]*"
    else
@@ -66,6 +66,7 @@ function matcher.new()
   end
   function self:testPath(path,fn)
     for k, v in pairs(selectors) do
+       print("regex", k)
        if path:match(k) then
          fn(v)
        end
@@ -73,4 +74,10 @@ function matcher.new()
   end
   return self
 end
+
+
+local t = matcher.new()
+t:addSelector(matchTag("p"),"ahoj p")
+t:addSelector(matchClass(".*", "ahoj"), "ahoj class")
+t:testPath("<p class=|ahoj|>", print)
 return M
