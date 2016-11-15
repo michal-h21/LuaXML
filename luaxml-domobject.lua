@@ -3,7 +3,7 @@
 local dom = {}
 local xml = require("luaxml-mod-xml")
 local handler = require("luaxml-mod-handler")
-local query = require("make4ht-parse-query")
+local query = require("luaxml-parse-query")
 
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}
