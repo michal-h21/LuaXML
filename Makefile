@@ -10,7 +10,7 @@ INSTALL_DIR = $(TEXMFHOME)/scripts/lua/$(name)
 MANUAL_DIR = $(TEXMFHOME)/doc/latex/$(name)
 SYSTEM_BIN = /usr/local/bin
 BUILD_DIR = build
-BUILD_MAKE4HT = $(BUILD_DIR)/$(name)
+BUILD_LUAXML = $(BUILD_DIR)/$(name)
 
 all: doc
 
@@ -22,12 +22,12 @@ $(doc_file): $(name).tex
 
 build: doc $(lua_content) $(filters)
 	@rm -rf build
-	@mkdir -p $(BUILD_MAKE4HT)
-	@mkdir -p $(BUILD_MAKE4HT)/filters
-	@cp $(lua_content) $(tex_content)  make4ht-doc.pdf $(BUILD_MAKE4HT)
-	@cp $(filters) $(BUILD_MAKE4HT)/filters
-	@cp README.md $(BUILD_MAKE4HT)/README
-	@cd $(BUILD_DIR) && zip -r make4ht.zip make4ht
+	@mkdir -p $(BUILD_LUAXML)
+	@mkdir -p $(BUILD_LUAXML)/filters
+	@cp $(lua_content) $(tex_content)  luaxml-doc.pdf $(BUILD_LUAXML)
+	@cp $(filters) $(BUILD_LUAXML)/filters
+	@cp README.md $(BUILD_LUAXML)/README
+	@cd $(BUILD_DIR) && zip -r luaxml.zip luaxml
 
 install: doc $(lua_content) $(filters)
 	mkdir -p $(INSTALL_DIR)
@@ -36,6 +36,6 @@ install: doc $(lua_content) $(filters)
 	cp  $(doc_file) $(MANUAL_DIR)
 	cp $(lua_content) $(INSTALL_DIR)
 	cp $(filters) $(FILTERS_DIR)
-	chmod +x $(INSTALL_DIR)/make4ht
-	ln -s $(INSTALL_DIR)/make4ht $(SYSTEM_BIN)/make4ht
+	chmod +x $(INSTALL_DIR)/luaxml
+	ln -s $(INSTALL_DIR)/luaxml $(SYSTEM_BIN)/luaxml
 
