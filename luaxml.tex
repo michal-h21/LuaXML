@@ -1,10 +1,15 @@
 \documentclass{ltxdoc}
 \usepackage{tgschola,url}
 \usepackage[english]{babel}
+% Version is defined in the makefile, use default values when compiled directly
+\ifdefined\version\else
+\def\version{0}
+\let\gitdate\date
+\fi
 \begin{document}
 	\title{The \textsc{LuaXML} library}
 	\author{Paul Chakravarti \and Michal Hoftich}
-	\date{Version 0.0.2\\May 25, 2013}
+	\date{Version \version\\\gitdate}
 	\maketitle
 \tableofcontents
 \section*{Introduction}
