@@ -25,7 +25,7 @@ describe("CSS selector handling", function()
   </html>
   ]]
   local newobj = dom.parse(document)
-  local matchedlist = newobj:get_selector_path(objects)
+  local matchedlist = obj:get_selector_path(newobj, objects)
   assert.truthy(#matchedlist == 3)
   -- assert.truthy(#obj:prepare_selector(selector)==2)
 end)
