@@ -10,8 +10,12 @@ local obj = cssquery()
 describe("CSS selector handling", function()
   local selector = "div#pokus span.ahoj, p, div.ahoj:first-child"
   local objects = obj:prepare_selector(selector)
-  assert.truthy(#objects == 3)
-  assert.truthy(obj:calculate_specificity(objects[1]) == 112)
+  it("should parse selectors", function()
+    assert.truthy(#objects == 3)
+  end)
+  it("should calculate specificity", function()
+    assert.truthy(obj:calculate_specificity(objects[1]) == 112)
+  end)
   local document = [[
   <html>
   <body>
@@ -26,6 +30,8 @@ describe("CSS selector handling", function()
   ]]
   local newobj = dom.parse(document)
   local matchedlist = obj:get_selector_path(newobj, objects)
-  assert.truthy(#matchedlist == 3)
+  it("should get selector path",function()
+    assert.truthy(#matchedlist == 3)
+  end)
   -- assert.truthy(#obj:prepare_selector(selector)==2)
 end)
