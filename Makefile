@@ -1,5 +1,6 @@
 lua_content = $(wildcard luaxml-*.lua) 
 tex_content = $(wildcard *.tex)
+tests       = $(wildcard test/*.lua)
 
 name = luaxml
 VERSION:= $(shell git --no-pager describe --tags --always )
@@ -14,13 +15,18 @@ BUILD_LUAXML = $(BUILD_DIR)/$(name)
 
 all: doc
 
+.PHONY: test
+
 doc: $(doc_file) 
 	
 $(doc_file): $(name).tex
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $(name).tex
 
+test: 
+	texlua test/dom-test.lua
+	texlua test/cssquery-test.lua
 
-build: doc $(lua_content) 
+build: doc test $(lua_content) 
 	@rm -rf build
 	@mkdir -p $(BUILD_LUAXML)
 	@cp $(lua_content) $(tex_content)  $(doc_file) $(BUILD_LUAXML)
