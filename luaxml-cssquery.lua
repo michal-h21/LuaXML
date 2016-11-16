@@ -1,5 +1,5 @@
 local query = require("luaxml-parse-query")
-function cssquery()
+local function cssquery()
   local Parser = {}
   Parser.__index = Parser
   function Parser.calculate_specificity(self, query)
@@ -19,7 +19,7 @@ function cssquery()
     return specificity
   end
 
-  function Parser.match_querylist(self, querylist)
+  function Parser.match_querylist(self, domobj, querylist)
     local matches = {}
     local querylist = querylist
 
@@ -72,17 +72,17 @@ function cssquery()
       local query =  {}
       for k,v in ipairs(element.query) do query[k] = v end
       if #query > 0 then -- don't try to match empty query
-        local result = match_query(query, self)
+        local result = match_query(query, domobj)
         if result then matches[#matches+1] = element end
       end
     end
     return matches
   end
 
-  function Parser.get_selector_path(self, selectorlist)
+  function Parser.get_selector_path(self, domobj, selectorlist)
     local nodelist = {}
-    self:traverse_elements(function(el)
-      local matches = el:match_querylist(selectorlist)
+    domobj:traverse_elements(function(el)
+      local matches = self:match_querylist(el, selectorlist)
       print("Matching", el:get_element_name(), #matches)
       if #matches > 0 then nodelist[#nodelist+1] = el
       end
@@ -121,6 +121,4 @@ function cssquery()
   return setmetatable({}, Parser)
 end
 
-
-local m = {}
-return m
+return cssquery
