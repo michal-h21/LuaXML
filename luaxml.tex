@@ -167,7 +167,7 @@ parser:parse(x)
 traverseDom(domHandler.root)
 \end{verbatim}
 
-The ROOT element is stored in |parser._handler.root| table, it's child nodes are stored in |_children|
+The ROOT element is stored in |domHandler.root| table, it's child nodes are stored in |_children|
 tables. Node type is saved in |_type| field, if the node type is |ELEMENT|, then |_name| field contains 
 element name, |_attr| table contains element attributes. |TEXT| node contains text content in |_text| 
 field.
