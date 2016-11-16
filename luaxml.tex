@@ -1,6 +1,7 @@
 \documentclass{ltxdoc}
 \usepackage{tgschola,url}
 \usepackage[english]{babel}
+\usepackage{hyperref}
 % Version is defined in the makefile, use default values when compiled directly
 \ifdefined\version\else
 \def\version{0}
@@ -12,22 +13,39 @@
 	\date{Version \version\\\gitdate}
 	\maketitle
 \tableofcontents
-\section*{Introduction}
+
+\section{Introduction}
 
 |LuaXML| is pure lua library for reading and serializing of the |xml| files.
-Current release is aimed mainly as support for the odsfile package. 
-In first release it was included with the odsfile package,
-but as it is general library which can be used also with other packages, 
-I decided to distribute it as separate library.
+% Current release is aimed mainly as support for the odsfile package. 
+% In first release it was included with the odsfile package,
+% but as it is general library which can be used also with other packages, 
+% I decided to distribute it as separate library.
 
-\noindent Example of usage:
+\section{Low-level functions usage}
+
+% The processing is done with several handlers, their usage will be shown in the
+% following section. Full description of handlers is given in the original
+% documentation in section \ref{sec:handlers}.
+
+% \subsection{Usage examples}
+
+The original |LuaXML| library provides some low-level functions for |XML| handling.
+First of all, we need to load the libraries:
 
 \begin{verbatim}
 xml = require('luaxml-mod-xml')
 handler = require('luaxml-mod-handler')
 \end{verbatim} 
 
-First load the libraries. In |luaxml-mod-xml|, there is xml parser and also serializer. In |luaxml-mod-handler|, there are various handlers for dealing with xml data. Handlers are objects with callback functions which are invoked for every type of content in the |xml| file. More information about handlers can be found in the original documentation, section \ref{sec:handlers}.
+
+The |luaxml-mod-xml| file contains the  xml parser and also the serializer. In
+|luaxml-mod-handler|, various handlers for dealing with xml data are defined.
+Handlers transforms the |xml| file to data structures which can be handled from
+the Lua code. More information about handlers can be found in the original
+documentation, section \ref{sec:handlers}.
+
+\subsection{The simpleTreeHandler} 
 \begin{verbatim}
 sample = [[
 <a>
@@ -40,7 +58,10 @@ x = xml.xmlParser(treehandler)
 x:parse(sample)
 \end{verbatim} 
 
-You have to create handler object, using |handler.simpleTreeHandler()| and xml parser object using |xml.xmlParser(handler object)|. |simpleTreehandler| creates simple table hierarchy, with top root node in |treehandler.root|
+You have to create handler object, using |handler.simpleTreeHandler()| and xml
+parser object using |xml.xmlParser(handler object)|. |simpleTreehandler|
+creates simple table hierarchy, with top root node in |treehandler.root|
+
 \begin{verbatim}
 -- pretty printing function
 function printable(tb, level)
@@ -63,46 +84,63 @@ printable(treehandler.root)
 print(xml.serialize(treehandler.root))
 -- direct access to the element
 print(treehandler.root["a"]["b"][1])
-
--- output:
---   a
---     d=hello
---     b
---       1=world.
---       2
---         1=another
---         _attr
---           at=Hi
--- <?xml version="1.0" encoding="UTF-8"?>
--- <a>
---   <d>hello</d>
---     <b>world.</b>
---     <b at="Hi">
---       another
---     </b>
--- </a>
--- 
--- world.
 \end{verbatim}
 
-Note that |simpleTreeHandler| creates tables that can be easily accessed using standard lua functions, but in case of mixed content, like
+This code produces the following output:
+
+\begin{verbatim}
+ output:
+   a
+     d=hello
+     b
+       1=world.
+       2
+         1=another
+         _attr
+           at=Hi
+ <?xml version="1.0" encoding="UTF-8"?>
+ <a>
+   <d>hello</d>
+     <b>world.</b>
+     <b at="Hi">
+       another
+     </b>
+ </a>
+ 
+ world.
+\end{verbatim}
+
+First part is pretty-printed dump of Lua table structure contained in the handler, the second
+part is |xml| serialized from that table and the last part demonstrates direct access to particular
+elements.
+
+Note that |simpleTreeHandler| creates tables that can be easily accessed using
+standard lua functions, but if the xml document is of mixed-content type\footnote{%
+This means that element may contain both children elements and text.}:
+
 \begin{verbatim}
 <a>hello
   <b>world</b>
 </a>	  
 \end{verbatim}
-it produces wrong results. It is useful mostly for data |xml| files, not for text formats like |xhtml|.
 
-For complex xml documents with mixed content, |domHandler| is capable of representing any valid XML document:
+\noindent then it produces wrong results. It is useful mostly for data |xml| files, not for
+text formats like |xhtml|.
+
+\subsection{The domHandler}
+
+% For complex xml documents with mixed content, |domHandler| is capable of representing any valid XML document:
+For complex xml documents, it is best to use the |domHandler|, which creates object which contains all information
+from the |xml| document. 
 
 \begin{verbatim}
--- dom-sample.lua
+-- file dom-sample.lua
 -- next line enables scripts called with texlua to use luatex libraries
-kpse.set_program_name("luatex")
-function traverseDom(parser, current,level)
+--kpse.set_program_name("luatex")
+function traverseDom(current,level)
   local level = level or 0
   local spaces = string.rep(" ",level)
-  local root= current or parser._handler.root
+  local root= current or current.root
   local name = root._name or "unnamed"
   local xtype = root._type or "untyped"
   local attributes = root._attr  or {} 
@@ -116,7 +154,7 @@ function traverseDom(parser, current,level)
   end
   local children = root._children or {}
   for _, child in ipairs(children) do
-    traverseDom(parser,child, level + 1)
+    traverseDom(child, level + 1)
   end
 end
 
@@ -126,10 +164,16 @@ local x = '<p>hello <a href="http://world.com/">world</a>, how are you?</p>'
 local domHandler = handler.domHandler()
 local parser = xml.xmlParser(domHandler)
 parser:parse(x)
-traverseDom(parser)	
+traverseDom(domHandler.root)
 \end{verbatim}
 
-This produces after running with |texlua dom-sample.lua|:
+The ROOT element is stored in |parser._handler.root| table, it's child nodes are stored in |_children|
+tables. Node type is saved in |_type| field, if the node type is |ELEMENT|, then |_name| field contains 
+element name, |_attr| table contains element attributes. |TEXT| node contains text content in |_text| 
+field.
+
+The previous code produces following output in the terminal: % after command
+% |texlua dom-sample.lua| running:
 
 \begin{verbatim}
 ROOT : unnamed
@@ -141,16 +185,15 @@ ROOT : unnamed
   TEXT : , how are you?
 \end{verbatim}
 
-With \verb|domHandler|, you can process documents with mixed content, like \verb|xhtml|.
+% With \verb|domHandler|, you can process documents with mixed content, like
+% \verb|xhtml|, so it is a most powerful handler.
 
-Because at the moment it is intended mainly as support for the odsfile package, there is little documentation, 
-what follows is the original documentation of |LuaXML|, which may be little bit obsolete now.
 
 \clearpage
-\noindent{\Huge Original documentation}
+\part{Original \texttt{LuaXML} documentation by Paul Chakravarti}
 \medskip
 
-\noindent This document was created automatically from original source code comments using Pandoc\footnote{\url{http://johnmacfarlane.net/pandoc/}} 
+\noindent This document was created automatically from the original source code comments using Pandoc\footnote{\url{http://johnmacfarlane.net/pandoc/}} 
 
 \section{Overview}
 
