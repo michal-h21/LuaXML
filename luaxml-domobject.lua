@@ -202,7 +202,11 @@ local parse = function(x)
   end
 
   function Parser.traverse_elements(self, fn, current)
-    local current = current or self:root_node()
+    local current = current or self --
+    -- Following situation may happen when this method is called directly on the parsed object
+    if not current:get_element_type() then
+      current = self:root_node() 
+    end
     local status = true
     if self:is_element(current) or self:get_element_type(current) == "ROOT"then
       local status = fn(current)
