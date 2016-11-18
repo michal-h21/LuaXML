@@ -1,5 +1,4 @@
 --- DOM module for LuaXML
--- @module make4ht-dom
 local dom = {}
 local xml = require("luaxml-mod-xml")
 local handler = require("luaxml-mod-handler")
@@ -16,7 +15,6 @@ local actions = {
 }
 
 --- It serializes the DOM object back to the XML 
--- @function serialize_dom
 -- @param parser DOM object
 -- @param current 
 -- @param level
@@ -91,16 +89,14 @@ local function serialize_dom(parser, current,level, output)
 end
 
 --- XML parsing function
--- @function parse
--- @param xml XML string which should be parsed
 -- @return DOM object
-local parse = function(x)
+local parse = function(xmltext)
   local domHandler = handler.domHandler()
   ---  @section DOM 
   local Parser = xml.xmlParser(domHandler)
   -- preserve whitespace
   Parser.options.stripWS = nil
-  Parser:parse(x)
+  Parser:parse(xmltext)
   Parser.current = Parser._handler.root
   Parser.__index = Parser
 
@@ -338,7 +334,8 @@ local parse = function(x)
 end
 
 
-local M = {}
-M.parse = parse
-M.serialize= serialize_dom
-return M
+--- @export
+return {
+  parse = parse, 
+  serialize_dom= serialize_dom
+}
