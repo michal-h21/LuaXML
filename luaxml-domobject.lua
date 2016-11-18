@@ -22,7 +22,7 @@ local actions = {
 -- @param level
 -- @param output
 -- @return table
-function serialize_dom(parser, current,level, output)
+local function serialize_dom(parser, current,level, output)
   local output = output or {}
   local function get_action(typ, action)
     local ac = actions[typ] or {}
