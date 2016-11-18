@@ -15,7 +15,7 @@ local actions = {
   DTD = {start = "<!DOCTYPE ", text = "%s" , stop=">"}
 }
 
---- It serializes the DOM object back to XML 
+--- It serializes the DOM object back to the XML 
 -- @function serialize_dom
 -- @param parser DOM object
 -- @param current 
