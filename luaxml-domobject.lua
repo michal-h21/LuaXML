@@ -124,7 +124,10 @@ local parse = function(xmltext)
     local el = el or self
     return el._type
   end
-  function Parser.is_element(self, el)
+
+  --- Test if node is an element
+  -- @within DOM
+  function Parser:is_element(el)
     local el = el or self
     return self:get_node_type(el) == "ELEMENT" 
   end
