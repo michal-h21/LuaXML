@@ -5,3 +5,5 @@
 *.out
 *.log
 *.fdb_latexmk
+build
+doc
