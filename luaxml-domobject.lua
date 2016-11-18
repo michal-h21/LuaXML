@@ -93,26 +93,26 @@ end
 local parse = function(xmltext)
   local domHandler = handler.domHandler()
   ---  @section DOM 
-  local Parser = xml.xmlParser(domHandler)
+  local DOM_Object = xml.xmlParser(domHandler)
   -- preserve whitespace
-  Parser.options.stripWS = nil
-  Parser:parse(xmltext)
-  Parser.current = Parser._handler.root
-  Parser.__index = Parser
+  DOM_Object.options.stripWS = nil
+  DOM_Object:parse(xmltext)
+  DOM_Object.current = DOM_Object._handler.root
+  DOM_Object.__index = DOM_Object
 
   local function save_methods(element)
-    setmetatable(element,Parser)
+    setmetatable(element,DOM_Object)
     local children = element._children or {}
     for _, x in ipairs(children) do
       save_methods(x)
     end
   end
-  local parser = setmetatable({}, Parser)
+  local parser = setmetatable({}, DOM_Object)
 
   --- @function DOM:root_node 
   -- @within DOM
   -- @return Root node of the DOM object
-  function Parser.root_node(self)
+  function DOM_Object.root_node(self)
     return self._handler.root
   end
 
@@ -120,31 +120,31 @@ local parse = function(xmltext)
   ---
   --- @function DOM:get_node_type
   -- @within DOM
-  function Parser.get_node_type(self, el)
+  function DOM_Object.get_node_type(self, el)
     local el = el or self
     return el._type
   end
 
   --- Test if node is an element
   -- @within DOM
-  function Parser:is_element(el)
+  function DOM_Object:is_element(el)
     local el = el or self
     return self:get_node_type(el) == "ELEMENT" 
   end
 
-  function Parser.is_text(self, el)
+  function DOM_Object.is_text(self, el)
     local el = el or self
     return self:get_node_type(el) == "TEXT"
   end
 
   local lower = string.lower
 
-  function Parser.get_element_name(self, el)
+  function DOM_Object.get_element_name(self, el)
     local el = el or self
     return el._name or "unnamed"
   end
 
-  function Parser.get_attribute(self, name)
+  function DOM_Object.get_attribute(self, name)
     local el = self
     if self:is_element(el) then
       local attr = el._attr or {}
@@ -152,7 +152,7 @@ local parse = function(xmltext)
     end
   end
 
-  function Parser.set_attribute(self, name, value)
+  function DOM_Object.set_attribute(self, name, value)
     local el = self
     if self:is_element(el) then
       el._attr[name] = value
@@ -161,7 +161,7 @@ local parse = function(xmltext)
   end
   
 
-  function Parser.serialize(self, current)
+  function DOM_Object.serialize(self, current)
     local current = current
     -- if no current element is added and self is not plain parser object
     -- (_type is then nil), use the current object as serialized root
@@ -171,7 +171,7 @@ local parse = function(xmltext)
     return table.concat(serialize_dom(self, current))
   end
 
-  function Parser.get_path(self,path, current)
+  function DOM_Object.get_path(self,path, current)
     local function traverse_path(path_elements, current, t)
       local t = t or {}
       if #path_elements == 0 then 
@@ -199,18 +199,18 @@ local parse = function(xmltext)
     return traverse_path(path_elements, current)
   end
 
-  function Parser.get_children(self, el)
+  function DOM_Object.get_children(self, el)
     local el  = el or self
     local children = el._children or {}
     return children
   end
 
-  function Parser.get_parent(self, el)
+  function DOM_Object.get_parent(self, el)
     local el = el or self
     return el._parent
   end
 
-  function Parser.traverse_elements(self, fn, current)
+  function DOM_Object.traverse_elements(self, fn, current)
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
     if not current:get_node_type() then
@@ -228,7 +228,7 @@ local parse = function(xmltext)
     end
   end
 
-  function Parser.traverse_node_list(self, nodelist, fn)
+  function DOM_Object.traverse_node_list(self, nodelist, fn)
     local nodelist = nodelist or {}
     for _, node in ipairs(nodelist) do
       for _, element in ipairs(node._children) do
@@ -237,7 +237,7 @@ local parse = function(xmltext)
     end
   end
 
-  function Parser.replace_node(self,  new)
+  function DOM_Object.replace_node(self,  new)
     local old = self
     local parent = self:get_parent(old)
     local id,msg = self:find_element_pos( old)
@@ -248,14 +248,14 @@ local parse = function(xmltext)
     return false, msg
   end
 
-  function Parser.add_child_node(self, child)
+  function DOM_Object.add_child_node(self, child)
     local parent = self
     child._parent = parent
     table.insert(parent._children, child)
   end
 
 
-  function Parser.copy_node(self, element)
+  function DOM_Object.copy_node(self, element)
     local element = element or self
     local t = {}
     for k, v in pairs(element) do
@@ -269,7 +269,7 @@ local parse = function(xmltext)
     return t
   end
 
-  function Parser.create_element(self, name, attributes, parent)
+  function DOM_Object.create_element(self, name, attributes, parent)
     local parent = parent or self
     local new = {}
     new._type = "ELEMENT"
@@ -281,18 +281,18 @@ local parse = function(xmltext)
     return new
   end
 
-  function Parser.remove_node(self, element)
+  function DOM_Object.remove_node(self, element)
     local element = element or self
     local parent = self:get_parent(element)
     local pos = self:find_element_pos(element)
     -- if pos then table.remove(parent._children, pos) end
     if pos then 
       -- table.remove(parent._children, pos) 
-      parent._children[pos] = setmetatable({_type = "removed"}, Parser)
+      parent._children[pos] = setmetatable({_type = "removed"}, DOM_Object)
     end
   end
 
-  function Parser.find_element_pos(self, el)
+  function DOM_Object.find_element_pos(self, el)
     local el = el or self
     local parent = self:get_parent(el)
     if not self:is_element(parent) and self:get_node_type(parent) ~= "ROOT" then return nil, "The parent isn't element" end
@@ -302,7 +302,7 @@ local parse = function(xmltext)
     return false, "Cannot find element"
   end
 
-  function Parser.get_siblibgs(self, el)
+  function DOM_Object.get_siblibgs(self, el)
     local el = el or self
     local parent = el:get_parent()
     if parent:is_element() then
@@ -310,7 +310,7 @@ local parse = function(xmltext)
     end
   end
 
-  function Parser.get_sibling_node(self, change)
+  function DOM_Object.get_sibling_node(self, change)
     local el = self
     local pos = el:find_element_pos()
     local siblings = el:get_siblibgs()
@@ -319,12 +319,12 @@ local parse = function(xmltext)
     end
   end
 
-  function Parser.get_next_node(self, el)
+  function DOM_Object.get_next_node(self, el)
     local el = el or self
     return el:get_sibling_node(1)
   end
 
-  function Parser.get_prev_node(self, el)
+  function DOM_Object.get_prev_node(self, el)
     local el = el or self
     return el:get_sibling_node(-1)
   end
