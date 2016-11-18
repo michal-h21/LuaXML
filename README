@@ -7,6 +7,16 @@ In this version, some files not useful for luaTeX were droped. Original files ca
 
     http://manoelcampos.com/files/LuaXML--0.0.0-lua5.1.tgz 
 
+Install
+=======
+
+LuaXML is installed in TeX distributions, so you don't need to install it yourself. If you want to try the development version,
+then clone this repository and run 
+
+    make install
+
+Please note that you will need [LDoc](http://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) installed
+on your system.
 
 License:
 ========
