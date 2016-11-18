@@ -90,12 +90,13 @@ local function serialize_dom(parser, current,level, output)
   return output
 end
 
+--- XML parsing function
 -- @function parse
 -- @param xml XML string which should be parsed
 -- @return DOM object
 local parse = function(x)
   local domHandler = handler.domHandler()
-  -- @module Parser
+  ---  @section DOM 
   local Parser = xml.xmlParser(domHandler)
   -- preserve whitespace
   Parser.options.stripWS = nil
@@ -112,6 +113,9 @@ local parse = function(x)
   end
   local parser = setmetatable({}, Parser)
 
+  --- @function DOM:root_node 
+  -- @within DOM
+  -- @return Root node of the DOM object
   function Parser.root_node(self)
     return self._handler.root
   end
