@@ -12,15 +12,23 @@ MANUAL_DIR = $(TEXMFHOME)/doc/latex/$(name)
 SYSTEM_BIN = /usr/local/bin
 BUILD_DIR = build
 BUILD_LUAXML = $(BUILD_DIR)/$(name)
+API_DOC = doc/index.html
+API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua
 
 all: doc
 
-.PHONY: test
+.PHONY: test 
 
-doc: $(doc_file) 
+doc: $(doc_file) api 
+
 	
 $(doc_file): $(name).tex
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $(name).tex
+
+api: $(API_DOC)
+
+$(API_DOC): $(API_SOURCES)
+	ldoc $(API_SOURCES)
 
 test: 
 	texlua test/dom-test.lua
