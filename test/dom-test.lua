@@ -36,7 +36,7 @@ describe("Basic DOM functions", function()
       if obj:get_element_name(el) == "p" then
         matched = true
         it("Element matching should work", function()
-          assert.truthy(el:root_node():get_element_type() == "ROOT")
+          assert.truthy(el:root_node():get_node_type() == "ROOT")
           assert.truthy(el:is_element())
           assert.truthy(el:get_element_name()== "p")
         end)

@@ -121,18 +121,21 @@ local parse = function(x)
   end
 
 
-  function Parser.get_element_type(self, el)
+  ---
+  --- @function DOM:get_node_type
+  -- @within DOM
+  function Parser.get_node_type(self, el)
     local el = el or self
     return el._type
   end
   function Parser.is_element(self, el)
     local el = el or self
-    return self:get_element_type(el) == "ELEMENT" 
+    return self:get_node_type(el) == "ELEMENT" 
   end
 
   function Parser.is_text(self, el)
     local el = el or self
-    return self:get_element_type(el) == "TEXT"
+    return self:get_node_type(el) == "TEXT"
   end
 
   local lower = string.lower
@@ -211,11 +214,11 @@ local parse = function(x)
   function Parser.traverse_elements(self, fn, current)
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
-    if not current:get_element_type() then
+    if not current:get_node_type() then
       current = self:root_node() 
     end
     local status = true
-    if self:is_element(current) or self:get_element_type(current) == "ROOT"then
+    if self:is_element(current) or self:get_node_type(current) == "ROOT"then
       local status = fn(current)
       -- don't traverse child nodes when the user function return false
       if status ~= false then
@@ -293,7 +296,7 @@ local parse = function(x)
   function Parser.find_element_pos(self, el)
     local el = el or self
     local parent = self:get_parent(el)
-    if not self:is_element(parent) and self:get_element_type(parent) ~= "ROOT" then return nil, "The parent isn't element" end
+    if not self:is_element(parent) and self:get_node_type(parent) ~= "ROOT" then return nil, "The parent isn't element" end
     for i, x in ipairs(parent._children) do
       if x == el then return i end
     end
