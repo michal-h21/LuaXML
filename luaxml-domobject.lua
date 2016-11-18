@@ -93,7 +93,7 @@ end
 -- @return DOM_Object
 local parse = function(xmltext)
   local domHandler = handler.domHandler()
-  ---  @section DOM 
+  ---  @type DOM_Object
   local DOM_Object = xml.xmlParser(domHandler)
   -- preserve whitespace
   DOM_Object.options.stripWS = nil
@@ -111,7 +111,6 @@ local parse = function(xmltext)
   local parser = setmetatable({}, DOM_Object)
 
   --- Returns root element of the DOM_Object 
-  -- @within DOM
   -- @return DOM_Object 
   function DOM_Object:root_node()
     return self._handler.root
@@ -120,19 +119,22 @@ local parse = function(xmltext)
 
   --- Get current node type
   -- @param  el Optional node to get the type of
-  -- @within DOM
   function DOM_Object:get_node_type( el)
     local el = el or self
     return el._type
   end
 
-  --- Test if the current node is an element
-  -- @within DOM
+  --- Test if the current node is an element.
+  -- You can pass different element as parameter
+  -- @return boolean
   function DOM_Object:is_element(el)
     local el = el or self
-    return self:get_node_type(el) == "ELEMENT" 
+    return self:get_node_type(el) == "ELEMENT" -- @bool
   end
 
+  
+  --- Test if current node is text
+  -- @return boolean
   function DOM_Object:is_text(el)
     local el = el or self
     return self:get_node_type(el) == "TEXT"
@@ -140,11 +142,13 @@ local parse = function(xmltext)
 
   local lower = string.lower
 
+  --- Return name of the current element
   function DOM_Object:get_element_name( el)
     local el = el or self
     return el._name or "unnamed"
   end
 
+  --- Get value of an attribute
   function DOM_Object:get_attribute(name)
     local el = self
     if self:is_element(el) then
@@ -153,6 +157,7 @@ local parse = function(xmltext)
     end
   end
 
+  --- Set value of an attribute
   function DOM_Object:set_attribute( name, value)
     local el = self
     if self:is_element(el) then
@@ -162,6 +167,7 @@ local parse = function(xmltext)
   end
   
 
+  --- Seriealize the current node back to XML
   function DOM_Object:serialize( current)
     local current = current
     -- if no current element is added and self is not plain parser object
@@ -172,6 +178,11 @@ local parse = function(xmltext)
     return table.concat(serialize_dom(self, current))
   end
 
+
+  --- Retrieve elements from the given path. 
+  -- The path is list of elements separated with space,
+  -- you must start from the root element
+  -- @return table of elements which match the path
   function DOM_Object:get_path(path, current)
     local function traverse_path(path_elements, current, t)
       local t = t or {}
@@ -200,17 +211,20 @@ local parse = function(xmltext)
     return traverse_path(path_elements, current)
   end
 
+  --- Get table with children of the current element
   function DOM_Object:get_children(el)
     local el  = el or self
     local children = el._children or {}
     return children
   end
 
+  --- Get the parent element
   function DOM_Object:get_parent( el)
     local el = el or self
     return el._parent
   end
 
+  --- Execute function on the current element and all it's children elements
   function DOM_Object:traverse_elements( fn, current)
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
@@ -229,6 +243,7 @@ local parse = function(xmltext)
     end
   end
 
+  --- Execute function on list of elements returned by DOM_Object:get_path()
   function DOM_Object:traverse_node_list( nodelist, fn)
     local nodelist = nodelist or {}
     for _, node in ipairs(nodelist) do
@@ -238,6 +253,7 @@ local parse = function(xmltext)
     end
   end
 
+  --- Replace the current node with new one
   function DOM_Object:replace_node(  new)
     local old = self
     local parent = self:get_parent(old)
@@ -249,6 +265,7 @@ local parse = function(xmltext)
     return false, msg
   end
 
+  --- Add child node to the current node
   function DOM_Object:add_child_node( child)
     local parent = self
     child._parent = parent
@@ -256,6 +273,7 @@ local parse = function(xmltext)
   end
 
 
+  --- Create copy of the current node
   function DOM_Object:copy_node( element)
     local element = element or self
     local t = {}
@@ -270,6 +288,8 @@ local parse = function(xmltext)
     return t
   end
 
+
+  --- Create new element
   function DOM_Object:create_element( name, attributes, parent)
     local parent = parent or self
     local new = {}
@@ -282,6 +302,7 @@ local parse = function(xmltext)
     return new
   end
 
+  --- Delete current node
   function DOM_Object:remove_node( element)
     local element = element or self
     local parent = self:get_parent(element)
@@ -293,6 +314,7 @@ local parse = function(xmltext)
     end
   end
 
+  --- Find the element position in the current node list
   function DOM_Object:find_element_pos( el)
     local el = el or self
     local parent = self:get_parent(el)
@@ -303,6 +325,7 @@ local parse = function(xmltext)
     return false, "Cannot find element"
   end
 
+  --- Get node list which current node is part of
   function DOM_Object:get_siblibgs( el)
     local el = el or self
     local parent = el:get_parent()
@@ -311,6 +334,8 @@ local parse = function(xmltext)
     end
   end
 
+  --- Get sibling node of the current node
+  -- @param change Distance from the current node
   function DOM_Object:get_sibling_node( change)
     local el = self
     local pos = el:find_element_pos()
@@ -320,11 +345,13 @@ local parse = function(xmltext)
     end
   end
 
+  --- Get next node
   function DOM_Object:get_next_node( el)
     local el = el or self
     return el:get_sibling_node(1)
   end
 
+  --- Get previous node
   function DOM_Object:get_prev_node( el)
     local el = el or self
     return el:get_sibling_node(-1)
