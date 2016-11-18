@@ -302,6 +302,17 @@ local parse = function(xmltext)
     return new
   end
 
+  --- Create new text node
+  function DOM_Object:create_text_node( text, parent)
+    local parent = parent or self
+    local new = {}
+    new._type = "TEXT"
+    new._parent = parent
+    new._text = text
+    save_methods(new)
+    return new
+  end
+
   --- Delete current node
   function DOM_Object:remove_node( element)
     local element = element or self
