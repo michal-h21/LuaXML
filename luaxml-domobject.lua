@@ -89,7 +89,8 @@ local function serialize_dom(parser, current,level, output)
 end
 
 --- XML parsing function
--- @return DOM object
+-- Parse the XML text and create the DOM object. 
+-- @return DOM_Object
 local parse = function(xmltext)
   local domHandler = handler.domHandler()
   ---  @section DOM 
@@ -109,23 +110,23 @@ local parse = function(xmltext)
   end
   local parser = setmetatable({}, DOM_Object)
 
-  --- @function DOM:root_node 
+  --- Returns root element of the DOM_Object 
   -- @within DOM
-  -- @return Root node of the DOM object
+  -- @return DOM_Object 
   function DOM_Object:root_node()
     return self._handler.root
   end
 
 
-  ---
-  --- @function DOM:get_node_type
+  --- Get current node type
+  -- @param  el Optional node to get the type of
   -- @within DOM
   function DOM_Object:get_node_type( el)
     local el = el or self
     return el._type
   end
 
-  --- Test if node is an element
+  --- Test if the current node is an element
   -- @within DOM
   function DOM_Object:is_element(el)
     local el = el or self
