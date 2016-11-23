@@ -6,6 +6,28 @@ local handler = require("luaxml-mod-handler")
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}
 
+local escapes = {
+  [">"] = "&gt;",
+  ["<"] = "&lt;",
+  ["&"] = "&amp;",
+  ['"'] = "&quot;",
+  ["'"] = "&#39;"
+}
+
+local function escape(search, text)
+  return text:gsub(search, function(ch)
+    return escapes[ch] or ""
+  end)
+end
+
+local function escape_element(text)
+  return escape("([<>&])", text)
+end
+
+local function escape_attr(text)
+  return escape("([<>&\"'])", text)
+end
+
 local actions = {
   TEXT = {text = "%s"},
   COMMENT = {start = "<!-- ", text = "%s", stop = " -->"},
@@ -34,7 +56,7 @@ local function serialize_dom(parser, current,level, output)
     local t = {}
     local attr = attr or {}
     for k, v in pairs(attr) do
-      t[#t+1] = string.format("%s='%s'", k, v)
+      t[#t+1] = string.format("%s='%s'", k, escape_attr(v))
     end
     if #t == 0 then return "" end
     -- add space before attributes
@@ -46,7 +68,7 @@ local function serialize_dom(parser, current,level, output)
   end
   local function text(typ, text)
     local format = get_action(typ, "text")
-    insert(format, text)
+    insert(format, escape_element(text))
   end
   local function stop(typ, el)
     local format = get_action(typ, "stop")
