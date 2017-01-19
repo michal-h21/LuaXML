@@ -12,8 +12,9 @@ MANUAL_DIR = $(TEXMFHOME)/doc/latex/$(name)
 SYSTEM_BIN = /usr/local/bin
 BUILD_DIR = build
 BUILD_LUAXML = $(BUILD_DIR)/$(name)
-API_DOC = doc/index.html
+API_DOC = doc/api.tex
 API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua
+LDOC_FILTER = ldoc-latex.lua
 
 all: doc
 
@@ -27,8 +28,8 @@ $(doc_file): $(name).tex
 
 api: $(API_DOC)
 
-$(API_DOC): $(API_SOURCES)
-	ldoc $(API_SOURCES)
+$(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
+	ldoc --filter ldoc-latex.filter $(API_SOURCES) >  $(API_DOC)
 
 test: 
 	texlua test/dom-test.lua
@@ -46,4 +47,7 @@ install: doc $(lua_content) $(filters)
 	mkdir -p $(MANUAL_DIR)
 	cp  $(doc_file) $(MANUAL_DIR)
 	cp $(lua_content) $(INSTALL_DIR)
+
+version:
+	echo $(VERSION), $(DATE)
 
