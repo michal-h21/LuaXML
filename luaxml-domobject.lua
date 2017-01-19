@@ -165,12 +165,14 @@ local parse = function(xmltext)
   local lower = string.lower
 
   --- Return name of the current element
+  -- @return string
   function DOM_Object:get_element_name( el)
     local el = el or self
     return el._name or "unnamed"
   end
 
   --- Get value of an attribute
+  -- @return string
   function DOM_Object:get_attribute(name)
     local el = self
     if self:is_element(el) then
