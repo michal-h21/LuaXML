@@ -1,4 +1,6 @@
 --- DOM module for LuaXML
+-- @module luaxml-domobject
+-- @author Michal Hoftich <michal.h21@gmail.com
 local dom = {}
 local xml = require("luaxml-mod-xml")
 local handler = require("luaxml-mod-handler")
@@ -398,7 +400,6 @@ local parse = function(xmltext)
   -- parser:
   return parser
 end
-
 
 --- @export
 return {
