@@ -4,6 +4,7 @@
 local dom = {}
 local xml = require("luaxml-mod-xml")
 local handler = require("luaxml-mod-handler")
+local css_query = require("luaxml-cssquery")
 
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}
@@ -124,6 +125,7 @@ local parse = function(xmltext)
   DOM_Object:parse(xmltext)
   DOM_Object.current = DOM_Object._handler.root
   DOM_Object.__index = DOM_Object
+  DOM_Object.css_query = css_query()
 
   local function save_methods(element)
     setmetatable(element,DOM_Object)
@@ -235,6 +237,14 @@ local parse = function(xmltext)
     local path = string.lower(path)
     for el in path:gmatch("([^%s]+)") do table.insert(path_elements, el) end
     return traverse_path(path_elements, current)
+  end
+
+  --- Select elements chidlren using CSS selector syntax
+  --
+  function DOM_Object:query_selector(selector)
+    local css_query = self.css_query
+    local css_parts = css_query.prepare_selector(selector)
+    return css_query.get_selector_path(self, css_parts)
   end
 
   --- Get table with children of the current element
