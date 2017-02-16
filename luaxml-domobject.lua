@@ -243,8 +243,8 @@ local parse = function(xmltext)
   --
   function DOM_Object:query_selector(selector)
     local css_query = self.css_query
-    local css_parts = css_query.prepare_selector(selector)
-    return css_query.get_selector_path(self, css_parts)
+    local css_parts = css_query:prepare_selector(selector)
+    return css_query:get_selector_path(self, css_parts)
   end
 
   --- Get table with children of the current element
