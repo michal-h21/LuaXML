@@ -67,5 +67,26 @@ describe("Basic DOM functions", function()
   end)
 
 
+  describe("Query selector matching should work", function()
+    local document = [[
+    <html>
+    <head><title>pokus</title></head>
+    <body>
+    <h1>pokus</h1>
+    <p>nazdar</p>
+    <p class="noindent">First noindent</p>
+    <p class="noindent another-class">Second noindent</p>
+    </body>
+    </html>
+    ]]
+    local newobj = dom.parse(document)
+    local matched = newobj:query_selector(".noindent")
+    it("Should return table", function()
+      assert.truthy(type(matched) == "table")
+    end)
+    it("Should match two elemetns", function()
+      assert.truthy(#matched == 2)
+    end)
+  end)
 
 end)
