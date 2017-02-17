@@ -2,6 +2,17 @@ local query = require("luaxml-parse-query")
 local function cssquery()
   local Parser = {}
   Parser.__index = Parser
+  Parser.__debug = false
+
+  function Parser.debug(self)
+    self.__debug = false
+  end
+
+  function Parser.debug_print(self, ...)
+    if self.__debug then
+      print("[CSS Object]: " .. table.concat(arg, "\t"))
+    end
+  end
   function Parser.calculate_specificity(self, query)
     local query = query or {}
     local specificity = 0
@@ -83,7 +94,7 @@ local function cssquery()
     local nodelist = {}
     domobj:traverse_elements(function(el)
       local matches = self:match_querylist(el, selectorlist)
-      print("Matching", el:get_element_name(), #matches)
+      self:debug_print("Matching", el:get_element_name(), #matches)
       if #matches > 0 then nodelist[#nodelist+1] = el
       end
     end)
