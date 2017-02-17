@@ -6,6 +6,7 @@ local dom = require "luaxml-domobject"
 local cssquery = require "luaxml-cssquery"
 
 local obj = cssquery()
+obj:debug()
 
 describe("CSS selector handling", function()
   local selector = "div#pokus span.ahoj, p, div.ahoj:first-child"
