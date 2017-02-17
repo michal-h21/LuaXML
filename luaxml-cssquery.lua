@@ -5,12 +5,12 @@ local function cssquery()
   Parser.__debug = false
 
   function Parser.debug(self)
-    self.__debug = false
+    self.__debug = true
   end
 
-  function Parser.debug_print(self, ...)
+  function Parser.debug_print(self, text)
     if self.__debug then
-      print("[CSS Object]: " .. table.concat(arg, "\t"))
+      print("[CSS Object]: " .. text)
     end
   end
   function Parser.calculate_specificity(self, query)
@@ -94,7 +94,7 @@ local function cssquery()
     local nodelist = {}
     domobj:traverse_elements(function(el)
       local matches = self:match_querylist(el, selectorlist)
-      self:debug_print("Matching", el:get_element_name(), #matches)
+      self:debug_print("Matching " ..  el:get_element_name() .." "..#matches)
       if #matches > 0 then nodelist[#nodelist+1] = el
       end
     end)
