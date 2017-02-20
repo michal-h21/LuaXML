@@ -32,7 +32,18 @@ describe("CSS selector handling", function()
   local newobj = dom.parse(document)
   local matchedlist = obj:get_selector_path(newobj, objects)
   it("should get selector path",function()
-    assert.truthy(#matchedlist == 3)
+    assert.same(#matchedlist, 3)
+  end)
+  describe("List selectors that matches object", function()
+    obj:add_selector(".ahoj", function(domobj)
+      return false
+    end)
+    obj:add_selector("#pokus", function(domobj)
+      return false
+    end)
+    for k,v in ipairs(obj.selectors) do
+      print(k, v.source, v.specificity)
+    end
   end)
   -- assert.truthy(#obj:prepare_selector(selector)==2)
 end)
