@@ -87,6 +87,13 @@ describe("Basic DOM functions", function()
     it("Should match two elemetns", function()
       assert.truthy(#matched == 2)
     end)
+    local el = matched[2]
+    it("Should be possible to add new elements to the matched elements",function()
+      local text = newobj:create_text_node(" with added text")
+      el:add_child_node(text)
+      assert.same(el:serialize(),'<p class=\'noindent another-class\'>Second noindent with added text</p>')
+    end)
+    
   end)
 
 end)
