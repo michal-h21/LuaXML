@@ -37,12 +37,12 @@ local function cssquery()
 
     local function test_part(key, value, el)
       -- print("testing", key, value, el:get_element_name())
-      if key == "tag" then 
+      if key == "tag" then
         return el:get_element_name() == value
       elseif key == "id" then
         local id = el:get_attribute "id"
         return id and id == value
-      elseif key == "class" then 
+      elseif key == "class" then
         local class = el:get_attribute "class"
         if not class then return false end
         local c = {}
