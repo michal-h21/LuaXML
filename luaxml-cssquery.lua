@@ -1,4 +1,4 @@
-local query = require("luaxml-parse-query")
+local parse_query = require("luaxml-parse-query")
 local function cssquery()
   local Parser = {}
   Parser.__index = Parser
@@ -123,7 +123,7 @@ local function cssquery()
     -- for item in selector:gmatch("([^%s]+)") do
     -- elements[#elements+1] = parse_selector(item)
     -- end
-    local parts = query.parse_query(selector) or {}
+    local parts = parse_query.parse_query(selector) or {}
     -- several selectors may be separated using ",", we must process them separately
     local sources = selector:explode(",")
     for i, part in ipairs(parts) do
