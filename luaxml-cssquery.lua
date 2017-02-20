@@ -125,10 +125,30 @@ local function cssquery()
     -- end
     local parts = query.parse_query(selector) or {}
     -- several selectors may be separated using ",", we must process them separately
-    for _, part in ipairs(parts) do
-      querylist[#querylist+1] = {query =  parse_selector(part)}
+    local sources = selector:explode(",")
+    for i, part in ipairs(parts) do
+      querylist[#querylist+1] = {query =  parse_selector(part), source = sources[i]}
     end
     return querylist
+  end
+
+  --- Add selector to CSS object list of selectors, 
+  -- func is called when the selector matched a DOM object
+  function Parser.add_selector(self, selector, func)
+    local selector_list = self:prepare_selector(selector)
+    for k, query in ipairs(selector_list) do
+      query.specificity = self:calculate_specificity(query)
+      query.func = func
+      table.insert(self.selectors, query)
+    end
+    self:sort_selectors()
+    return #selector_list
+  end
+
+  function Parser:sort_selectors()
+    table.sort(self.selectors, function(a,b)
+      return a.specificity > b.specificity
+    end)
   end
   return setmetatable({}, Parser)
 end
