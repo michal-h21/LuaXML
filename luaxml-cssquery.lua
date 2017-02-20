@@ -3,6 +3,7 @@ local function cssquery()
   local Parser = {}
   Parser.__index = Parser
   Parser.__debug = false
+  Parser.selectors = {}
 
   function Parser.debug(self)
     self.__debug = true
