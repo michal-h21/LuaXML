@@ -12,10 +12,10 @@ describe("CSS selector handling", function()
   local selector = "div#pokus span.ahoj, p, div.ahoj:first-child"
   local objects = obj:prepare_selector(selector)
   it("should parse selectors", function()
-    assert.truthy(#objects == 3)
+    assert.same(#objects, 3)
   end)
   it("should calculate specificity", function()
-    assert.truthy(obj:calculate_specificity(objects[1]) == 112)
+    assert.same(obj:calculate_specificity(objects[1]),  112)
   end)
   local document = [[
   <html>
