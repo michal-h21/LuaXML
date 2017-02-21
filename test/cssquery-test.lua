@@ -60,6 +60,11 @@ describe("CSS selector handling", function()
       -- should match .ahoj and #pokus 
       assert.same(#obj:match_querylist(div_ahoj), 2)
     end)
+    it("Applying querylist should work", function()
+      local div_querylist = obj:match_querylist(div_ahoj)
+      obj:apply_querylist(div_ahoj, div_querylist)
+      assert.same(div_ahoj:get_attribute("style"), "color:red")
+    end)
     -- for k,v in ipairs(obj.querylist) do
     --   print(k, v.source, v.specificity)
     -- end
