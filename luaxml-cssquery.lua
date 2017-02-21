@@ -31,7 +31,9 @@ local function cssquery()
     return specificity
   end
 
-  --- 
+  --- Test prepared querylist
+  -- @param domobj: DOM element to test
+  -- @param querylist: List of queries to test
   function Parser.match_querylist(self, domobj, querylist)
     local matches = {}
     -- querylist can be explicit, saved queries can be used otherwise
