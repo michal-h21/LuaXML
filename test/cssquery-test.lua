@@ -6,7 +6,7 @@ local dom = require "luaxml-domobject"
 local cssquery = require "luaxml-cssquery"
 
 local obj = cssquery()
-obj:debug()
+-- obj:debug()
 
 describe("CSS selector handling", function()
   local selector = "div#pokus span.ahoj, p, div.ahoj:first-child"
@@ -60,9 +60,9 @@ describe("CSS selector handling", function()
       -- should match .ahoj and #pokus 
       assert.same(#obj:match_querylist(div_ahoj), 2)
     end)
-    for k,v in ipairs(obj.querylist) do
-      print(k, v.source, v.specificity)
-    end
+    -- for k,v in ipairs(obj.querylist) do
+    --   print(k, v.source, v.specificity)
+    -- end
   end)
   -- assert.truthy(#obj:prepare_selector(selector)==2)
 end)
