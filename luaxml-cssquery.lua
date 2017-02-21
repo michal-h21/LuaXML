@@ -147,11 +147,17 @@ local function cssquery()
     return #selector_list
   end
 
-  function Parser:sort_selectors()
+  --- Sort selectors according to their specificity
+  -- It is called automatically when the selector is added
+  function Parser:sort_selectors(selectors)
+    local selectors = selectors or self.selectors
     table.sort(self.selectors, function(a,b)
       return a.specificity > b.specificity
     end)
+    return selectors
   end
+
+  
   return setmetatable({}, Parser)
 end
 
