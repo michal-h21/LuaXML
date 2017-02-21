@@ -31,9 +31,11 @@ local function cssquery()
     return specificity
   end
 
+  --- 
   function Parser.match_querylist(self, domobj, querylist)
     local matches = {}
-    local querylist = querylist
+    -- querylist can be explicit, saved queries can be used otherwise
+    local querylist = querylist or self.querylist
 
     local function test_part(key, value, el)
       -- print("testing", key, value, el:get_element_name())
