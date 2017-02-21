@@ -161,6 +161,19 @@ local function cssquery()
     return querylist
   end
 
+  --- Apply functions from a matched querylist to a DOM object 
+  function Parser:apply_querylist(domobj, querylist)
+    for _, query in ipairs(querylist) do
+      -- use default empty function which will pass to another match
+      local func = query.func or function() return true end
+      local params = query.params or {}
+      local status = func(domobj, params)
+      -- break the execution when the function return false
+      if status == false then
+        break
+      end
+    end
+  end
   
   return setmetatable({}, Parser)
 end
