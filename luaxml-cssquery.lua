@@ -3,7 +3,7 @@ local function cssquery()
   local Parser = {}
   Parser.__index = Parser
   Parser.__debug = false
-  Parser.selectors = {}
+  Parser.querylist = {}
 
   function Parser.debug(self)
     self.__debug = true
@@ -141,20 +141,20 @@ local function cssquery()
     for k, query in ipairs(selector_list) do
       query.specificity = self:calculate_specificity(query)
       query.func = func
-      table.insert(self.selectors, query)
+      table.insert(self.querylist, query)
     end
-    self:sort_selectors()
+    self:sort_querylist()
     return #selector_list
   end
 
   --- Sort selectors according to their specificity
   -- It is called automatically when the selector is added
-  function Parser:sort_selectors(selectors)
-    local selectors = selectors or self.selectors
-    table.sort(self.selectors, function(a,b)
+  function Parser:sort_querylist(querylist)
+    local querylist = querylist or self.querylist
+    table.sort(self.querylist, function(a,b)
       return a.specificity > b.specificity
     end)
-    return selectors
+    return querylist
   end
 
   
