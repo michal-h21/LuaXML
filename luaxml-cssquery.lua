@@ -137,12 +137,14 @@ local function cssquery()
   end
 
   --- Add selector to CSS object list of selectors, 
-  -- func is called when the selector matched a DOM object
-  function Parser.add_selector(self, selector, func)
+  -- func is called when the selector matches a DOM object
+  -- params is table which will be passed to the func 
+  function Parser.add_selector(self, selector, func, params)
     local selector_list = self:prepare_selector(selector)
     for k, query in ipairs(selector_list) do
       query.specificity = self:calculate_specificity(query)
       query.func = func
+      query.params = params
       table.insert(self.querylist, query)
     end
     self:sort_querylist()
