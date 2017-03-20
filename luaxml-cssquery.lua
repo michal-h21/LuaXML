@@ -1,3 +1,6 @@
+--- CSS query module for LuaXML
+-- @module luaxml-cssquery
+-- @author Michal Hoftich <michal.h21@gmail.com
 local parse_query = require("luaxml-parse-query")
 local function cssquery()
   local Parser = {}
