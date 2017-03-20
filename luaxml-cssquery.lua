@@ -9,7 +9,7 @@ local function cssquery()
     self.__debug = true
   end
 
-  function Parser.debug_print(self, text)
+  function Parser:debug_print(text)
     if self.__debug then
       print("[CSS Object]: " .. text)
     end
@@ -32,9 +32,9 @@ local function cssquery()
   end
 
   --- Test prepared querylist
-  -- @param domobj: DOM element to test
-  -- @param querylist: List of queries to test
-  function Parser.match_querylist(self, domobj, querylist)
+  -- @param domobj DOM element to test
+  -- @param querylist List of queries to test
+  function Parser:match_querylist(domobj, querylist)
     local matches = {}
     -- querylist can be explicit, saved queries can be used otherwise
     local querylist = querylist or self.querylist
@@ -95,7 +95,7 @@ local function cssquery()
     return matches
   end
 
-  function Parser.get_selector_path(self, domobj, selectorlist)
+  function Parser:get_selector_path(domobj, selectorlist)
     local nodelist = {}
     domobj:traverse_elements(function(el)
       local matches = self:match_querylist(el, selectorlist)
@@ -107,7 +107,7 @@ local function cssquery()
   end
 
   --- Parse CSS selector to match table
-  function Parser.prepare_selector(self, selector)
+  function Parser:prepare_selector(selector)
     local querylist = {}
     local function parse_selector(item)
       local query = {}
@@ -139,7 +139,7 @@ local function cssquery()
   --- Add selector to CSS object list of selectors, 
   -- func is called when the selector matches a DOM object
   -- params is table which will be passed to the func 
-  function Parser.add_selector(self, selector, func, params)
+  function Parser:add_selector(selector, func, params)
     local selector_list = self:prepare_selector(selector)
     for k, query in ipairs(selector_list) do
       query.specificity = self:calculate_specificity(query)
