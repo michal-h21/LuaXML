@@ -2,22 +2,25 @@
 -- @module luaxml-cssquery
 -- @author Michal Hoftich <michal.h21@gmail.com
 local parse_query = require("luaxml-parse-query")
-local function cssquery()
-  local Parser = {}
-  Parser.__index = Parser
-  Parser.__debug = false
-  Parser.querylist = {}
 
-  function Parser.debug(self)
+
+local function cssquery()
+  --- @type CssQuery
+  local CssQuery = {}
+  CssQuery.__index = CssQuery
+  CssQuery.__debug = false
+  CssQuery.querylist = {}
+
+  function CssQuery.debug(self)
     self.__debug = true
   end
 
-  function Parser:debug_print(text)
+  function CssQuery:debug_print(text)
     if self.__debug then
       print("[CSS Object]: " .. text)
     end
   end
-  function Parser.calculate_specificity(self, query)
+  function CssQuery.calculate_specificity(self, query)
     local query = query or {}
     local specificity = 0
     for _, item in ipairs(query.query or {}) do
@@ -37,7 +40,7 @@ local function cssquery()
   --- Test prepared querylist
   -- @param domobj DOM element to test
   -- @param querylist List of queries to test
-  function Parser:match_querylist(domobj, querylist)
+  function CssQuery:match_querylist(domobj, querylist)
     local matches = {}
     -- querylist can be explicit, saved queries can be used otherwise
     local querylist = querylist or self.querylist
@@ -98,7 +101,7 @@ local function cssquery()
     return matches
   end
 
-  function Parser:get_selector_path(domobj, selectorlist)
+  function CssQuery:get_selector_path(domobj, selectorlist)
     local nodelist = {}
     domobj:traverse_elements(function(el)
       local matches = self:match_querylist(el, selectorlist)
@@ -110,7 +113,7 @@ local function cssquery()
   end
 
   --- Parse CSS selector to match table
-  function Parser:prepare_selector(selector)
+  function CssQuery:prepare_selector(selector)
     local querylist = {}
     local function parse_selector(item)
       local query = {}
@@ -142,7 +145,7 @@ local function cssquery()
   --- Add selector to CSS object list of selectors, 
   -- func is called when the selector matches a DOM object
   -- params is table which will be passed to the func 
-  function Parser:add_selector(selector, func, params)
+  function CssQuery:add_selector(selector, func, params)
     local selector_list = self:prepare_selector(selector)
     for k, query in ipairs(selector_list) do
       query.specificity = self:calculate_specificity(query)
@@ -156,7 +159,7 @@ local function cssquery()
 
   --- Sort selectors according to their specificity
   -- It is called automatically when the selector is added
-  function Parser:sort_querylist(querylist)
+  function CssQuery:sort_querylist(querylist)
     local querylist = querylist or self.querylist
     table.sort(self.querylist, function(a,b)
       return a.specificity > b.specificity
@@ -165,7 +168,7 @@ local function cssquery()
   end
 
   --- Apply functions from a matched querylist to a DOM object 
-  function Parser:apply_querylist(domobj, querylist)
+  function CssQuery:apply_querylist(domobj, querylist)
     for _, query in ipairs(querylist) do
       -- use default empty function which will pass to another match
       local func = query.func or function() return true end
@@ -178,7 +181,9 @@ local function cssquery()
     end
   end
   
-  return setmetatable({}, Parser)
+  return setmetatable({}, CssQuery)
 end
 
+--- @export {
 return cssquery
+--- }
