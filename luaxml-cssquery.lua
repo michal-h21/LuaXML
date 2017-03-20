@@ -20,7 +20,9 @@ local function cssquery()
       print("[CSS Object]: " .. text)
     end
   end
-  function CssQuery.calculate_specificity(self, query)
+  --- Calculate CSS specificity of the query
+  -- @param query
+  function CssQuery:calculate_specificity(query)
     local query = query or {}
     local specificity = 0
     for _, item in ipairs(query.query or {}) do
