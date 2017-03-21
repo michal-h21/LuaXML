@@ -293,8 +293,14 @@ local xmlParser = function(handler)
                             break
                         end
                     end
+                    local errorstring = tagstr:sub(errstart, errend)
+                    -- it seems that it causes error if an attribute starts with `=`
+                    if errorstring:match("^=") then break end
+                    
                     extstart,extend,endt2 = string.find(str,self._TAGEXT,endmatch+1)
-                    tagstr = tagstr .. string.sub(string,endmatch,extend-1)
+                    if not extstart then break end
+
+                    tagstr = tagstr .. string.sub(str,endmatch,extend-1)
                     if not match then 
                         self:_err(self._errstr.xmlErr,pos)
                     end 
