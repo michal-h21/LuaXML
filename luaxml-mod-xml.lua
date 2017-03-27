@@ -462,7 +462,7 @@ local xmlParser = function(handler)
         end
         m,e,r = string.find(s, self._DTD6, pos)
         if m then
-          return m,e, {_root=r, _type = r}
+          return m,e, {_root=r }
         end
         return nil
     end
