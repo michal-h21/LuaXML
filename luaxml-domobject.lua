@@ -96,6 +96,9 @@ local function serialize_dom(parser, current,level, output)
   -- end
   if xtype == "DTD" then
     text_content = string.format('%s %s "%s" "%s"', name, attributes["_type"],  attributes._name, attributes._uri )
+    -- remove unused fields
+    text_content = text_content:gsub('"nil"','')
+    text_content = text_content:gsub('%s*>','>')
     attributes = {}
   elseif xtype == "ELEMENT" and void[name] then
     local format = get_action(xtype, "void")
