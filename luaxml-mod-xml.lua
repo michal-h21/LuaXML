@@ -368,6 +368,7 @@ local xmlParser = function(handler)
     obj._DTD3       = '<!DOCTYPE%s+(.-)%s*(%b[])%s*>'
     obj._DTD4       = '<!DOCTYPE%s+(.-)%s+(SYSTEM)%s+["\'](.-)["\']%s*>'
     obj._DTD5       = '<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*>'
+    obj._DTD6       = '<!DOCTYPE%s+(.-)%s*>'
     --obj._DTD6       = "<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+[\"'](.-)[\"']%s+[\"'](.-)[\"']%s*>"
 
     obj._ATTRERR1   = '=%s*"[^"]*$'
@@ -458,6 +459,10 @@ local xmlParser = function(handler)
         m,e,r,t,u = string.find(s,self._DTD4,pos)
         if m then
             return m,e,{_root=r,_type=t,_uri=u} 
+        end
+        m,e,r = string.find(s, self._DTD6, pos)
+        if m then
+          return m,e, {_root=r, _type = r}
         end
         return nil
     end
