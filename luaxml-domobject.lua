@@ -209,6 +209,22 @@ local parse = function(xmltext)
     return table.concat(serialize_dom(self, current))
   end
 
+  --- Get text content from the node and all of it's children
+  function DOM_Object:get_text(current)
+    local current = current or self
+    local text = {}
+    for _, el in ipairs(current:get_children()) do
+      print(el:get_node_type())
+      if el:is_text() then
+        text[#text+1] = el._text or ""
+      elseif el:is_element() then
+        text[#text+1] = el:get_text()
+      end
+    end
+    return table.concat(text)
+  end
+
+
 
   --- Retrieve elements from the given path. 
   -- The path is list of elements separated with space,
