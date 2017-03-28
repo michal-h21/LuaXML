@@ -214,7 +214,6 @@ local parse = function(xmltext)
     local current = current or self
     local text = {}
     for _, el in ipairs(current:get_children()) do
-      print(el:get_node_type())
       if el:is_text() then
         text[#text+1] = el._text or ""
       elseif el:is_element() then
