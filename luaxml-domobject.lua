@@ -198,7 +198,7 @@ local parse = function(xmltext)
   end
   
 
-  --- Seriealize the current node back to XML
+  --- Serialize the current node back to XML
   function DOM_Object:serialize( current)
     local current = current
     -- if no current element is added and self is not plain parser object
