@@ -95,5 +95,30 @@ describe("Basic DOM functions", function()
     end)
     
   end)
+  describe("Text retrieving should work", function()
+    local document = [[
+    <html>
+    <body>
+    <h1>pokus</h1>
+    <p class="noindent">First <span class="hello">noindent</span>
+some another text. More <b>text</b>.
+    </p>
+    </body>
+    </html>
+    ]]
+    local newobj = dom.parse(document)
+    local matched = newobj:query_selector(".noindent")
+    it("Should return table", function()
+      assert.same(type(matched), "table")
+    end)
+    it("Should have one element", function()
+      assert.same(#matched, 1)
+    end)
+    local par = matched[1]
+    local text = par:get_text()
+    it("Should return element's text content", function()
+      assert.truthy(text:match( "First noindent\nsome another text. More text."))
+    end)
+  end)
 
 end)
