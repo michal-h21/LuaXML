@@ -39,12 +39,14 @@ local actions = {
   DTD = {start = "<!DOCTYPE ", text = "%s" , stop=">"}
 }
 
---- It serializes the DOM object back to the XML 
+--- It serializes the DOM object back to the XML.
+-- This function is mainly used for internal purposes, it is better to
+-- use the `DOM_Object:serialize()`.
 -- @param parser DOM object
--- @param current 
--- @param level
+-- @param current Element which should be serialized
+-- @param level 
 -- @param output
--- @return table
+-- @return table Table with XML strings. It can be concenated using table.concat() function to get XML string corresponding to the DOM_Object.
 local function serialize_dom(parser, current,level, output)
   local output = output or {}
   local function get_action(typ, action)
