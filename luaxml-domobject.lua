@@ -119,9 +119,11 @@ local function serialize_dom(parser, current,level, output)
 end
 
 --- XML parsing function
--- Parse the XML text and create the DOM object. 
+-- Parse the XML text and create the DOM object.
 -- @return DOM_Object
-local parse = function(xmltext)
+local parse = function(
+  xmltext --- String to be parsed
+ )
   local domHandler = handler.domHandler()
   ---  @type DOM_Object
   local DOM_Object = xml.xmlParser(domHandler)
@@ -150,7 +152,9 @@ local parse = function(xmltext)
 
   --- Get current node type
   -- @param  el Optional node to get the type of
-  function DOM_Object:get_node_type( el)
+  function DOM_Object:get_node_type( 
+    el --- Optional: element to test
+    )
     local el = el or self
     return el._type
   end
@@ -158,7 +162,9 @@ local parse = function(xmltext)
   --- Test if the current node is an element.
   -- You can pass different element as parameter
   -- @return boolean
-  function DOM_Object:is_element(el)
+  function DOM_Object:is_element(
+    el --- Optional: element to test
+    )
     local el = el or self
     return self:get_node_type(el) == "ELEMENT" -- @bool
   end
@@ -166,7 +172,9 @@ local parse = function(xmltext)
   
   --- Test if current node is text
   -- @return boolean
-  function DOM_Object:is_text(el)
+  function DOM_Object:is_text(
+    el --- Optional: element to test
+    )
     local el = el or self
     return self:get_node_type(el) == "TEXT"
   end
@@ -175,14 +183,18 @@ local parse = function(xmltext)
 
   --- Return name of the current element
   -- @return string
-  function DOM_Object:get_element_name( el)
+  function DOM_Object:get_element_name(
+    el --- Optional: element to test
+    )
     local el = el or self
     return el._name or "unnamed"
   end
 
   --- Get value of an attribute
   -- @return string
-  function DOM_Object:get_attribute(name)
+  function DOM_Object:get_attribute(
+    name --- Attribute name
+    )
     local el = self
     if self:is_element(el) then
       local attr = el._attr or {}
@@ -191,7 +203,11 @@ local parse = function(xmltext)
   end
 
   --- Set value of an attribute
-  function DOM_Object:set_attribute( name, value)
+  -- @return boolean
+  function DOM_Object:set_attribute( 
+    name --- Attribute name
+    , value --- Value to be set
+    )
     local el = self
     if self:is_element(el) then
       el._attr[name] = value
@@ -201,7 +217,10 @@ local parse = function(xmltext)
   
 
   --- Serialize the current node back to XML
-  function DOM_Object:serialize( current)
+  -- @return string
+  function DOM_Object:serialize(
+    current --- Optional: element to be serialized
+    )
     local current = current
     -- if no current element is added and self is not plain parser object
     -- (_type is then nil), use the current object as serialized root
@@ -212,7 +231,10 @@ local parse = function(xmltext)
   end
 
   --- Get text content from the node and all of it's children
-  function DOM_Object:get_text(current)
+  -- @return string
+  function DOM_Object:get_text(
+    current --- Optional: element which should be converted to text
+    )
     local current = current or self
     local text = {}
     for _, el in ipairs(current:get_children()) do
@@ -227,11 +249,14 @@ local parse = function(xmltext)
 
 
 
-  --- Retrieve elements from the given path. 
-  -- The path is list of elements separated with space,
-  -- you must start from the root element
+  --- Retrieve elements from the given path.
+  -- The path is list of elements separated by space,
+  -- starting from the top element of the current element
   -- @return table of elements which match the path
-  function DOM_Object:get_path(path, current)
+  function DOM_Object:get_path(
+    path --- path to be traversed
+    , current --- Optional: element which should be traversed. Default element is the root element of the DOM_Object
+    )
     local function traverse_path(path_elements, current, t)
       local t = t or {}
       if #path_elements == 0 then 
@@ -260,28 +285,40 @@ local parse = function(xmltext)
   end
 
   --- Select elements chidlren using CSS selector syntax
-  --
-  function DOM_Object:query_selector(selector)
+  -- @return table with elements matching the selector.
+  function DOM_Object:query_selector(
+    selector --- String using the CSS selector syntax
+    )
     local css_query = self.css_query
     local css_parts = css_query:prepare_selector(selector)
     return css_query:get_selector_path(self, css_parts)
   end
 
   --- Get table with children of the current element
-  function DOM_Object:get_children(el)
+  -- @return table with children of the selected element
+  function DOM_Object:get_children(
+    el --- Optional: element to be selected
+    )
     local el  = el or self
     local children = el._children or {}
     return children
   end
 
   --- Get the parent element
-  function DOM_Object:get_parent( el)
+  -- @return DOM_Object parent element
+  function DOM_Object:get_parent( 
+    el --- Optional: element to be selected
+    )
     local el = el or self
     return el._parent
   end
 
   --- Execute function on the current element and all it's children elements
-  function DOM_Object:traverse_elements( fn, current)
+  -- @return nothing
+  function DOM_Object:traverse_elements(
+    fn, --- function which will be executed on the current element and all it's children
+    current --- Optional: element to be selected
+    )
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
     if not current:get_node_type() then
@@ -300,7 +337,10 @@ local parse = function(xmltext)
   end
 
   --- Execute function on list of elements returned by DOM_Object:get_path()
-  function DOM_Object:traverse_node_list( nodelist, fn)
+  function DOM_Object:traverse_node_list( 
+    nodelist --- table with nodes selected by DOM_Object:get_path()
+    , fn --- function to be executed
+    )
     local nodelist = nodelist or {}
     for _, node in ipairs(nodelist) do
       for _, element in ipairs(node._children) do
@@ -310,7 +350,10 @@ local parse = function(xmltext)
   end
 
   --- Replace the current node with new one
-  function DOM_Object:replace_node(  new)
+  -- @return boolean, message
+  function DOM_Object:replace_node(
+     new --- element which should replace the current element
+    )
     local old = self
     local parent = self:get_parent(old)
     local id,msg = self:find_element_pos( old)
@@ -322,7 +365,9 @@ local parse = function(xmltext)
   end
 
   --- Add child node to the current node
-  function DOM_Object:add_child_node( child)
+  function DOM_Object:add_child_node( 
+    child --- element to be inserted as a current node child
+    )
     local parent = self
     child._parent = parent
     table.insert(parent._children, child)
@@ -330,7 +375,10 @@ local parse = function(xmltext)
 
 
   --- Create copy of the current node
-  function DOM_Object:copy_node( element)
+  -- @return DOM_Object element
+  function DOM_Object:copy_node( 
+    element --- Optional: element to be copied
+    )
     local element = element or self
     local t = {}
     for k, v in pairs(element) do
@@ -345,8 +393,13 @@ local parse = function(xmltext)
   end
 
 
-  --- Create new element
-  function DOM_Object:create_element( name, attributes, parent)
+  --- Create a new element
+  -- @return DOM_Object element
+  function DOM_Object:create_element(
+    name --- New tag name
+    , attributes --- Table with attributes
+    , parent --- Optional: element which should be saved as the element's parent
+    )
     local parent = parent or self
     local new = {}
     new._type = "ELEMENT"
