@@ -25,6 +25,11 @@ return {
                end
                for k, v in pairs(item.modifiers or {}) do
                  print("modifier", k,v)
+                 for _, yyy in pairs(v) do
+                   for x,y in pairs(yyy) do
+                     print("mod", x,y)
+                   end
+                 end
                end
                print("return",item.ret)
                print "----------"
@@ -43,7 +48,7 @@ return {
            end
          end
          for k,v in pairs(mod.sections[1]) do
-           print("mod", k,v) 
+           print("mod", k,v)
          end
       end
    end

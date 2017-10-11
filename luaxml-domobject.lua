@@ -396,9 +396,9 @@ local parse = function(
   --- Create a new element
   -- @return DOM_Object element
   function DOM_Object:create_element(
-    name --- New tag name
-    , attributes --- Table with attributes
-    , parent --- Optional: element which should be saved as the element's parent
+    name, -- New tag name
+    attributes, -- Table with attributes
+    parent -- [optional]: element which should be saved as the element's parent
     )
     local parent = parent or self
     local new = {}
@@ -412,7 +412,11 @@ local parse = function(
   end
 
   --- Create new text node
-  function DOM_Object:create_text_node( text, parent)
+  -- @return DOM_Object text object
+  function DOM_Object:create_text_node( 
+    text, 
+    parent
+    )
     local parent = parent or self
     local new = {}
     new._type = "TEXT"
