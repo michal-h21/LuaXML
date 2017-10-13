@@ -151,9 +151,9 @@ local parse = function(
 
 
   --- Get current node type
-  -- @param  el Optional node to get the type of
+  -- @param  el [optional] node to get the type of
   function DOM_Object:get_node_type( 
-    el --- Optional: element to test
+    el --- [optional] element to test
     )
     local el = el or self
     return el._type
@@ -163,7 +163,7 @@ local parse = function(
   -- You can pass different element as parameter
   -- @return boolean
   function DOM_Object:is_element(
-    el --- Optional: element to test
+    el --- [optional] element to test
     )
     local el = el or self
     return self:get_node_type(el) == "ELEMENT" -- @bool
@@ -173,7 +173,7 @@ local parse = function(
   --- Test if current node is text
   -- @return boolean
   function DOM_Object:is_text(
-    el --- Optional: element to test
+    el --- [optional] element to test
     )
     local el = el or self
     return self:get_node_type(el) == "TEXT"
@@ -184,7 +184,7 @@ local parse = function(
   --- Return name of the current element
   -- @return string
   function DOM_Object:get_element_name(
-    el --- Optional: element to test
+    el --- [optional] element to test
     )
     local el = el or self
     return el._name or "unnamed"
@@ -219,7 +219,7 @@ local parse = function(
   --- Serialize the current node back to XML
   -- @return string
   function DOM_Object:serialize(
-    current --- Optional: element to be serialized
+    current --- [optional] element to be serialized
     )
     local current = current
     -- if no current element is added and self is not plain parser object
@@ -233,7 +233,7 @@ local parse = function(
   --- Get text content from the node and all of it's children
   -- @return string
   function DOM_Object:get_text(
-    current --- Optional: element which should be converted to text
+    current --- [optional] element which should be converted to text
     )
     local current = current or self
     local text = {}
@@ -255,7 +255,7 @@ local parse = function(
   -- @return table of elements which match the path
   function DOM_Object:get_path(
     path --- path to be traversed
-    , current --- Optional: element which should be traversed. Default element is the root element of the DOM_Object
+    , current --- [optional] element which should be traversed. Default element is the root element of the DOM_Object
     )
     local function traverse_path(path_elements, current, t)
       local t = t or {}
@@ -297,7 +297,7 @@ local parse = function(
   --- Get table with children of the current element
   -- @return table with children of the selected element
   function DOM_Object:get_children(
-    el --- Optional: element to be selected
+    el --- [optional] element to be selected
     )
     local el  = el or self
     local children = el._children or {}
@@ -307,7 +307,7 @@ local parse = function(
   --- Get the parent element
   -- @return DOM_Object parent element
   function DOM_Object:get_parent( 
-    el --- Optional: element to be selected
+    el --- [optional] element to be selected
     )
     local el = el or self
     return el._parent
@@ -317,7 +317,7 @@ local parse = function(
   -- @return nothing
   function DOM_Object:traverse_elements(
     fn, --- function which will be executed on the current element and all it's children
-    current --- Optional: element to be selected
+    current --- [optional] element to be selected
     )
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
@@ -377,7 +377,7 @@ local parse = function(
   --- Create copy of the current node
   -- @return DOM_Object element
   function DOM_Object:copy_node( 
-    element --- Optional: element to be copied
+    element --- [optional] element to be copied
     )
     local element = element or self
     local t = {}
@@ -398,7 +398,7 @@ local parse = function(
   function DOM_Object:create_element(
     name, -- New tag name
     attributes, -- Table with attributes
-    parent -- [optional]: element which should be saved as the element's parent
+    parent -- [optional] element which should be saved as the element's parent
     )
     local parent = parent or self
     local new = {}
