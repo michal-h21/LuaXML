@@ -414,8 +414,8 @@ local parse = function(
   --- Create new text node
   -- @return DOM_Object text object
   function DOM_Object:create_text_node( 
-    text, 
-    parent
+    text, -- string
+    parent -- [optional] element which should be saved as the element's parent
     )
     local parent = parent or self
     local new = {}
@@ -427,7 +427,9 @@ local parse = function(
   end
 
   --- Delete current node
-  function DOM_Object:remove_node( element)
+  function DOM_Object:remove_node(
+    element -- [optional] element to be removed
+    )
     local element = element or self
     local parent = self:get_parent(element)
     local pos = self:find_element_pos(element)
@@ -439,7 +441,10 @@ local parse = function(
   end
 
   --- Find the element position in the current node list
-  function DOM_Object:find_element_pos( el)
+  -- @return integer position of the current element in the element table
+  function DOM_Object:find_element_pos(
+    el -- [optional] element which should be looked up
+    )
     local el = el or self
     local parent = self:get_parent(el)
     if not self:is_element(parent) and self:get_node_type(parent) ~= "ROOT" then return nil, "The parent isn't element" end
@@ -450,7 +455,10 @@ local parse = function(
   end
 
   --- Get node list which current node is part of
-  function DOM_Object:get_siblibgs( el)
+  -- @return table with elements
+  function DOM_Object:get_siblibgs(
+    el -- [optional] element for which the sibling element list should be retrieved
+    )
     local el = el or self
     local parent = el:get_parent()
     if parent:is_element() then
@@ -460,6 +468,7 @@ local parse = function(
 
   --- Get sibling node of the current node
   -- @param change Distance from the current node
+  -- @return DOM_Object node
   function DOM_Object:get_sibling_node( change)
     local el = self
     local pos = el:find_element_pos()
@@ -470,13 +479,19 @@ local parse = function(
   end
 
   --- Get next node
-  function DOM_Object:get_next_node( el)
+  -- @return DOM_Object node
+  function DOM_Object:get_next_node(
+    el --- [optional] node to be used
+    )
     local el = el or self
     return el:get_sibling_node(1)
   end
 
   --- Get previous node
-  function DOM_Object:get_prev_node( el)
+  -- @return DOM_Object node
+  function DOM_Object:get_prev_node(
+    el -- [optional] node to be used
+    )
     local el = el or self
     return el:get_sibling_node(-1)
   end
