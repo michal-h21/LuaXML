@@ -3,7 +3,8 @@
 -- @author Michal Hoftich <michal.h21@gmail.com
 local parse_query = require("luaxml-parse-query")
 
-
+--- CssQuery constructor
+-- @return CssQuery object
 local function cssquery()
   --- @type CssQuery
   local CssQuery = {}
@@ -21,7 +22,8 @@ local function cssquery()
     end
   end
   --- Calculate CSS specificity of the query
-  -- @param query
+  -- @param query table created by CssQuery:prepare_selector() function
+  -- @return integer speficity value
   function CssQuery:calculate_specificity(query)
     local query = query or {}
     local specificity = 0
@@ -41,7 +43,8 @@ local function cssquery()
 
   --- Test prepared querylist
   -- @param domobj DOM element to test
-  -- @param querylist List of queries to test
+  -- @param querylist [optional] List of queries to test
+  -- @return table with CSS queries, which match the selected DOM element
   function CssQuery:match_querylist(domobj, querylist)
     local matches = {}
     -- querylist can be explicit, saved queries can be used otherwise
@@ -103,6 +106,8 @@ local function cssquery()
     return matches
   end
 
+  --- Get elements that match the selector list
+  -- @return table with DOM_Object elements
   function CssQuery:get_selector_path(domobj, selectorlist)
     local nodelist = {}
     domobj:traverse_elements(function(el)
@@ -186,6 +191,4 @@ local function cssquery()
   return setmetatable({}, CssQuery)
 end
 
---- @export {
 return cssquery
---- }
