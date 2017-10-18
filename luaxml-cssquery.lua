@@ -106,9 +106,12 @@ local function cssquery()
     return matches
   end
 
-  --- Get elements that match the selector list
+  --- Get elements that match the selector 
   -- @return table with DOM_Object elements
-  function CssQuery:get_selector_path(domobj, selectorlist)
+  function CssQuery:get_selector_path(
+    domobj, -- DOM_Object 
+    selectorlist -- querylist table created using CssQuery:prepare_selector 
+    )
     local nodelist = {}
     domobj:traverse_elements(function(el)
       local matches = self:match_querylist(el, selectorlist)
@@ -119,7 +122,8 @@ local function cssquery()
     return nodelist
   end
 
-  --- Parse CSS selector to match table
+  --- Parse CSS selector to query table
+  --  @return table querylist
   function CssQuery:prepare_selector(selector)
     local querylist = {}
     local function parse_selector(item)
@@ -151,8 +155,13 @@ local function cssquery()
 
   --- Add selector to CSS object list of selectors, 
   -- func is called when the selector matches a DOM object
-  -- params is table which will be passed to the func 
-  function CssQuery:add_selector(selector, func, params)
+  -- params is table which will be passed to the func
+  -- @return integer number of elements in the prepared selector
+  function CssQuery:add_selector(
+    selector, -- CSS selector string
+    func, -- function which will be executed on matched elements
+    params -- table with parameters for the function
+    )
     local selector_list = self:prepare_selector(selector)
     for k, query in ipairs(selector_list) do
       query.specificity = self:calculate_specificity(query)
@@ -174,7 +183,7 @@ local function cssquery()
     return querylist
   end
 
-  --- Apply functions from a matched querylist to a DOM object 
+  --- Apply functions from a matched querylist to a DOM element 
   function CssQuery:apply_querylist(domobj, querylist)
     for _, query in ipairs(querylist) do
       -- use default empty function which will pass to another match
