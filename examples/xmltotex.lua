@@ -26,6 +26,7 @@ local css = cssobj()
 --   add_parameter("add")
 -- end
 
+-- escape special LaTeX characters. More should be added
 local tex_escape = function(s)
   local codes = {["&"] = "\\&{}", ["\\"] = "\\textbackslash{}"}
   return s:gsub("([&\\])", function(a) return codes[a] end)
@@ -37,6 +38,9 @@ local collapsed_ws = function(s)
   return s:gsub("(%s%s+)", function(a) return a:sub(1,1) end)
 end
 
+--- Declare new template. 
+-- template should contain <.> placeholder, which will be replaced
+-- by content of the matched element
 local function add_template(selector, template)
   css:add_selector(selector, function(obj, parameters) 
     local t = obj.template or {}
@@ -51,6 +55,7 @@ local function apply_template(template, content, element)
   return template:gsub("<.>", content)
 end
 
+-- we must escape \ characters in macro names
 add_template("p", "<.>\n\n")
 add_template("h1", "\\section{<.>}")
 add_template("i", "\\textit{<.>}")
@@ -58,15 +63,17 @@ add_template("i", "\\textit{<.>}")
 -- css:add_selector("h1", applytex, {pre = "\\section{", add = "}"})
 -- css:add_selector("i", applytex, {pre = "\\textit{", add = "}"})
 
+-- traverse all elements and add templates to them
 dom:traverse_elements(function(el)
+  -- find selectors that match the current element
   local querylist = css:match_querylist(el)
+  -- add templates to the element
   css:apply_querylist(el,querylist)
 end)
 
 local function serialize_tex(el)
   local t = {}
 
-  print(el:is_element(), el:is_element(el), el:get_node_type())
   if el:is_text() then
     local text = tex_escape(el._text)
     table.insert(t, text)
@@ -95,11 +102,14 @@ local function serialize_tex(el)
       end
       table.insert(current_nodes, current)
     end
-    local escapes = {default = tex_escape, identity = identity_escape}
     -- local content = table.concat(h)
     local templates = el.template or {}
     local content = {}
+    -- only escaped and collapsed text is added at the moment.
+    -- it would be nice to add support for verbatim elements, where 
+    -- unescaped text could be added, but it is not here yet
     for _, v in ipairs(current_nodes) do
+      -- content comes from elements, collapsed is escaped text content
       local text = v.content or v.collapsed
       content[#content+1] = text
     end
@@ -116,4 +126,6 @@ local function serialize_tex(el)
   return table.concat(t)
 end
 
+-- process the document from the root node, get TeX code from 
+-- the templates
 print(serialize_tex(dom:root_node()))
