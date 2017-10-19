@@ -29,7 +29,7 @@ $(doc_file): $(name).tex
 api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
-	ldoc --filter ldoc-latex.filter $(API_SOURCES) >  $(API_DOC)
+	ldoc --filter ldoc-latex.filter . >  $(API_DOC)
 
 test: 
 	texlua test/dom-test.lua
