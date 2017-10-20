@@ -20,7 +20,7 @@ all: doc
 
 .PHONY: test 
 
-doc: $(doc_file) api 
+doc: api $(doc_file) 
 
 	
 $(doc_file): $(name).tex
@@ -29,7 +29,7 @@ $(doc_file): $(name).tex
 api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
-	ldoc --filter ldoc-latex.filter . >  $(API_DOC)
+	ldoc --all --filter ldoc-latex.filter . >  $(API_DOC)
 
 test: 
 	texlua test/dom-test.lua
