@@ -3,7 +3,12 @@ local function escape(s)
     _ = "\\_{}",
     ["\\"] = "\\backspace{}"
   }
-  return s:gsub("([_\\])", function(a) return escapes[a] end)
+  -- only process strings
+  if type(s) == "string" then
+    s = s:gsub("%s+", " ")
+    return s:gsub("([_\\])", function(a) return escapes[a] end)
+  end
+  return s
 end
 
 local function print_template(format, s)
@@ -12,7 +17,7 @@ end
 local function print_module(mod)
   print_template("\\modulename{%s}", mod.mod_name)
   print_template("\\modulesummary{%s}", mod.summary)
-  for k,v in pairs(mod.sections.by_name) do print("mod", k,v) end
+  -- for k,v in pairs(mod.sections.by_name) do print("mod", k,v) end
 end
 
 local function print_class(mod, class, items)
@@ -24,13 +29,16 @@ local function print_class(mod, class, items)
     for k,v in ipairs(item.params or {}) do
       par[#par+1] = escape(v)
     end
-    print(string.format("\\functionname{%s}{%s}", escape(item.name), table.concat(par)))
+    print(string.format("\\functionname{%s}{%s}", escape(item.name), table.concat(par, ", ")))
     print_template("\\functionsummary{%s}", item.summary)
     for x,y in ipairs(item.params) do
       print(string.format("\\functionparam{%s}{%s}", escape(y), escape(map[y])))
       -- print(x,y)
     end
-    print(string.format("\\functionreturn{%s}", item.ret ))
+    for _, ret in ipairs(item.ret or {}) do
+      print_template("\\functionreturn{%s}", ret)
+    end
+    -- print(string.format("\\functionreturn{%s}", escape(item.ret ) ))
   end
 
 end
