@@ -4,6 +4,7 @@
 local parse_query = require("luaxml-parse-query")
 
 --- CssQuery constructor
+-- @function cssquery
 -- @return CssQuery object
 local function cssquery()
   --- @type CssQuery
