@@ -3,18 +3,21 @@
 \usepackage{url}
 \usepackage[english]{babel}
 \usepackage{hyperref}
+\usepackage{luacode}
+\usepackage{framed}
 % Version is defined in the makefile, use default values when compiled directly
 \ifdefined\version\else
 \def\version{0}
 \let\gitdate\date
 \fi
-\newcommand\modulename[1]{\subsection{#1}}
+\newcommand\modulename[1]{\subsection{#1}\label{sec:#1}}
 \newcommand\modulesummary[1]{#1\\}
 \newcommand\moduleclass[1]{\subsubsection{Class: #1}}
-\newcommand\functionname[2]{\bigskip\par\noindent\textbf{#1(#2)}\\}
+\newcommand\functionname[2]{\par\noindent\textbf{#1(#2)}\\}
 \newcommand\functionsummary[1]{#1\\\textbf{Parameters:}\\}
 \newcommand\functionparam[2]{\texttt{#1}: #2\\}
 \newcommand\functionreturn[1]{\textbf{Return: }\\#1\\}
+
 \begin{document}
 	\title{The \textsc{LuaXML} library}
 	\author{Paul Chakravarti \and Michal Hoftich}
@@ -24,14 +27,157 @@
 
 \section{Introduction}
 
-|LuaXML| is pure lua library for reading and serializing of the |xml| files.
+|LuaXML| is pure lua library for processing and serializing of the |xml| files.
+The base code code has been written by Paul Chakravarti, with minor changes
+which brings Lua 5.3 or HTML 5 support. On top of that, new modules for
+accessing the |xml| files using |DOM| like methods or |CSS|
+selectors\footnote{Thanks to Leaf Corcoran for |CSS selector| parsing code.}
+have been added.
+
+The documentation is divided to three parts -- first part deals with the |DOM|
+library, second part describes the low-level libraries and the third part is
+original documentation by Paul Chakravarti.
 % Current release is aimed mainly as support for the odsfile package. 
 % In first release it was included with the odsfile package,
 % but as it is general library which can be used also with other packages, 
 % I decided to distribute it as separate library.
 
-\section{The domObject library}
+\section{The \texttt{DOM\_Object} library}
 
+This library can process a |xml| sources using |DOM| like functions. To load
+it, you need to require |luaxml-domobject.lua| file. The |parse| function
+provided by the library creates \texttt{DOM\_Object} object, which provides several
+methods for processing the |xml| tree.
+
+\begin{verbatim}
+local dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello</p>
+</body>
+</html>
+  ]]
+
+-- dom.parse returns the DOM_Object
+local obj = dom.parse(document)
+-- it is possible to call methods on the object
+local root_node = obj:root_node()
+for _, x in ipairs(root_node:get_children()) do
+  print(x:get_element_name())
+end
+\end{verbatim}
+
+The details about available methods can be found in the API docs, section
+\ref{sec:luaxml-domobject}. The above code will load a |xml| document, it will
+get the ROOT element and print all it's children element names.  The
+\verb|DOM_Object:get_children| function returns Lua table, so it is possible to
+loop over it using standard table functions.
+
+\begin{framed}
+\begin{luacode*}
+dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello</p>
+</body>
+</html>
+  ]]
+
+-- dom.parse returns the DOM_Object
+obj = dom.parse(document)
+-- it is possible to call methods on the object
+local root_node = obj:root_node()
+for _, x in ipairs(root_node:get_children()) do
+  tex.print(x:get_element_name().. "\\par")
+end
+\end{luacode*}
+\end{framed}
+
+\subsection{Node selection methods}
+There are some other methods for element retrieving. 
+
+\subsubsection{The \texttt{DOM\_Object:get\_path} method}
+If you want to print text content of all child elements of the body element, you can use \verb|DOM_Object:get_path|:
+
+\begin{verbatim}
+local path = obj:get_path("html body")
+for _, el in ipairs(path[1]:get_children()) do
+  print(el:get_text())
+end
+\end{verbatim}
+
+The \verb|DOM_Object:get_path| function always return array with all elements
+which match the requested path, even it there is only one such element. In this
+case, it is possible to use standard Lua table indexing to get the first and
+only one matched element and get it's children using
+\verb|DOM_Object:get_children| method. It the children node is an element, it's
+text content is printed using \verb|DOM_Object:get_text|.
+
+
+
+\begin{framed}
+  \begin{luacode*}
+local path = obj:get_path("html body")
+
+for _, el in ipairs(path[1]:get_children()) do
+  if el:is_element() then
+    tex.print(el:get_text().."\\par")
+  end
+end
+  \end{luacode*}
+\end{framed}
+
+\subsubsection{The \texttt{DOM\_Object:query\_selector} method}
+
+This method uses |CSS selector| syntax to select elements, similarly to JavaScript \textit{jQuery} library.
+
+\begin{verbatim}
+for _, el in ipairs(obj:query_selector("h1,p")) do
+  print(el:get_text())
+end
+\end{verbatim}
+
+
+\begin{framed}
+  \begin{luacode*}
+for _, el in ipairs(obj:query_selector("h1,p")) do
+  tex.print(el:get_text().."\\par")
+end
+  \end{luacode*}
+\end{framed}
+
+\subsection{Element traversing}
+
+\subsubsection{The \texttt{DOM\_Object:traverse\_elements} method}
+
+It may be useful to traverse over all elements and apply a function on all of them. 
+
+\begin{verbatim}
+
+obj:traverse_elements(function(node)
+  if node:is_element() then
+    print(node:get_text())
+  end
+end)
+\end{verbatim}
+
+\begin{framed}
+  \begin{luacode*}
+obj:traverse_elements(function(node)
+  if node:is_element() then
+    print(node:get_text())
+  end
+end)
+  \end{luacode*}
+\end{framed}
+
+\section{The API documentation}
 \input{doc/api.tex}
 
 \section{Low-level functions usage}
