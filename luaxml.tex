@@ -159,25 +159,30 @@ end
 It may be useful to traverse over all elements and apply a function on all of them. 
 
 \begin{verbatim}
-
 obj:traverse_elements(function(node)
-  if node:is_element() then
-    print(node:get_text())
-  end
+  print(node:get_text())
 end)
 \end{verbatim}
 
 \begin{framed}
   \begin{luacode*}
 obj:traverse_elements(function(node)
-  if node:is_element() then
-    print(node:get_text())
-  end
+  tex.print(node:get_text().."\\par")
 end)
   \end{luacode*}
 \end{framed}
 
+The \verb|get_text| method gets text from all children elements, so the first
+line shows all text contained in the \verb|<html>| element, the second one in
+\verb|<head>| element and so on.  
+
+\subsection{DOM modifications}
+
+It is possible to add new elements, text nodes, or to remove them. 
+
+
 \section{The API documentation}
+
 \input{doc/api.tex}
 
 \section{Low-level functions usage}
