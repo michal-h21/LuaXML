@@ -180,6 +180,52 @@ line shows all text contained in the \verb|<html>| element, the second one in
 
 It is possible to add new elements, text nodes, or to remove them. 
 
+\begin{verbatim}
+local headers = obj:query_selector("h1")
+for _, header in ipairs(headers) do
+  header:remove_node()
+end
+-- query selector returns array, we must retrieve the first element
+-- to get the actual body element
+local body = obj:query_selector("body")[1]
+local paragraph = body:create_element("p", {})
+body:add_child_node(paragraph)
+paragraph:add_child_node(paragraph:create_text_node("This is a second paragraph"))
+
+for _, el in ipairs(body:get_children()) do
+  if el:is_element() then
+    print(el:get_element_name().. ": ".. el:get_text())
+  end
+end
+\end{verbatim}
+
+In this example, \verb|<h1>| element is being removed from the sample document, and new 
+paragraph is added. Two paragraphs should be shown in the output:
+
+\begin{framed}
+  \begin{luacode*}
+local headers = obj:query_selector("h1")
+-- query selector returns array, we must retrieve the first element
+-- to get the actual body element
+local body = obj:query_selector("body")[1]
+local oldbody = body:copy_node()
+for _, header in ipairs(headers) do
+  header:remove_node()
+end
+local paragraph = body:create_element("p", {})
+body:add_child_node(paragraph)
+paragraph:add_child_node(paragraph:create_text_node("This is a second paragraph"))
+
+for _, el in ipairs(body:get_children()) do
+if el:is_element() then
+  tex.print(el:get_element_name().. ": ".. el:get_text() .. "\\par")
+end
+end
+
+body:replace_node(oldbody)
+  \end{luacode*}
+\end{framed}
+
 
 \section{The API documentation}
 
