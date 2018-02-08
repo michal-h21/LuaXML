@@ -23,7 +23,7 @@ all: doc
 doc: api $(doc_file) 
 
 	
-$(doc_file): $(name).tex
+$(doc_file): $(name).tex $(API_DOC)
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $(name).tex
 
 api: $(API_DOC)
