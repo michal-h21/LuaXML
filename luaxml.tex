@@ -227,6 +227,93 @@ body:replace_node(oldbody)
 \end{framed}
 
 
+\section{The \texttt{CssQuery} library}
+
+This library serves mainly as a support for the
+\texttt{DOM\_Object:query\_selector} function. It also supports adding
+information to the DOM tree.
+
+\subsection{Example usage}
+
+\begin{verbatim}
+local cssobj = require "luaxml-cssquery"
+local domobj = require "luaxml-domobject"
+
+local xmltext = [[
+<html>
+<body>
+<h1>Header</h1>
+<p>Some text, <i>italics</i></p>
+</body>
+</html>
+]]
+
+local dom = domobj.parse(xmltext)
+local css = cssobj()
+
+css:add_selector("h1", function(obj)
+  print("header found: "  .. obj:get_text())
+end)
+
+css:add_selector("p", function(obj)
+  print("paragraph found: " .. obj:get_text())
+end)
+
+css:add_selector("i", function(obj)
+  print("found italics: " .. obj:get_text())
+end)
+
+dom:traverse_elements(function(el)
+  -- find selectors that match the current element
+  local querylist = css:match_querylist(el)
+  -- add templates to the element
+  css:apply_querylist(el,querylist)
+end)
+\end{verbatim}
+
+\begin{framed}
+  \begin{luacode*}
+local cssobj = require "luaxml-cssquery"
+local domobj = require "luaxml-domobject"
+local print = function(s) tex.print(s .. "\\par") end
+
+local xmltext = [[
+<html>
+<body>
+<h1>Header</h1>
+<p>Some text, <i>italics</i></p>
+</body>
+</html>
+]]
+
+local dom = domobj.parse(xmltext)
+local css = cssobj()
+
+css:add_selector("h1", function(obj)
+  print("header found: "  .. obj:get_text())
+end)
+
+css:add_selector("p", function(obj)
+  print("paragraph found: " .. obj:get_text())
+end)
+
+css:add_selector("i", function(obj)
+  print("found italics: " .. obj:get_text())
+end)
+
+dom:traverse_elements(function(el)
+  -- find selectors that match the current element
+  local querylist = css:match_querylist(el)
+  -- add templates to the element
+  css:apply_querylist(el,querylist)
+end)
+  \end{luacode*}
+\end{framed}
+
+More complete example may be found in the \texttt{examples} directory in the
+\texttt{LuaXML} source code
+repository\footnote{\url{https://github.com/michal-h21/LuaXML/blob/master/examples/xmltotex.lua}}.
+
 \section{The API documentation}
 
 \input{doc/api.tex}
