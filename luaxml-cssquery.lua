@@ -125,7 +125,9 @@ local function cssquery()
 
   --- Parse CSS selector to query table
   --  @return table querylist
-  function CssQuery:prepare_selector(selector)
+  function CssQuery:prepare_selector(
+    selector -- string CSS selector query
+   )
     local querylist = {}
     local function parse_selector(item)
       local query = {}
@@ -176,7 +178,10 @@ local function cssquery()
 
   --- Sort selectors according to their specificity
   -- It is called automatically when the selector is added
-  function CssQuery:sort_querylist(querylist)
+  -- @return querylist table
+  function CssQuery:sort_querylist(
+    querylist -- [optional] querylist table
+  )
     local querylist = querylist or self.querylist
     table.sort(self.querylist, function(a,b)
       return a.specificity > b.specificity
@@ -184,8 +189,13 @@ local function cssquery()
     return querylist
   end
 
-  --- Apply functions from a matched querylist to a DOM element 
-  function CssQuery:apply_querylist(domobj, querylist)
+  --- It tests list of queries agaings a DOM element and executes the
+  --- coresponding function that is saved for the matched query.
+  -- @return nothing
+  function CssQuery:apply_querylist(
+    domobj, -- DOM element
+    querylist -- querylist table
+    )
     for _, query in ipairs(querylist) do
       -- use default empty function which will pass to another match
       local func = query.func or function() return true end
