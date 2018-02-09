@@ -14,7 +14,8 @@ local escapes = {
   ["<"] = "&lt;",
   ["&"] = "&amp;",
   ['"'] = "&quot;",
-  ["'"] = "&#39;"
+  ["'"] = "&#39;",
+  ["`"] = "&#x60;"
 }
 
 local function escape(search, text)
@@ -28,7 +29,7 @@ local function escape_element(text)
 end
 
 local function escape_attr(text)
-  return escape("([<>&\"'])", text)
+  return escape("([<>&\"'`])", text)
 end
 
 local actions = {
