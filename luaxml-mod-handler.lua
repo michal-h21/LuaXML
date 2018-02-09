@@ -113,6 +113,7 @@
 
 local M = {}
 local stack = require("luaxml-stack")
+local entities = require("luaxml-entities")
 
 local function showTable(t)
     local sep = ''
@@ -251,13 +252,21 @@ M.simpleTreeHandler = simpleTreeHandler
 --- domHandler
 local function domHandler() 
     local obj = {}
+    local decode = entities.decode
     obj.options = {commentNode=1,piNode=1,dtdNode=1,declNode=1}
     obj.root = { _children = {n=0}, _type = "ROOT" }
     obj.current = obj.root
     obj.starttag = function(self,t,a)
+      local newattr 
+      if a then
+        newattr = {}
+        for k,v in pairs(a) do
+          newattr[k] = decode(v)
+        end
+      end
             local node = { _type = 'ELEMENT', 
                            _name = t, 
-                           _attr = a, 
+                           _attr = newattr, 
                            _parent = self.current, 
                            _children = {n=0} }
             table.insert(self.current._children,node)
@@ -272,7 +281,7 @@ local function domHandler()
     obj.text = function(self,t)
             local node = { _type = "TEXT", 
                            _parent = self.current, 
-                           _text = t }
+                           _text = decode(t) }
             table.insert(self.current._children,node)
     end
     obj.comment = function(self,t)
