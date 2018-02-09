@@ -3,7 +3,7 @@ tex_content = $(wildcard *.tex)
 tests       = $(wildcard test/*.lua)
 
 name = luaxml
-VERSION:= $(shell git --no-pager describe --tags --always )
+VERSION:= $(shell git --no-pager describe --abbrev=0 --tags --always )
 DATE := $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 doc_file = luaxml.pdf
 TEXMFHOME = $(shell kpsewhich -var-value=TEXMFHOME)
@@ -39,12 +39,14 @@ $(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
 test: 
 	texlua test/dom-test.lua
 	texlua test/cssquery-test.lua
+	texlua test/entities-test.lua
 
 build: doc test $(lua_content) 
 	@rm -rf build
 	@mkdir -p $(BUILD_LUAXML)
 	@cp $(lua_content) $(tex_content)  $(doc_file) $(BUILD_LUAXML)
-	@cp README $(BUILD_LUAXML)/README
+	@cat README | sed -e "s/{{VERSION}}/${VERSION}/" >  $(BUILD_LUAXML)/README
+	@cat luaxml.tex | sed -e "s/{{VERSION}}/${VERSION}/" >  $(BUILD_LUAXML)/luaxml.tex
 	@cd $(BUILD_DIR) && zip -r luaxml.zip luaxml
 
 install: doc $(lua_content) $(filters)
