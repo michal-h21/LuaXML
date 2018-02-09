@@ -15,8 +15,10 @@ BUILD_LUAXML = $(BUILD_DIR)/$(name)
 API_DOC = doc/api.tex
 API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua
 LDOC_FILTER = ldoc-latex.lua
+ENTITIES_SOURCE = data/entities.json
+ENTITIES_MODULE = luaxml-namedentities.lua
 
-all: doc
+all: doc $(ENTITIES_MODULE)
 
 .PHONY: test 
 
@@ -30,6 +32,9 @@ api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	ldoc --all --filter ldoc-latex.filter . >  $(API_DOC)
+
+$(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
+	lua data/jsontolua.lua < $< > $(ENTITIES_MODULE)
 
 test: 
 	texlua test/dom-test.lua
