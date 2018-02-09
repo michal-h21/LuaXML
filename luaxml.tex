@@ -7,7 +7,7 @@
 \usepackage{framed}
 % Version is defined in the makefile, use default values when compiled directly
 \ifdefined\version\else
-\def\version{0}
+\def\version{{{VERSION}}}
 \let\gitdate\date
 \fi
 \newcommand\modulename[1]{\subsection{#1}\label{sec:#1}}

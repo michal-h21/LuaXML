@@ -15,8 +15,8 @@ then clone this repository and run
 
     make install
 
-Please note that you will need [LDoc](http://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) installed
-on your system.
+Please note that you will need [LDoc](http://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) and 
+[dkjson](http://dkolf.de/src/dkjson-lua.fsl/home) Lua modules installed on your system.
 
 License:
 ========
@@ -29,6 +29,7 @@ Author
 ------
 Michal Hoftich
 Email: michal.h21@gmail.com
+Version: {{VERSION}}
 
 Original authors: Paul Chakravarti and Manoel Campos (http://manoelcampos.com)
 
