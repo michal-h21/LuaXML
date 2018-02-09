@@ -6,7 +6,7 @@ local data = io.read("*all")
 local json_data = json.decode(data)
 print("return {")
 for name, rec in pairs(json_data) do
-  print(string.format('%s="%s",',name:gsub("[&;]", ""), rec.characters))
+  print(string.format('["%s"]="%s",',name:gsub("[&;]", ""), rec.characters:gsub('\\', '\\\\'):gsub("\n", '\\n'):gsub('"', '\\"')))
 end
 
 print "}"
