@@ -238,6 +238,7 @@ local parse = function(
     )
     local current = current or self
     local text = {}
+    if current:is_text() then return current._text or "" end
     for _, el in ipairs(current:get_children()) do
       if el:is_text() then
         text[#text+1] = el._text or ""
