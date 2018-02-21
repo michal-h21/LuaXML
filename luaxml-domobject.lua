@@ -315,7 +315,9 @@ local parse = function(
     return el._parent
   end
 
-  --- Execute function on the current element and all it's children elements
+  --- Execute function on the current element and all it's children elements.
+  -- The traversing of child elements of a given node can be disabled when the executed
+  -- function returns false.
   -- @return nothing
   function DOM_Object:traverse_elements(
     fn, --- function which will be executed on the current element and all it's children
