@@ -103,7 +103,7 @@ local function serialize_dom(parser, current,level, output)
     text_content = text_content:gsub('"nil"','')
     text_content = text_content:gsub('%s*$','')
     attributes = {}
-  elseif xtype == "ELEMENT" and void[name] then
+  elseif xtype == "ELEMENT" and void[name] and #current._children < 1 then
     local format = get_action(xtype, "void")
     insert(format, name, prepare_attributes(attributes))
     return output
