@@ -123,7 +123,9 @@ local function cssquery()
     return nodelist
   end
 
-  --- Parse CSS selector to query table
+  --- Parse CSS selector to a query table.
+  -- XML namespaces can be supported using
+  -- namespace|element syntax
   --  @return table querylist
   function CssQuery:prepare_selector(
     selector -- string CSS selector query
@@ -138,6 +140,14 @@ local function cssquery()
         for _, atom in ipairs(part) do
           local key = atom[1]
           local value = atom[2]
+          -- support for XML namespaces in selectors
+          -- the namespace should be added using "|" 
+          -- like namespace|element
+          if key=="tag" then 
+            -- LuaXML doesn't support namespaces, so it is necessary
+            -- to match namespace:element
+            value=value:gsub("|", ":")
+          end
           t[key] =  value
         end
         query[#query + 1] = t
