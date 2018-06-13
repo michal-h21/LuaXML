@@ -13,7 +13,10 @@ end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local white = S(" \t\n") ^ 0
-local word = (alphanum + S("_-")) ^ 1
+-- this is a deviation from the upstream, we allow ":" in the tag name, because
+-- luaxml doesn't support XML namespaces and elements must be queried using
+-- dom:query_selector("namespace:element")
+local word = (alphanum + S("_-") + S(":")) ^ 1
 local mark
 mark = function(name)
   return function(...)
