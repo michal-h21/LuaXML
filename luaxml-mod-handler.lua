@@ -319,7 +319,12 @@ local function domHandler()
                 table.insert(self.current._children,node)
             end
     end
-    obj.cdata = obj.text
+    obj.cdata = function(self,t)
+      local node = { _type = "CDATA", 
+        _parent = self.current, 
+        _text = decode(t) }
+        table.insert(self.current._children,node)
+    end
     return obj
 end
 M.domHandler = domHandler
