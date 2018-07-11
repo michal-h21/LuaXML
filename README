@@ -3,9 +3,8 @@ Introduction
 
 LuaXML is pure lua library for reading and serializing of the XML files. Current release is aimed mainly as support 
 for the odsfile package. The documentation was created by automatic conversion of original documentation in the source code. 
-In this version, some files not useful for luaTeX were droped. Original files can be found at
+In this version, some files not useful for luaTeX were droped. 
 
-    http://manoelcampos.com/files/LuaXML--0.0.0-lua5.1.tgz 
 
 Install
 =======
