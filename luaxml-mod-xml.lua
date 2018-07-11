@@ -363,12 +363,13 @@ local xmlParser = function(handler)
     obj._LEADINGWS  = '^%s+'
     obj._TRAILINGWS = '%s+$'
     obj._WS         = '^%s*$'
-    obj._DTD1       = '<!DOCTYPE%s+(.-)%s+(SYSTEM)%s+["\'](.-)["\']%s*(%b[])%s*>'
-    obj._DTD2       = '<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*(%b[])%s*>'
-    obj._DTD3       = '<!DOCTYPE%s+(.-)%s*(%b[])%s*>'
-    obj._DTD4       = '<!DOCTYPE%s+(.-)%s+(SYSTEM)%s+["\'](.-)["\']%s*>'
-    obj._DTD5       = '<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*>'
-    obj._DTD6       = '<!DOCTYPE%s+(.-)%s*>'
+    local allowed_element_name_pattern = "[%w_%.%-]+"
+    obj._DTD1       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s+(SYSTEM)%s+["\'](.-)["\']%s*(%b[])%s*>'
+    obj._DTD2       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*(%b[])%s*>'
+    obj._DTD3       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s*(%b[])%s*>'
+    obj._DTD4       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s+(SYSTEM)%s+["\'](.-)["\']%s*>'
+    obj._DTD5       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s+(PUBLIC)%s+["\'](.-)["\']%s+["\'](.-)["\']%s*>'
+    obj._DTD6       = '<!DOCTYPE%s+(' .. allowed_element_name_pattern .. ')%s*>'
     --obj._DTD6       = "<!DOCTYPE%s+(.-)%s+(PUBLIC)%s+[\"'](.-)[\"']%s+[\"'](.-)[\"']%s*>"
 
     obj._ATTRERR1   = '=%s*"[^"]*$'
