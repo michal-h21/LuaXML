@@ -45,7 +45,7 @@ build: doc test $(lua_content)
 	@rm -rf build
 	@mkdir -p $(BUILD_LUAXML)
 	@cp $(lua_content) $(tex_content)  $(doc_file) $(BUILD_LUAXML)
-	@cat README | sed -e "s/{{VERSION}}/${VERSION}/" >  $(BUILD_LUAXML)/README
+	@cat README | sed -e "s/{{VERSION}}/${VERSION}/" | sed -e "s/{{DATE}}/${DATE}/" >  $(BUILD_LUAXML)/README
 	@cat luaxml.tex | sed -e "s/{{VERSION}}/${VERSION}/" >  $(BUILD_LUAXML)/luaxml.tex
 	@cd $(BUILD_DIR) && zip -r luaxml.zip luaxml
 
