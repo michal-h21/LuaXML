@@ -372,11 +372,16 @@ local parse = function(
 
   --- Add child node to the current node
   function DOM_Object:add_child_node( 
-    child --- element to be inserted as a current node child
+    child, --- element to be inserted as a current node child
+    position --- [optional] position at which should the node be inserted
     )
     local parent = self
     child._parent = parent
-    table.insert(parent._children, child)
+    if position then
+      table.insert(parent._children, position, child)
+    else
+      table.insert(parent._children, child)
+    end
   end
 
 
