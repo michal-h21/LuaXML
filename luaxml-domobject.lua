@@ -37,7 +37,9 @@ local actions = {
   COMMENT = {start = "<!-- ", text = "%s", stop = " -->"},
   ELEMENT = {start = "<%s%s>", stop = "</%s>", void = "<%s%s />"},
   DECL = {start = "<?%s %s?>"},
-  DTD = {start = "<!DOCTYPE ", text = "%s" , stop=">"}
+  DTD = {start = "<!DOCTYPE ", text = "%s" , stop=">"},
+  CDATA = {start = "<![CDATA[", text = "%s", stop ="]]>"}
+  
 }
 
 --- It serializes the DOM object back to the XML.
