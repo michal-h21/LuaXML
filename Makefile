@@ -41,10 +41,10 @@ test:
 	texlua test/cssquery-test.lua
 	texlua test/entities-test.lua
 
-build: doc test $(lua_content) 
+build: $(ENTITIES_MODULE) doc test $(lua_content) 
 	@rm -rf build
 	@mkdir -p $(BUILD_LUAXML)
-	@cp $(lua_content) $(tex_content)  $(doc_file) $(BUILD_LUAXML)
+	@cp $(lua_content) $(tex_content)  $(doc_file) $(ENTITIES_MODULE) $(BUILD_LUAXML)
 	@cat README | sed -e "s/{{VERSION}}/${VERSION}/" | sed -e "s/{{DATE}}/${DATE}/" >  $(BUILD_LUAXML)/README
 	@cat luaxml.tex | sed -e "s/{{VERSION}}/${VERSION}/" >  $(BUILD_LUAXML)/luaxml.tex
 	@cd $(BUILD_DIR) && zip -r luaxml.zip luaxml
