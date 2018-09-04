@@ -25,7 +25,7 @@ all: doc $(ENTITIES_MODULE)
 doc: api $(doc_file) 
 
 	
-$(doc_file): $(name).tex $(API_DOC)
+$(doc_file): $(name).tex $(API_DOC) $(ENTITIES_MODULE)
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $(name).tex
 
 api: $(API_DOC)
