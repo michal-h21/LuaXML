@@ -37,6 +37,7 @@ local actions = {
   COMMENT = {start = "<!-- ", text = "%s", stop = " -->"},
   ELEMENT = {start = "<%s%s>", stop = "</%s>", void = "<%s%s />"},
   DECL = {start = "<?%s %s?>"},
+  PI = {start = "<?%s %s?>"},
   DTD = {start = "<!DOCTYPE ", text = "%s" , stop=">"},
   CDATA = {start = "<![CDATA[", text = "%s", stop ="]]>"}
   
@@ -109,6 +110,9 @@ local function serialize_dom(parser, current,level, output)
     local format = get_action(xtype, "void")
     insert(format, name, prepare_attributes(attributes))
     return output
+  elseif xtype == "PI" then
+    -- it contains spurious _text attribute
+    attributes["_text"] = nil
   end
 
   start(xtype, name, attributes)
