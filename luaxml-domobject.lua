@@ -113,6 +113,10 @@ local function serialize_dom(parser, current,level, output)
   elseif xtype == "PI" then
     -- it contains spurious _text attribute
     attributes["_text"] = nil
+  elseif xtype == "DECL" and name =="xml" then
+    -- the xml declaration attributes must be in a correct order
+    insert("<?xml version='%s' encoding='%s' ?>", attributes.version, attributes.encoding)
+    return output
   end
 
   start(xtype, name, attributes)
