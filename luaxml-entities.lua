@@ -1,5 +1,5 @@
 local M = {}
-local char = unicode.utf8.char
+local char = unicode and unicode.utf8.char or utf8.char
 local named_entities = require "luaxml-namedentities"
 local hexchartable = {}
 local decchartable = {}
