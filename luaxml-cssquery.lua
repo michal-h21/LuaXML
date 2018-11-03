@@ -3,6 +3,18 @@
 -- @author Michal Hoftich <michal.h21@gmail.com
 local parse_query = require("luaxml-parse-query")
 
+-- the string.explode function is provided by LuaTeX
+-- this is alternative for stock Lua
+-- source: http://lua-users.org/wiki/SplitJoin
+local function string_split(str, sep)
+   local sep, fields = sep or ":", {}
+   local pattern = string.format("([^%s]+)", sep)
+   str:gsub(pattern, function(c) fields[#fields+1] = c end)
+   return fields
+end
+
+string.explode = string.explode or string_split
+
 --- CssQuery constructor
 -- @function cssquery
 -- @return CssQuery object
