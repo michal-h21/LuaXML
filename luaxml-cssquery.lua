@@ -54,6 +54,36 @@ local function cssquery()
     return specificity
   end
 
+  -- test element for nth-child selector
+  local function test_nth_child(el, nth)
+    -- save element position in the current siblings list
+    local function make_nth(curr_el)
+      local pos = 0
+      local el_pos = 0
+      -- get current node list
+      local siblings = curr_el:get_siblings()
+      if siblings then
+        for _, other_el in ipairs(siblings) do
+          -- number the elements
+          if other_el:is_element() then
+            pos = pos + 1
+            other_el.nth = pos
+            -- save the current element position
+            if other_el == curr_el then
+              el_pos = pos
+            end
+          end
+        end
+      else
+        return false
+      end
+      return el_pos
+    end
+    local el_pos = el.nth or make_nth(el)
+    -- we support only the nth-child(number) form
+    return el_pos == tonumber(nth)
+  end
+
   --- Test prepared querylist
   -- @param domobj DOM element to test
   -- @param querylist [optional] List of queries to test
@@ -78,6 +108,8 @@ local function cssquery()
           c[part] = true
         end
         return c[value] == true
+      elseif key == "nth-child" then
+        return test_nth_child(el, value)
       end
       -- TODO: Add more cases
       -- just return true for not supported selectors
@@ -96,7 +128,7 @@ local function cssquery()
       end
       return true
     end
-        
+
     local function match_query(query, el)
       local query = query or {}
       local object = table.remove(query) -- get current object from the query stack
@@ -141,12 +173,12 @@ local function cssquery()
   --  @return table querylist
   function CssQuery:prepare_selector(
     selector -- string CSS selector query
-   )
+    )
     local querylist = {}
     local function parse_selector(item)
       local query = {}
       -- for i = #item, 1, -1 do
-        -- local part = item[i]
+      -- local part = item[i]
       for _, part in ipairs(item) do
         local t = {}
         for _, atom in ipairs(part) do
@@ -203,7 +235,7 @@ local function cssquery()
   -- @return querylist table
   function CssQuery:sort_querylist(
     querylist -- [optional] querylist table
-  )
+    )
     local querylist = querylist or self.querylist
     table.sort(self.querylist, function(a,b)
       return a.specificity > b.specificity
@@ -229,7 +261,7 @@ local function cssquery()
       end
     end
   end
-  
+
   return setmetatable({}, CssQuery)
 end
 
