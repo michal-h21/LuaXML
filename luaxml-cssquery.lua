@@ -54,31 +54,37 @@ local function cssquery()
     return specificity
   end
 
-  -- test element for nth-child selector
-  local function test_nth_child(el, nth)
-    -- save element position in the current siblings list
-    local function make_nth(curr_el)
-      local pos = 0
-      local el_pos = 0
-      -- get current node list
-      local siblings = curr_el:get_siblings()
-      if siblings then
-        for _, other_el in ipairs(siblings) do
-          -- number the elements
-          if other_el:is_element() then
-            pos = pos + 1
-            other_el.nth = pos
-            -- save the current element position
-            if other_el == curr_el then
-              el_pos = pos
-            end
+  -- save element position in the current siblings list
+  local function make_nth(curr_el)
+    local pos = 0
+    local el_pos = 0
+    -- get current node list
+    local siblings = curr_el:get_siblings()
+    if siblings then
+      for _, other_el in ipairs(siblings) do
+        -- number the elements
+        if other_el:is_element() then
+          pos = pos + 1
+          other_el.nth = pos
+          -- save the current element position
+          if other_el == curr_el then
+            el_pos = pos
           end
         end
-      else
-        return false
       end
-      return el_pos
+    else
+      return false
     end
+    return el_pos
+  end
+
+  local function test_first_child(el, nth)
+    local el_pos = el.nth or make_nth(el)
+    return el_pos == 1 
+  end
+
+  -- test element for nth-child selector
+  local function test_nth_child(el, nth)
     local el_pos = el.nth or make_nth(el)
     -- we support only the nth-child(number) form
     return el_pos == tonumber(nth)
@@ -110,6 +116,8 @@ local function cssquery()
         return c[value] == true
       elseif key == "nth-child" then
         return test_nth_child(el, value)
+      elseif key == "first-child" then
+        return test_first_child(el, value)
       end
       -- TODO: Add more cases
       -- just return true for not supported selectors
