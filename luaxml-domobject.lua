@@ -475,7 +475,7 @@ local parse = function(
 
   --- Get node list which current node is part of
   -- @return table with elements
-  function DOM_Object:get_siblibgs(
+  function DOM_Object:get_siblings(
     el -- [optional] element for which the sibling element list should be retrieved
     )
     local el = el or self
@@ -491,7 +491,7 @@ local parse = function(
   function DOM_Object:get_sibling_node( change)
     local el = self
     local pos = el:find_element_pos()
-    local siblings = el:get_siblibgs()
+    local siblings = el:get_siblings()
     if pos and siblings then
       return siblings[pos + change]
     end
