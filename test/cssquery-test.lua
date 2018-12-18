@@ -71,3 +71,39 @@ describe("CSS selector handling", function()
   end)
   -- assert.truthy(#obj:prepare_selector(selector)==2)
 end)
+
+describe("pseudo-classes", function()
+local  sample = [[
+<data>
+  <items>
+    <item>foo</item>
+    <item>bar</item>
+    <item>baz</item>
+  </items>
+</data>
+]]
+local nth = [[
+data
+items
+item:nth-child(2)
+]]
+
+local first = "item:first-child"
+local dom = dom.parse(sample)
+local css = cssquery()
+
+css:add_selector(nth, function(obj)
+   assert.equal(obj:get_text(), "bar")
+end)
+
+css:add_selector(first, function(obj)
+  assert.equal(obj:get_text(), "foo")
+end)
+
+it("Should match pseudo classes", function()
+  dom:traverse_elements(function(el)
+    local querylist = css:match_querylist(el)
+    css:apply_querylist(el, querylist)
+  end)
+end)
+end)
