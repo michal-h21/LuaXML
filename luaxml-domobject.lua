@@ -140,6 +140,7 @@ local parse = function(
   local DOM_Object = xml.xmlParser(domHandler)
   -- preserve whitespace
   DOM_Object.options.stripWS = nil
+  DOM_Object._handler.options.voidElements = void
   DOM_Object:parse(xmltext)
   DOM_Object.current = DOM_Object._handler.root
   DOM_Object.__index = DOM_Object

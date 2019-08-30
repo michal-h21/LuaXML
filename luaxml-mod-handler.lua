@@ -253,7 +253,7 @@ M.simpleTreeHandler = simpleTreeHandler
 local function domHandler() 
     local obj = {}
     local decode = entities.decode
-    obj.options = {commentNode=1,piNode=1,dtdNode=1,declNode=1}
+    obj.options = {commentNode=1,piNode=1,dtdNode=1,declNode=1, voidElements = {}}
     obj.root = { _children = {n=0}, _type = "ROOT" }
     obj.current = obj.root
     obj.starttag = function(self,t,a)
@@ -270,13 +270,18 @@ local function domHandler()
                            _parent = self.current, 
                            _children = {n=0} }
             table.insert(self.current._children,node)
-            self.current = node
+            -- close void element
+            if not self.options.voidElements[t] then
+              self.current = node
+            end
     end
     obj.endtag = function(self,t,s)
-            if t ~= self.current._name then
+            if not self.options.voidElements[t] then
+              if t ~= self.current._name then
                 error("XML Error - Unmatched Tag ["..s..":"..t.."]\n")
+              end
+              self.current = self.current._parent
             end
-            self.current = self.current._parent
     end
     obj.text = function(self,t)
             local node = { _type = "TEXT", 
