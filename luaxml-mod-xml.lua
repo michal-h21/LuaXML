@@ -351,6 +351,7 @@ local xmlParser = function(handler)
     -- Private attrobures/functions
 
     obj._handler    = handler
+    handler._xml    = obj
     obj._stack      = {}
 
     obj._XML        = '^([^<]*)<(%/?)([^>]-)(%/?)>'

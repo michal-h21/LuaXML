@@ -273,6 +273,8 @@ local function domHandler()
             -- close void element
             if not self.options.voidElements[t] then
               self.current = node
+            else
+              table.remove(self._xml._stack)
             end
     end
     obj.endtag = function(self,t,s)
