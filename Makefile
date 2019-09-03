@@ -31,7 +31,7 @@ $(doc_file): $(name).tex $(API_DOC) $(ENTITIES_MODULE)
 api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
-	mkdir doc
+	mkdir -p doc
 	ldoc --all --filter ldoc-latex.filter . >  $(API_DOC)
 
 $(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
