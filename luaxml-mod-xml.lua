@@ -170,10 +170,12 @@ local xmlParser = function(handler)
     obj.options = { 
                     stripWS = 1, 
                     expandEntities = 1,
+                    voidElements = {},
                     errorHandler = function(err,pos) 
                                        error(format("%s [char=%d]\n",
                                                err or "Parse Error",pos))
                                    end,
+
                   }
 
     -- Public methods
@@ -183,6 +185,8 @@ local xmlParser = function(handler)
 	       parseAttributes = true
 	    end
 	    self._handler.parseAttributes = parseAttributes
+      local handler_options = self._handler.options or {}
+      local void_elements = handler_options.voidElements or {}
     
         local match,endmatch,pos = 0,0,1
         local text,endt1,endt2,tagstr,tagname,attrs,starttext,endtext
@@ -331,12 +335,12 @@ local xmlParser = function(handler)
                     end
                 else
                     -- Start Tag
-                    table.insert(self._stack,tagname)
+                      table.insert(self._stack,tagname)
                     if self._handler.starttag then
                         self._handler:starttag(tagname,attrs,match,endmatch)
                     end
-                    -- Self-Closing Tag
-                    if (endt2=="/") then
+                    -- Self-Closing Tag. Skip void elements
+                    if (endt2=="/") and not void_elements[tagname] then
                         table.remove(self._stack)
                         if self._handler.endtag then
                             self._handler:endtag(tagname,nil,match,endmatch)

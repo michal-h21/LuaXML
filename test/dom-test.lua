@@ -11,6 +11,7 @@ describe("Basic DOM functions", function()
   <h1>pokus</h1>
   <p>nazdar</p>
   <br>
+  <br />
   </body>
   </html>
   ]]
@@ -26,7 +27,7 @@ describe("Basic DOM functions", function()
     assert.truthy(path)
     assert.same(#path,  1)
     assert.truthy(path[1]:is_element())
-    assert.same(#path[1]:get_children(),  7)
+    assert.same(#path[1]:get_children(),  9)
   end)
  
   describe("Basic DOM traversing should work", function()
@@ -55,7 +56,7 @@ describe("Basic DOM functions", function()
     end)
     it("Traverse should find 7 elements and match one <p>", function()
       assert.truthy(matched)
-      assert.same(count, 8)
+      assert.same(count, 9)
     end)
   end)
 
