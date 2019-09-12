@@ -286,10 +286,13 @@ local function domHandler()
             end
     end
     obj.text = function(self,t)
-            local node = { _type = "TEXT", 
-                           _parent = self.current, 
-                           _text = decode(t) }
-            table.insert(self.current._children,node)
+      local text = decode(t)
+      local node = {
+        _type = "TEXT",
+        _parent = self.current,
+        _text = text
+      }
+      table.insert(self.current._children,node)
     end
     obj.comment = function(self,t)
             if self.options.commentNode then
