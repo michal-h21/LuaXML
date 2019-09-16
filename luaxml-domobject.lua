@@ -134,6 +134,7 @@ end
 -- @return DOM_Object
 local parse = function(
   xmltext --- String to be parsed
+  ,voidElements --- hash table with void elements
  )
   local domHandler = handler.domHandler()
   ---  @type DOM_Object
@@ -142,7 +143,8 @@ local parse = function(
   DOM_Object.options.stripWS = nil
   -- don't try to expand entities
   DOM_Object.options.expandEntities = nil
-  DOM_Object._handler.options.voidElements = void
+  local voidElements = voidElements or void
+  DOM_Object._handler.options.voidElements = voidElements
   DOM_Object:parse(xmltext)
   DOM_Object.current = DOM_Object._handler.root
   DOM_Object.__index = DOM_Object
