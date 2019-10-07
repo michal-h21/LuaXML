@@ -122,5 +122,35 @@ some another text. More <b>text</b>.
       assert.truthy(text:match( "First noindent\nsome another text. More text."))
     end)
   end)
+  describe("Handling of void elements", function()
+    local test_metas = function(metas, msg)
+      it(msg, function()
+        assert.same(type(metas), "table")
+        assert.same(#metas, 2)
+      end)
+    end
+
+    local document = [[
+    <html>
+    <head>
+    <meta name="sample" content="meta" />
+    <meta name="hello" content="world">
+    </head>
+    </html>
+    ]]
+    local newobj = dom.parse(document)
+    local metas = newobj:query_selector("meta")
+    test_metas(metas,"Should match two meta elements")
+    -- test configuration of void elements
+    local second = [[
+    <root>
+    <meta>Hello</meta>
+    <meta>world</meta>
+    </root>
+    ]]
+    local newobj = dom.parse(second, {})
+    local metas = newobj:query_selector("meta")
+    test_metas(metas,"Should support configuration of the void elements")
+  end)
 
 end)

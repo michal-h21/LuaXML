@@ -99,6 +99,22 @@ end
 \end{luacode*}
 \end{framed}
 
+\subsection{Void elements}
+
+The \verb|DOM_Object.parse| function tries to support the HTML void elements,
+such as \verb|<img>| or \verb|<hr>|. They cannot have closing tags, a parse
+error occurs when the closing tags are used.
+
+It is possible to define a different set of void elements using the second parameter 
+for \verb|DOM_Object.parse|:
+
+\begin{verbatim}
+obj = dom.parse(document, {custom_void = true})
+\end{verbatim}
+
+An empty table will disable all void elements. This setting is recommended for common |xml| documents.
+
+
 \subsection{Node selection methods}
 There are some other methods for element retrieving. 
 
