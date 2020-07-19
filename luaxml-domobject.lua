@@ -115,7 +115,12 @@ local function serialize_dom(parser, current,level, output)
     attributes["_text"] = nil
   elseif xtype == "DECL" and name =="xml" then
     -- the xml declaration attributes must be in a correct order
-    insert("<?xml version='%s' encoding='%s' ?>", attributes.version, attributes.encoding)
+    local encoding = attributes.encoding or "utf-8"
+    insert("<?xml version='%s' encoding='%s' ?>", attributes.version, encoding)
+    return output
+  elseif xtype == "CDATA" then
+    -- return content unescaped
+    insert(string.format("<![CDATA[%s]]>", text_content))
     return output
   end
 
