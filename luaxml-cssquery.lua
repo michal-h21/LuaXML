@@ -90,6 +90,45 @@ local function cssquery()
     return el_pos == tonumber(nth)
   end
 
+  -- test if element has attribute
+  local function test_attr(el, attr)
+    local result = el:get_attribute(attr)
+    return result~=nil
+  end
+
+  -- test attribute values
+  local function test_attr_value(el, parts)
+    -- parts is a table: {attr_name, modifier, search value}
+    local _, name, modifier, search = table.unpack(parts)
+    local value = el:get_attribute(name)
+    if value == nil then return false end
+    -- make sure we deal with a string
+    value = tostring(value)
+    -- make the search string safe for pattern matching
+    local escaped_search = search:gsub("([%(%)%.%%%+%–%*%?%[%^%$])", "%%%1")
+    if modifier == "" then
+      return value == search
+    elseif modifier == "|" then
+      -- attribute must be exactly the value or start with value + "-"
+      return value == search or (value:match("^" .. escaped_search .. "%-")~=nil)
+    elseif  modifier == "~" then
+      -- test any word
+      for word in value:gmatch("(%S+)") do
+        if word == search then return true end
+      end
+      return false
+    elseif modifier == "^" then
+      -- value start 
+      return value:match("^" .. escaped_search) ~= nil 
+    elseif modifier == "$" then
+      -- value ends
+      return value:match(escaped_search .. "$") ~= nil 
+    elseif modifier == "*" then
+      -- value anywhere
+      return value:match(escaped_search) ~= nil 
+    end
+  end
+
   --- Test prepared querylist
   -- @param domobj DOM element to test
   -- @param querylist [optional] List of queries to test
@@ -118,6 +157,14 @@ local function cssquery()
         return test_nth_child(el, value)
       elseif key == "first-child" then
         return test_first_child(el, value)
+      elseif key == "attr" then
+        return test_attr(el, value)
+      elseif key == "attr_value" then
+        return test_attr_value(el, value)
+      else
+        if type(value) == "table" then value = table.concat(value, ":") end
+        print("unsupported feature", key, value)
+        return false
       end
       -- TODO: Add more cases
       -- just return true for not supported selectors
@@ -128,7 +175,9 @@ local function cssquery()
       -- test one object in CSS selector
       local matched = {}
       for key, value in pairs(query) do
-        matched[#matched+1] = test_part(key, value, el)
+        local test =  test_part(key, value, el)
+        if test~= true then return false end
+        matched[#matched+1] = test
       end
       if #matched == 0 then return false end
       for k, v in ipairs(matched) do
@@ -191,7 +240,13 @@ local function cssquery()
         local t = {}
         for _, atom in ipairs(part) do
           local key = atom[1]
-          local value = atom[2]
+          local value
+          if not atom[3] then
+            value = atom[2]
+          else
+            -- save additional selector parts when available
+            value = atom
+          end
           -- support for XML namespaces in selectors
           -- the namespace should be added using "|" 
           -- like namespace|element

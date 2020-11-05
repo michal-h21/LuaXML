@@ -107,3 +107,35 @@ it("Should match pseudo classes", function()
   end)
 end)
 end)
+
+describe("attribute selectors", function()
+local sample = [[
+<p>
+  <a href="#hello">link to hello</a>
+  <span id="hello">hello</span>
+  <span lang="cs-CZ">czech text</span>
+  <span class="hello world">test word</span>
+  <span id="verylongword">test start</span>
+</p>
+]]
+local dom = dom.parse(sample)
+local css = cssquery()
+
+local function asserttext(obj, text)
+  assert.equal(obj:get_text(), text)
+end
+css:add_selector("a[href]", function(obj) asserttext(obj, "link to hello")  end)
+css:add_selector("[id='hello']", function(obj) asserttext(obj, "hello")  end)
+css:add_selector("[lang|='cs']", function(obj) asserttext(obj, "czech text") end)
+css:add_selector("[class~='world']", function(obj) asserttext(obj, "test word") end)
+css:add_selector("[id^='very']", function(obj) asserttext(obj, "test start") end)
+css:add_selector("[id$='word']", function(obj) asserttext(obj, "test start") end)
+css:add_selector("[id*='long']", function(obj) asserttext(obj, "test start") end)
+it("Should match attributes", function()
+  dom:traverse_elements(function(el)
+    local querylist = css:match_querylist(el)
+    css:apply_querylist(el, querylist)
+  end)
+end)
+
+end)
