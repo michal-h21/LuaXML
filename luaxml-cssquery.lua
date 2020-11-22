@@ -161,6 +161,8 @@ local function cssquery()
         return test_attr(el, value)
       elseif key == "attr_value" then
         return test_attr_value(el, value)
+      elseif key == "combinator" then
+        -- ignore combinators in this function
       else
         if type(value) == "table" then value = table.concat(value, ":") end
         print("unsupported feature", key, value)
@@ -186,9 +188,23 @@ local function cssquery()
       return true
     end
 
+
+    -- get next CSS selector
+    local function get_next_selector(query)
+      local combinator = " "
+      local selector = table.remove(query)
+      -- detect if this selector is a combinator"
+      if selector and selector.combinator  then
+        -- save the combinator and select next selector from the query  
+        combinator = selector.combinator
+        selector = table.remove(query)
+      end
+      return selector, combinator
+    end
+
     local function match_query(query, el)
       local query = query or {}
-      local object = table.remove(query) -- get current object from the query stack
+      local object, combinator = get_next_selector(query) -- get current object from the query stack
       if not object then return true end -- if the query stack is empty, then we can be sure that it matched previous items
       if not el:is_element() then return false end -- if there is object to test, but current node isn't element, test failed
       local result = test_object(object, el)
