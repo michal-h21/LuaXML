@@ -6,7 +6,7 @@ describe("Entities decoding should work",function()
   local decode = entities.decode
   it("should parse named entities", function()
     assert.same(decode("&amp;"), "&")
-    assert.same(decode("&lt"), "<")
+    assert.same(decode("&lt;"), "<")
     assert.same(decode("&QUOT;"), '"')
     assert.same(decode("&NewLine;"), "\n")
   end)
