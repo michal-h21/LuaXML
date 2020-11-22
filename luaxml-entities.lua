@@ -28,10 +28,10 @@ end
 
 
 function M.decode(s)
-  return s:gsub("&([#a-zA-Z0-9]+);?", function(m)
+  return s:gsub("&([#a-zA-Z0-9]+)(;?)", function(m, semicolon)
     -- check if this is named entity first
     local named = get_named_entity(m)
-    local original_entity = "&" .. m .. ";"
+    local original_entity = "&" .. m .. semicolon
     if named then return named end
     -- check if it is numeric entity
     local hex, charcode = m:match("#([xX]?)([a-fA-F0-9]+)")
