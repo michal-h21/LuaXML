@@ -14,9 +14,9 @@ local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local quotes = S("'\"") ^ 1
 local white = S(" \t\n") ^ 0
--- this is a deviation from the upstream, we allow ":" in the tag name, because
+-- this is a deviation from the upstream, we allow "|" in the tag name, because
 -- luaxml doesn't support XML namespaces and elements must be queried using
--- dom:query_selector("namespace:element")
+-- dom:query_selector("namespace|element")
 local word = (alphanum + S("_-") + S("|")) ^ 1
 
 local attr_name = (alphanum + S("_-")) ^ 1
