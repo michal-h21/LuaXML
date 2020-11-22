@@ -173,7 +173,7 @@ local function cssquery()
       return true
     end
 
-    local function test_object(query, el)
+    local function test_object(query, el, combinator)
       -- test one object in CSS selector
       local matched = {}
       for key, value in pairs(query) do
@@ -207,7 +207,7 @@ local function cssquery()
       local object, combinator = get_next_selector(query) -- get current object from the query stack
       if not object then return true end -- if the query stack is empty, then we can be sure that it matched previous items
       if not el:is_element() then return false end -- if there is object to test, but current node isn't element, test failed
-      local result = test_object(object, el)
+      local result = test_object(object, el, combinator)
       if result then
         return match_query(query, el:get_parent())
       end
