@@ -19,6 +19,8 @@ local white = S(" \t\n") ^ 0
 -- dom:query_selector("namespace|element")
 local word = (alphanum + S("_-") + S("|")) ^ 1
 
+local combinators = S(">~+")
+
 local attr_name = (alphanum + S("_-")) ^ 1
 local attr_function = S("~|^$*") ^ 0
 
@@ -42,7 +44,8 @@ parse_query = function(query)
   local first = P(":first-child") / mark("first-child")
   local attr = P("[") * C(word) * P("]") / mark("attr")
   local attr_value = P("[") * C(attr_name ) * C(attr_function)* P("=") * quotes * attr_content * quotes * P("]") / mark("attr_value")
-  local selector = Ct((any + nth + first + tag + cls + id + attr + attr_value) ^ 1)
+  local combinator = C(combinators) / mark("combinator")
+  local selector = Ct((any + nth + first + tag + cls + id + attr + attr_value + combinator) ^ 1)
   local pq = Ct(selector * (white * selector) ^ 0)
   local pqs = Ct(pq * (white * P(",") * white * pq) ^ 0)
   pqs = pqs * (white * -1)

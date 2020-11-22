@@ -139,3 +139,33 @@ it("Should match attributes", function()
 end)
 
 end)
+
+describe("combinators", function()
+local sample = [[
+<p>
+  <span id="hello">hello</span>
+  <a href="#hello">link to hello</a>
+  <span lang="cs-CZ">czech text</span>
+  <span class="hello world">test word</span>
+  <b>child content <b>ignore this</b></b> 
+  <span id="verylongword">test start</span>
+</p>
+]]
+
+local dom = dom.parse(sample)
+local css = cssquery()
+
+-- test how many span elements match the sibling combinator
+local number_of_spans = 0
+css:add_selector("a ~ span", function(obj)
+  number_of_spans = number_of_spans + 1
+end)
+
+it("Should match combinators", function()
+  dom:traverse_elements(function(el)
+    local querylist = css:match_querylist(el)
+    css:apply_querylist(el, querylist)
+  end)
+end)
+
+end)
