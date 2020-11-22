@@ -28,7 +28,7 @@ end
 
 
 function M.decode(s)
-  return s:gsub("&([#a-zA-Z0-9%_%:%-]+);", function(m)
+  return s:gsub("&([#a-zA-Z0-9%_%:%-]-);", function(m)
     -- check if this is named entity first
     local named = get_named_entity(m)
     local original_entity = "&" .. m .. ";"
