@@ -147,7 +147,7 @@ local sample = [[
   <a href="#hello">link to hello</a>
   <span lang="cs-CZ">czech text</span>
   <span class="hello world">test word</span>
-  <b>child content <b>ignore this</b></b> 
+  <b>child content <i>ignore this</i></b> 
   <span id="verylongword">test start</span>
 </p>
 ]]
@@ -161,11 +161,20 @@ css:add_selector("a ~ span", function(obj)
   number_of_spans = number_of_spans + 1
 end)
 
+css:add_selector("b + span", function(obj)
+  print("sibling", obj:get_text())
+end)
+
+css:add_selector("p i", function(obj)
+  print("deep child", obj:get_text())
+end)
+
 it("Should match combinators", function()
   dom:traverse_elements(function(el)
     local querylist = css:match_querylist(el)
     css:apply_querylist(el, querylist)
   end)
+  print("matched spans", number_of_spans)
 end)
 
 end)

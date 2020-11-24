@@ -173,7 +173,7 @@ local function cssquery()
       return true
     end
 
-    local function test_object(query, el, combinator)
+    local function test_object(query, el)
       -- test one object in CSS selector
       local matched = {}
       for key, value in pairs(query) do
@@ -191,28 +191,72 @@ local function cssquery()
 
     -- get next CSS selector
     local function get_next_selector(query)
-      local combinator = " "
+      local query = query or {}
       local selector = table.remove(query)
+      return selector 
+    end
+
+    local function get_next_combinator(query)
+      local query = query or {}
+      local combinator = " " -- default combinator
+      local selector = query[#query] -- get the last item in selector query
       -- detect if this selector is a combinator"
       if selector and selector.combinator  then
         -- save the combinator and select next selector from the query  
         combinator = selector.combinator
-        selector = table.remove(query)
+        table.remove(query) -- remove combinator from query
       end
-      return selector, combinator
+      return combinator
     end
 
+    local function get_previous_element(el)
+      -- try to find a previous element
+      local prev = el:get_prev_node()
+      if not prev then return nil end
+      if prev:is_element() then return prev end
+      return get_previous_element(prev)
+    end
+
+
     local function match_query(query, el)
-      local query = query or {}
-      local object, combinator = get_next_selector(query) -- get current object from the query stack
+      local function match_parent(query, el)
+        -- loop over the whole elemnt three and try to mach the css selector
+        if el and el:is_element() then
+          local status = match_query(query, el)
+          return status or match_parent(query, el:get_parent())
+        else
+          -- break processing if we reach top of the element tree
+          return false
+        end
+      end
+      local function match_sibling(query, el)
+        -- match potentially more distant sibling
+        if el and el:is_element() then
+          return match_query(query, el) or match_query(query, get_previous_element(el))
+        else
+          return false
+        end
+      end
+      local object = get_next_selector(query) -- get current object from the query stack
       if not object then return true end -- if the query stack is empty, then we can be sure that it matched previous items
-      if not el:is_element() then return false end -- if there is object to test, but current node isn't element, test failed
-      local result = test_object(object, el, combinator)
+      if not el or not el:is_element() then return false end -- if there is object to test, but current node isn't element, test failed
+      local result = test_object(object, el)
       if result then
-        return match_query(query, el:get_parent())
+        local combinator = get_next_combinator(query)
+        if combinator == " " then
+          -- we must traverse all parent elements to find if any matches
+          return match_parent(query, el:get_parent())
+        elseif combinator == ">" then -- simplest case, we need to match just the direct parent
+          return match_query(query, el:get_parent())
+        elseif combinator == "+" then -- match previous element
+          return match_query(query, get_previous_element(el))
+        elseif combinator == "~" then -- match all previous elements
+          return match_sibling(query, get_previous_element(el))
+        end
       end
       return false
     end
+
     for _,element in ipairs(querylist) do
       local query =  {}
       for k,v in ipairs(element.query) do query[k] = v end
