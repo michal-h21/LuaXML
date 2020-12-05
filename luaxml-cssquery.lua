@@ -200,6 +200,7 @@ local function cssquery()
       local query = query or {}
       local combinator = " " -- default combinator
       local selector = query[#query] -- get the last item in selector query
+      if not selector then return nil end
       -- detect if this selector is a combinator"
       if selector and selector.combinator  then
         -- save the combinator and select next selector from the query  
@@ -242,7 +243,7 @@ local function cssquery()
       if not el or not el:is_element() then return false end -- if there is object to test, but current node isn't element, test failed
       local result = test_object(object, el)
       if result then
-        local combinator = get_next_combinator(query)
+        local combinator = get_next_combinator(query) 
         if combinator == " " then
           -- we must traverse all parent elements to find if any matches
           return match_parent(query, el:get_parent())
@@ -252,6 +253,8 @@ local function cssquery()
           return match_query(query, get_previous_element(el))
         elseif combinator == "~" then -- match all previous elements
           return match_sibling(query, get_previous_element(el))
+        elseif combinator == nil then 
+          return result
         end
       end
       return false
