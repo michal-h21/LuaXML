@@ -118,11 +118,16 @@ function parse_xml(content)
   return process_tree(dom:root_node())
 end
 
+
 local function load_file(filename)
   local f = io.open(filename, "r")
   local content = f:read("*all")
   f:close()
   return parse_xml(content)
+end
+
+function process_dom(dom)
+  return process_tree(dom:root_node())
 end
 
 
@@ -141,7 +146,9 @@ local M = {
   add_action = add_action,
   add_custom_action = add_custom_action,
   simple_content = simple_content,
-  load_file = load_file
+  load_file = load_file,
+  process_dom = process_dom
 }
+
 
 return M
