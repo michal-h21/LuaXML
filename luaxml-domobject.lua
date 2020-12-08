@@ -231,6 +231,7 @@ local parse = function(
     )
     local el = self
     if self:is_element(el) then
+      el._attr = el._attr or {}
       el._attr[name] = value
       return true
     end
