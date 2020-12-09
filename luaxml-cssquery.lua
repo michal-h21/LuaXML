@@ -117,6 +117,11 @@ local function cssquery()
     return result~=nil
   end
 
+  local function test_any(el, value)
+    -- * selector
+    return true
+  end
+
   -- test attribute values
   local function test_attr_value(el, parts)
     -- parts is a table: {attr_name, modifier, search value}
@@ -184,6 +189,8 @@ local function cssquery()
         return test_attr(el, value)
       elseif key == "attr_value" then
         return test_attr_value(el, value)
+      elseif key == "any" then
+        return test_any(el, value)
       elseif key == "combinator" then
         -- ignore combinators in this function
       else

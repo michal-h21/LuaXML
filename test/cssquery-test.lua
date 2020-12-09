@@ -65,6 +65,14 @@ describe("CSS selector handling", function()
       obj:apply_querylist(div_ahoj, div_querylist)
       assert.same(div_ahoj:get_attribute("style"), "color:red")
     end)
+    it("Any selector should work", function()
+      local div_any = newobj:query_selector("div *")
+      local body_any = newobj:query_selector("body *")
+      local body_direct_any = newobj:query_selector("body > *")
+      assert.same(#div_any, 4)
+      assert.same(#body_any, 5)
+      assert.same(#body_direct_any, 1)
+    end)
     -- for k,v in ipairs(obj.querylist) do
     --   print(k, v.source, v.specificity)
     -- end
@@ -107,7 +115,8 @@ end)
 
 -- this shouldn't  match
 local last_item_matched = false
-css:add_selector("item:last-child", function(obj)
+-- item is not last child, ite element't doesn't exist
+css:add_selector("item:last-child, ite :last-child", function(obj)
   last_item_matched = true
 end)
 
