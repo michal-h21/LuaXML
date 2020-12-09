@@ -26,20 +26,27 @@ local unicodes = {
   [125] = "\\}"
 }
 
-local function process_text(text)
+local function process_text(text, parameters)
+  local parameters = parameters or {}
+  -- spaces are collapsed by default. set verbatim=true to disable it.
+  local verbatim = parameters.verbatim
   local t = {}
   -- process all Unicode characters and find if they should be replaced
   for _, char in utf8.codes(text) do
     -- construct new string with replacements or original char
     t[#t+1] = unicodes[char] or utf8.char(char)
   end
-  return table.concat(t)
+  local text = table.concat(t)
+  if not verbatim then
+    text = text:gsub("(%s%s+)", function(a) return a:sub(1,1) end)
+  end
+  return text
 end
 
 -- use template string to place the processed children
-local function simple_content(s)
+local function simple_content(s,parameters)
   return function(element)
-    local content = process_children(element)
+    local content = process_children(element,parameters)
     -- process attrubutes
     -- attribute should be marked as @{name}
     local expanded = s:gsub("@{(.-)}", function(name)
@@ -74,12 +81,12 @@ local function add_custom_action(selector, fn)
 end
 
 -- normal actions
-local function add_action(selector, template)
-  css:add_selector(selector, simple_content(template))
+local function add_action(selector, template, parameters)
+  css:add_selector(selector, simple_content(template, parameters))
 end
 
 
-function process_children(element)
+function process_children(element, parameters)
   -- accumulate text from children elements
   local t = {}
   -- sometimes we may get text node
@@ -87,7 +94,7 @@ function process_children(element)
   for i, elem in ipairs(element:get_children()) do
     if elem:is_text() then
       -- concat text
-      t[#t+1] = process_text(elem:get_text())
+      t[#t+1] = process_text(elem:get_text(), parameters)
     elseif elem:is_element() then
       -- recursivelly process child elements
       t[#t+1] = process_tree(elem)
