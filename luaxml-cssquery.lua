@@ -58,29 +58,50 @@ local function cssquery()
   local function make_nth(curr_el)
     local pos = 0
     local el_pos = 0
+    local type_pos = 0
     -- get current node list
     local siblings = curr_el:get_siblings()
     if siblings then
+      local parent = curr_el:get_parent()
+      local element_types = {}
       for _, other_el in ipairs(siblings) do
         -- number the elements
         if other_el:is_element() then
           pos = pos + 1
           other_el.nth = pos
+          -- save also element type, for nth-of-type and similar queries
+          local el_name = other_el:get_element_name()
+          local counter = (element_types[el_name] or 0) + 1
+          other_el.type_nth = counter
+          element_types[el_name] = counter
           -- save the current element position
           if other_el == curr_el then
             el_pos = pos
+            type_pos = counter
           end
         end
       end
+      -- save counter of element types
+      parent.element_types = element_types
+      -- save count of elements
+      parent.child_elements = pos
     else
       return false
     end
-    return el_pos
+    return el_pos, type_pos
   end
 
   local function test_first_child(el, nth)
     local el_pos = el.nth or make_nth(el)
     return el_pos == 1 
+  end
+
+  local function test_last_child(el, val)
+    local el_pos = el.nth or make_nth(el)
+    -- number of child elements is saved in the parent element
+    -- by make_nth function
+    local parent = el:get_parent()
+    return el_pos == parent.child_elements
   end
 
   -- test element for nth-child selector
@@ -157,6 +178,8 @@ local function cssquery()
         return test_nth_child(el, value)
       elseif key == "first-child" then
         return test_first_child(el, value)
+      elseif key == "last-child" then
+        return test_last_child(el, value)
       elseif key == "attr" then
         return test_attr(el, value)
       elseif key == "attr_value" then

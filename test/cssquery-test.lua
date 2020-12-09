@@ -79,6 +79,7 @@ local  sample = [[
     <item>foo</item>
     <item>bar</item>
     <item>baz</item>
+    <another>last</another>
   </items>
 </data>
 ]]
@@ -100,11 +101,23 @@ css:add_selector(first, function(obj)
   assert.equal(obj:get_text(), "foo")
 end)
 
+css:add_selector("items :last-child", function(obj)
+  assert.equal(obj:get_text(), "last")
+end)
+
+-- this shouldn't  match
+local last_item_matched = false
+css:add_selector("item:last-child", function(obj)
+  last_item_matched = true
+end)
+
+
 it("Should match pseudo classes", function()
   dom:traverse_elements(function(el)
     local querylist = css:match_querylist(el)
     css:apply_querylist(el, querylist)
   end)
+  assert.equal(last_item_matched, false)
 end)
 end)
 
