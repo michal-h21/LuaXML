@@ -128,7 +128,15 @@ it("Should match pseudo classes", function()
   end)
   assert.equal(last_item_matched, false)
 end)
+
+it("Should match more first-of-type", function()
+  local first_type = dom:query_selector("another:first-of-type")
+  assert.equal(#first_type, 1)
+  assert.equal(first_type[1]:get_text(), "last")
 end)
+
+end)
+
 
 describe("attribute selectors", function()
 local sample = [[

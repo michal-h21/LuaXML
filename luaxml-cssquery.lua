@@ -96,6 +96,12 @@ local function cssquery()
     return el_pos == 1 
   end
 
+  local function test_first_of_type(el, val)
+    local type_pos = el.type_nth 
+    if not type_pos then _, type_pos = make_nth(el) end
+    return type_pos == 1
+  end
+
   local function test_last_child(el, val)
     local el_pos = el.nth or make_nth(el)
     -- number of child elements is saved in the parent element
@@ -183,6 +189,8 @@ local function cssquery()
         return test_nth_child(el, value)
       elseif key == "first-child" then
         return test_first_child(el, value)
+      elseif key == "first-of-type" then
+        return test_first_of_type(el, value)
       elseif key == "last-child" then
         return test_last_child(el, value)
       elseif key == "attr" then
