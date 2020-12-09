@@ -110,6 +110,16 @@ local function cssquery()
     return el_pos == parent.child_elements
   end
 
+  local function test_last_of_type(el, val)
+    local type_pos = el.type_nth 
+    if not type_pos then _, type_pos = make_nth(el) end
+    -- get table with type counts in this sibling list
+    local parent = el:get_parent()
+    local element_types = parent.element_types or {}
+    local type_count = element_types[el:get_element_name()]
+    return type_pos == type_count 
+  end
+
   -- test element for nth-child selector
   local function test_nth_child(el, nth)
     local el_pos = el.nth or make_nth(el)
@@ -193,6 +203,8 @@ local function cssquery()
         return test_first_of_type(el, value)
       elseif key == "last-child" then
         return test_last_child(el, value)
+      elseif key == "last-of-type" then
+        return test_last_of_type(el, value)
       elseif key == "attr" then
         return test_attr(el, value)
       elseif key == "attr_value" then

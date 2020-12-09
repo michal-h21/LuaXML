@@ -129,10 +129,16 @@ it("Should match pseudo classes", function()
   assert.equal(last_item_matched, false)
 end)
 
-it("Should match more first-of-type", function()
+it("Should match first-of-type", function()
   local first_type = dom:query_selector("another:first-of-type")
   assert.equal(#first_type, 1)
   assert.equal(first_type[1]:get_text(), "last")
+end)
+
+it("Should match last-of-type", function()
+  local last = dom:query_selector("item:last-of-type")
+  assert.equal(#last, 1)
+  assert.equal(last[1]:get_text(), "baz")
 end)
 
 end)
