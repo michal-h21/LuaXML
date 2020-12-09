@@ -246,7 +246,9 @@ local function cssquery()
       local function match_parent(query, el)
         -- loop over the whole elemnt three and try to mach the css selector
         if el and el:is_element() then
-          local status = match_query(query, el)
+          local query = query or {}
+          local object = query[#query]
+          local status = test_object(object, el)
           return status or match_parent(query, el:get_parent())
         else
           -- break processing if we reach top of the element tree
