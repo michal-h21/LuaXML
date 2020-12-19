@@ -120,7 +120,7 @@ local function serialize_dom(parser, current,level, output)
     return output
   elseif xtype == "CDATA" then
     -- return content unescaped
-    insert(string.format("<![CDATA[%s]]>", text_content))
+    insert("<![CDATA[%s]]>", text_content)
     return output
   end
 
