@@ -170,6 +170,56 @@ end
 
 It supports also |XML| namespaces, using \verb_namespace|element_ syntax.
 
+\subsubsection{Supported CSS selectors}
+
+The \verb|query_selector| method supports following CSS selectors:
+
+\begin{description}
+  \item[Universal selector -- \texttt{*}] --  select any element.
+  \item[Type selector -- \texttt{elementname}] -- Selects all elements that have the given node name.
+  \item[Class selector -- \texttt{.classname}] -- Selects all elements that have the given class attribute.
+  \item[ID selector -- \texttt{\#idname}] -- Selects an element based on the value of its id attribute. 
+  \item[Attribute selector -- \texttt{[attrname='value']}] -- Selects all elements that have the given attribute.
+    It can have the following variants: 
+    \texttt{[attrname]} -- elements that contain given attribute, 
+    \texttt{[attr\string|=value]} -- attribute text is exactly the value, with optional hyphen at the end,
+    \verb|[attr~=value]| -- attribute name of attr whose value is a whitespace-separated list of words, one of which is exactly value,
+    \verb|[attr^=value]| -- attribute text starts with value,
+    \texttt{[attr\$=value]} -- attribute text ends with value.
+  \item[Grouping selector -- \texttt{,}] -- This is a grouping method, it selects all the matching nodes.
+\end{description}
+
+\bigskip
+\noindent It is also possible to combine selectors using \textit{combinators} to make more specific searches. Supported combinators:
+
+\begin{description}
+  \item[Descendant combinator -- \texttt{A B}] -- match all B elements that are inside A elements.
+  \item[Child combinator -- \verb|A > B|] -- match B elements that are nested directly inside a A element.
+  \item[General sibling combinator -- \texttt{A \char`\~ ~B}] -- the second element
+    follows the first (though not necessarily immediately), and both share the
+    same parent.
+  \item[Adjacent sibling combinator -- \texttt{A + B}] --  the second element directly follows the first, and both share the same parent.
+\end{description}
+
+\bigskip
+\noindent LuaXML also supports some CSS pseudo-classes. A pseudo-class is a
+keyword added to a selector that specifies a special state of the selected
+element. The following are supported:
+
+\begin{description}
+  \item[:first-child] -- matches an element that is the first of its siblings.
+  \item[:first-of-type] -- matches an element that is the first of its siblings, 
+    and also matches a certain type selector.
+  \item[:last-child] -- matches an element that is the last of its siblings.
+  \item[:last-of-type] -- matches an element that is the last of its siblings,
+    and also matches a certain type selector.
+  \item[:nth-child] -- matches elements based on their position in a group of siblings.
+    It can be used like this: \verb|li:nth-child(2)|.
+\end{description}
+
+
+
+
 \subsection{Element traversing}
 
 \subsubsection{The \texttt{DOM\_Object:traverse\_elements} method}
@@ -332,9 +382,18 @@ More complete example may be found in the \texttt{examples} directory in the
 \texttt{LuaXML} source code
 repository\footnote{\url{https://github.com/michal-h21/LuaXML/blob/master/examples/xmltotex.lua}}.
 
+\section{The \texttt{luaxml-transform} library}
+
+This library is still a bit experimental. It enables XML transformation based
+on CSS selector templates. It is better to use XSLT in general, but it may
+succeed for simpler tasks\footnote{See this example: \url{https://tex.stackexchange.com/a/574004/2891}}.
+
+
+
 \section{The API documentation}
 
 \input{doc/api.tex}
+
 
 \section{Low-level functions usage}
 
