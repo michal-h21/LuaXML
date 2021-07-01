@@ -67,6 +67,9 @@ local function serialize_dom(parser, current,level, output)
     for k, v in pairs(attr) do
       t[#t+1] = string.format("%s='%s'", k, escape_attr(v))
     end
+    -- sort attributes alphabetically. this will ensure that
+    -- their order will not change between several executions of dom:serialize()
+    table.sort(t)
     if #t == 0 then return "" end
     -- add space before attributes
     return " " .. table.concat(t, " ")
