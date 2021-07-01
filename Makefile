@@ -41,6 +41,7 @@ test:
 	texlua test/dom-test.lua
 	texlua test/cssquery-test.lua
 	texlua test/entities-test.lua
+	texlua test/transform-test.lua
 
 build: $(ENTITIES_MODULE) doc test $(lua_content) 
 	@rm -rf build
