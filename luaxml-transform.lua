@@ -21,7 +21,8 @@ local unicodes = {
   [125] = "\\}"
 }
 
-local function match_css(element)
+local function match_css(element,csspar)
+  local css = csspar or css
   local selectors = css:match_querylist(element)
   if #selectors == 0 then return nil end
   -- return function with the highest specificity
@@ -115,12 +116,14 @@ local actions = {
 }
 
 -- add more complicated action
-local function add_custom_action(selector, fn)
+local function add_custom_action(selector, fn, csspar)
+  local css = csspar or css
   css:add_selector(selector,fn)
 end
 
 -- normal actions
-local function add_action(selector, template, parameters)
+local function add_action(selector, template, parameters, csspar)
+  local css = csspar or css
   css:add_selector(selector, simple_content(template, parameters))
 end
 
@@ -155,6 +158,44 @@ local function print_tex(content)
   end
 end
 
+local Transformer = {}
+Transformer.__index = Transformer
+-- the library uses shared css variable. in order to support multiple transformers,
+-- we need to save the original state, set the self.css variable as the global variable
+-- execute library function and then set the original function back
+function Transformer.save_css(self)
+  self.old_css = css
+  css = self.css
+end
+
+function Transformer.restore_css(self)
+  css = self.old_css
+end
+
+function Transformer.add_action(self, selector, template, parameters )
+  add_action(selector, template, parameters, self.css)
+end
+
+function Transformer.add_custom_action(self, selector, fn )
+  add_custom_action(selector, fn, self.css)
+end
+
+function Transformer.parse_xml(self, content)
+  self:save_css()
+  local result = parse_xml(content)
+  self:restore_css()
+  return result
+end
+
+  
+
+
+local function new()
+  local self = setmetatable({}, Transformer)
+  self.css = cssquery()
+  return self
+end
+
 
 
 
@@ -167,7 +208,8 @@ local M = {
   add_custom_action = add_custom_action,
   simple_content = simple_content,
   load_file = load_file,
-  process_dom = process_dom
+  process_dom = process_dom,
+  new = new
 }
 
 
