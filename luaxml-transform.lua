@@ -5,11 +5,6 @@ local cssquery = require "luaxml-cssquery"
 -- initialize CSS selector object
 local css = cssquery()
 
--- we need to define different actions for XML elements. The default action is
--- to just process child elements and return the result
-local function default_action(element)
-  return process_children(element)
-end
 
 -- convert Unicode characters to TeX sequences
 local unicodes = {
@@ -25,6 +20,13 @@ local unicodes = {
   [123] = "\\{",
   [125] = "\\}"
 }
+
+local function match_css(element)
+  local selectors = css:match_querylist(element)
+  if #selectors == 0 then return nil end
+  -- return function with the highest specificity
+  return selectors[1].func
+end
 
 local function process_text(text, parameters)
   local parameters = parameters or {}
@@ -43,6 +45,41 @@ local function process_text(text, parameters)
   return text
 end
 
+-- this function is initialized later, I need the declaration here
+-- to prevent Lua run-time error
+local process_tree
+
+local function process_children(element, parameters)
+  -- accumulate text from children elements
+  local t = {}
+  -- sometimes we may get text node
+  if type(element) ~= "table" then return element end
+  for i, elem in ipairs(element:get_children()) do
+    if elem:is_text() then
+      -- concat text
+      t[#t+1] = process_text(elem:get_text(), parameters)
+    elseif elem:is_element() then
+      -- recursivelly process child elements
+      t[#t+1] = process_tree(elem)
+    end
+  end
+  return table.concat(t)
+end
+
+-- we need to define different actions for XML elements. The default action is
+-- to just process child elements and return the result
+local function default_action(element)
+  return process_children(element)
+end
+
+function process_tree(element)
+  -- find specific action for the element, or use the default action
+  local element_name = element:get_element_name()
+  local action = match_css(element) or default_action
+  return action(element)
+end
+
+
 -- use template string to place the processed children
 local function simple_content(s,parameters)
   return function(element)
@@ -56,6 +93,8 @@ local function simple_content(s,parameters)
     return expanded:gsub("%%s", function(a) return content end)
   end
 end
+
+
 
 local function get_child_element(element, count)
   -- return specified child element 
@@ -86,38 +125,9 @@ local function add_action(selector, template, parameters)
 end
 
 
-function process_children(element, parameters)
-  -- accumulate text from children elements
-  local t = {}
-  -- sometimes we may get text node
-  if type(element) ~= "table" then return element end
-  for i, elem in ipairs(element:get_children()) do
-    if elem:is_text() then
-      -- concat text
-      t[#t+1] = process_text(elem:get_text(), parameters)
-    elseif elem:is_element() then
-      -- recursivelly process child elements
-      t[#t+1] = process_tree(elem)
-    end
-  end
-  return table.concat(t)
-end
 
-local function match_css(element)
-  local selectors = css:match_querylist(element)
-  if #selectors == 0 then return nil end
-  -- return function with the highest specificity
-  return selectors[1].func
-end
 
-function process_tree(element)
-  -- find specific action for the element, or use the default action
-  local element_name = element:get_element_name()
-  local action = match_css(element) or default_action
-  return action(element)
-end
-
-function parse_xml(content)
+local function parse_xml(content)
   -- parse XML string and process it
   local dom = domobject.parse(content)
   -- start processing of DOM from the root element
@@ -133,17 +143,20 @@ local function load_file(filename)
   return parse_xml(content)
 end
 
-function process_dom(dom)
+local function process_dom(dom)
   return process_tree(dom:root_node())
 end
 
 
-function print_tex(content)
+local function print_tex(content)
   -- we need to replace "\n" characters with calls to tex.sprint
   for s in content:gmatch("([^\n]*)") do
     tex.sprint(s)
   end
 end
+
+
+
 
 
 local M = {
