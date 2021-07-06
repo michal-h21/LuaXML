@@ -180,6 +180,8 @@ function Transformer.add_custom_action(self, selector, fn )
   add_custom_action(selector, fn, self.css)
 end
 
+-- all methods that use transformation functions must 
+-- correctly handle the cssquery object that this library uses
 function Transformer.parse_xml(self, content)
   self:save_css()
   local result = parse_xml(content)
