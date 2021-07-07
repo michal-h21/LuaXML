@@ -189,17 +189,28 @@ function Transformer.parse_xml(self, content)
   return result
 end
 
+-- make method for load_file function
+function Transformer.load_file(self, filename)
+  self:save_css()
+  local result = load_file(filename)
+  self:restore_css()
+  return result
+end
+
+-- make method for process_dom function
+function Transformer.process_dom(self, dom)
+  self:save_css()
+  local result = process_dom(dom)
+  self:restore_css()
+  return result
+end
   
-
-
+-- return new Transformer object
 local function new()
   local self = setmetatable({}, Transformer)
   self.css = cssquery()
   return self
 end
-
-
-
 
 
 local M = {
