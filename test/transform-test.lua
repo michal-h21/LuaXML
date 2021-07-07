@@ -28,7 +28,7 @@ describe("Transform DOM object", function()
   end)
 end)
 
-describe("selectors support", function()
+describe("Selectors support", function()
   local transformer = transform.new()
   local dom1 = domobject.parse  [[<x>hello <b>world</b></x>]]
   local dom2 = domobject.parse  [[<v>hello <b>world</b></v>]]
@@ -49,3 +49,23 @@ describe("selectors support", function()
 
 end)
 
+describe("Function test", function()
+  local transformer = transform.new()
+  local dom1 = domobject.parse  [[<x>hello <b>world</b></x>]]
+  transformer:add_custom_action("b", function(el) 
+    return "fn: " ..el:get_text()
+  end)
+  it("should support function transformers", function()
+    assert.same("hello fn: world", transformer:process_dom(dom1))
+  end)
+end)
+
+describe("Attribute conversion", function()
+  local transformer = transform.new()
+  local dom1 = domobject.parse  [[<x><b>hello</b> <b style="red">world</b></x>]]
+  transformer:add_action("b", "%s")
+  transformer:add_action("b[style]", "s=@{style} %s")
+  it("should transform attributes", function()
+    assert.same("hello s=red world", transformer:process_dom(dom1))
+  end)
+end)
