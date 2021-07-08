@@ -69,3 +69,17 @@ describe("Attribute conversion", function()
     assert.same("hello s=red world", transformer:process_dom(dom1))
   end)
 end)
+
+describe("Escapes", function()
+  local transformer1 = transform.new()
+  local transformer2 = transform.new()
+  local dom1 = domobject.parse  [[<x>{}&amp;</x>]]
+  -- reset unicodes table in the second object
+  transformer2.unicodes = {}
+  it("should correctly escape special characters", function()
+    assert.same('\\{\\}\\&', transformer1:process_dom(dom1))
+    -- the second object shouldn't escape special characters
+    assert.same('{}&', transformer2:process_dom(dom1))
+  end)
+  
+end)
