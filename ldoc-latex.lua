@@ -51,7 +51,7 @@ return {
       print_module(mod)
       local classes = {}
       for _, item in ipairs(mod.items) do
-        if item.type == 'function' then
+        if item.type == 'function' or item.type == "lfunction" then
           -- move functions to tables corresponding to their classes
           local curr_class = item.section
           if curr_class then
