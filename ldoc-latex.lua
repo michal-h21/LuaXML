@@ -46,6 +46,7 @@ end
 return {
   filter = function (t)
     local modules = {}
+    local class_sequence = {}
     for modid, mod in ipairs(t) do
       -- print basic information about module
       print_module(mod)
@@ -57,11 +58,19 @@ return {
           if curr_class then
             local class = classes[curr_class] or {}
             class[#class+1] = item
+            -- we want to list classes in the order as they appear in the module
+            if not classes[curr_class] then table.insert(class_sequence, curr_class) end
             classes[curr_class] = class
           end
         end
       end
-      for k,v in pairs(classes) do
+      for _,k in ipairs(class_sequence) do
+        local v = classes[k]
+        if k == "lfunction" then
+          k = "Local functions"
+        elseif k == "function" then
+          k = "Functions"
+        end
         -- print class info and functions
         print_class(mod, k,v)
       end
