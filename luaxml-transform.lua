@@ -1,4 +1,8 @@
--- adapted code from https://github.com/michal-h21/luaxml-mathml
+--- XML transformation module for LuaXML
+-- @module luaxml-tranform
+-- @author Michal Hoftich <michal.h21@gmail.com
+--
+-- code originaly comes from from https://github.com/michal-h21/luaxml-mathml
 --
 local domobject = require "luaxml-domobject"
 local cssquery = require "luaxml-cssquery"
@@ -28,6 +32,7 @@ local function match_css(element,csspar)
   -- return function with the highest specificity
   return selectors[1].func
 end
+
 
 local function process_text(text, parameters)
   local parameters = parameters or {}
@@ -158,6 +163,7 @@ local function print_tex(content)
   end
 end
 
+---  @type Transformer
 local Transformer = {}
 Transformer.__index = Transformer
 -- the library uses shared css variable. in order to support multiple transformers,
@@ -166,10 +172,14 @@ Transformer.__index = Transformer
 function Transformer.save_css(self)
   self.old_css = css
   css = self.css
+  --  we must also save unicodes table
+  self.old_unicodes = unicodes
+  unicodes = self.unicodes
 end
 
 function Transformer.restore_css(self)
   css = self.old_css
+  unicodes = self.old_unicodes
 end
 
 function Transformer.add_action(self, selector, template, parameters )
@@ -209,6 +219,8 @@ end
 local function new()
   local self = setmetatable({}, Transformer)
   self.css = cssquery()
+  -- use the default unicodes table that escapes special LaTeX characters
+  self.unicodes = unicodes
   return self
 end
 
