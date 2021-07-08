@@ -155,7 +155,7 @@ local function process_dom(dom)
   return process_tree(dom:root_node())
 end
 
-
+--- print transformed file to PDF using LuaTeX functions
 local function print_tex(content)
   -- we need to replace "\n" characters with calls to tex.sprint
   for s in content:gmatch("([^\n]*)") do
@@ -169,7 +169,7 @@ Transformer.__index = Transformer
 -- the library uses shared css variable. in order to support multiple transformers,
 -- we need to save the original state, set the self.css variable as the global variable
 -- execute library function and then set the original function back
-function Transformer.save_css(self)
+function Transformer:save_css()
   self.old_css = css
   css = self.css
   --  we must also save unicodes table
@@ -177,22 +177,23 @@ function Transformer.save_css(self)
   unicodes = self.unicodes
 end
 
-function Transformer.restore_css(self)
+function Transformer:restore_css()
   css = self.old_css
   unicodes = self.old_unicodes
 end
 
-function Transformer.add_action(self, selector, template, parameters )
+--- 
+function Transformer:add_action(selector, template, parameters )
   add_action(selector, template, parameters, self.css)
 end
 
-function Transformer.add_custom_action(self, selector, fn )
+function Transformer:add_custom_action(selector, fn )
   add_custom_action(selector, fn, self.css)
 end
 
 -- all methods that use transformation functions must 
 -- correctly handle the cssquery object that this library uses
-function Transformer.parse_xml(self, content)
+function Transformer:parse_xml(content)
   self:save_css()
   local result = parse_xml(content)
   self:restore_css()
@@ -200,7 +201,7 @@ function Transformer.parse_xml(self, content)
 end
 
 -- make method for load_file function
-function Transformer.load_file(self, filename)
+function Transformer:load_file(filename)
   self:save_css()
   local result = load_file(filename)
   self:restore_css()
@@ -208,14 +209,15 @@ function Transformer.load_file(self, filename)
 end
 
 -- make method for process_dom function
-function Transformer.process_dom(self, dom)
+function Transformer:process_dom(dom)
   self:save_css()
   local result = process_dom(dom)
   self:restore_css()
   return result
 end
   
--- return new Transformer object
+--- Make new Transformer object
+-- @return Tranformer
 local function new()
   local self = setmetatable({}, Transformer)
   self.css = cssquery()
