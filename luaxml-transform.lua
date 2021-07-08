@@ -199,6 +199,7 @@ end
 --- add a new template
 -- @param selector CSS selector that should be matched
 -- @param template use %s for element's text, and @name to access attribute "name"
+-- @param parameters table with extra parameters
 function Transformer:add_action(selector, template, parameters )
   add_action(selector, template, parameters, self.css)
 end
