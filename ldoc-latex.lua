@@ -22,6 +22,7 @@ end
 
 local function print_class(mod, class, items)
   print_template("\\moduleclass{%s}", class)
+  local items = items or {}
   for _, item in ipairs(items) do
 
     local par = {}
