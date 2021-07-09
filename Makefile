@@ -15,6 +15,7 @@ BUILD_LUAXML = $(BUILD_DIR)/$(name)
 API_DOC = doc/api.tex
 API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua luaxml-transform.lua
 LDOC_FILTER = ldoc-latex.lua
+LDOC = ldoc --all --filter ldoc-latex.filter
 ENTITIES_SOURCE = data/entities.json
 ENTITIES_MODULE = luaxml-namedentities.lua
 
@@ -32,7 +33,9 @@ api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	mkdir -p doc
-	ldoc --all --filter ldoc-latex.filter . >  $(API_DOC)
+	$(LDOC) luaxml-domobject.lua > $(API_DOC)
+	$(LDOC) luaxml-cssquery.lua  >> $(API_DOC)
+	$(LDOC) luaxml-transform.lua >> $(API_DOC)
 
 $(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
 	lua data/jsontolua.lua < $< > $(ENTITIES_MODULE)
