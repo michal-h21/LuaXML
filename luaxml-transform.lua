@@ -143,6 +143,9 @@ end
 
 
 
+--- Transform XML string
+-- @param content String with XML content
+-- @return transformed string
 local function parse_xml(content)
   -- parse XML string and process it
   local dom = domobject.parse(content)
@@ -178,11 +181,28 @@ local function print_tex(content)
   end
 end
 
+--- return nth child element
+-- @param element DOM element to be processed
+-- @param count Number of child element that should be returned
+-- @return DOM object, or nil if it cannot be found
+local function get_child_element(element, count)
+  -- return specified child element 
+  local i = 0
+  for _, el in ipairs(element:get_children()) do
+    -- count elements 
+    if el:is_element() then
+      -- return the desired numbered element
+      i = i + 1
+      if i == count then return el end
+    end
+  end
+end
+
 -- make Transformer objec
 local Transformer 
 
 --- Make new Transformer object
--- @return Tranformer
+-- @return Tranformer object
 local function new()
   local self = setmetatable({}, Transformer)
   self.css = cssquery()
