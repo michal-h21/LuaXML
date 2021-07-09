@@ -58,6 +58,19 @@ describe("Function test", function()
   it("should support function transformers", function()
     assert.same("hello fn: world", transformer:process_dom(dom1))
   end)
+  local dom2 = domobject.parse [[<x><a>world</a><b>hello, </b></x>]]
+  local transformer = transform.new()
+  local get_child_element = transform.get_child_element
+  local process_children = transform.process_children
+  transformer:add_custom_action("x", function(el)
+    local first = process_children(get_child_element(el, 1))
+    local second = process_children(get_child_element(el, 2))
+    return second .. first
+  end)
+  it("should correctly transform children",function()
+    assert.same("hello, world", transformer:process_dom(dom2))
+  end)
+  
 end)
 
 describe("Attribute conversion", function()
@@ -83,3 +96,5 @@ describe("Escapes", function()
   end)
   
 end)
+
+
