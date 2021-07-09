@@ -55,6 +55,7 @@ end
 -- to prevent Lua run-time error
 local process_tree
 
+
 local function process_children(element, parameters)
   -- accumulate text from children elements
   local t = {}
@@ -120,13 +121,20 @@ local actions = {
   
 }
 
--- add more complicated action
+--- Use function to transform selected element
+-- @param selector CSS selector for the matching element
+-- @param fn Function that transforms the selected DOM element.
+-- @param csspar cssquery object. Default is set by the library, so it is not necessary to use.
 local function add_custom_action(selector, fn, csspar)
   local css = csspar or css
   css:add_selector(selector,fn)
 end
 
--- normal actions
+--- Use template to transform selected template
+-- @param selector CSS selector for the matching element
+-- @param template String template
+-- @param parameters Table with extra parameters. Use "verbatim=true" to keep spacing in the processed text.
+-- @param csspar cssquery object. Default is set by the library, so it is not necessary to use.
 local function add_action(selector, template, parameters, csspar)
   local css = csspar or css
   css:add_selector(selector, simple_content(template, parameters))
@@ -144,6 +152,9 @@ local function parse_xml(content)
 end
 
 
+--- Transform XML file
+-- @param filename XML file name
+-- @return transformed string
 local function load_file(filename)
   local f = io.open(filename, "r")
   local content = f:read("*all")
@@ -151,11 +162,15 @@ local function load_file(filename)
   return parse_xml(content)
 end
 
+--- Transform XML DOM object 
+-- @param dom DOM object
+-- @return transformed string
 local function process_dom(dom)
   return process_tree(dom:root_node())
 end
 
 --- print transformed file to PDF using LuaTeX functions
+-- @param content String to be printed 
 local function print_tex(content)
   -- we need to replace "\n" characters with calls to tex.sprint
   for s in content:gmatch("([^\n]*)") do
@@ -234,10 +249,11 @@ function Transformer:process_dom(dom)
 end
   
 
-
+--- @export
 local M = {
   parse_xml = parse_xml,
   process_children = process_children,
+  get_child_element= get_child_element,
   print_tex = print_tex,
   add_action = add_action,
   add_custom_action = add_custom_action,
