@@ -55,7 +55,10 @@ end
 -- to prevent Lua run-time error
 local process_tree
 
-
+--- Transform  DOM element and it's children
+-- @param element DOM element
+-- @param parameters Table with settings
+-- @return Transformed string
 local function process_children(element, parameters)
   -- accumulate text from children elements
   local t = {}
@@ -87,7 +90,11 @@ function process_tree(element)
 end
 
 
--- use template string to place the processed children
+--- Default transforming function. It replaces %s by text content of the
+--  element, and @ {attrname} by value of an attribute
+--  @param s Template string
+--  @param parameters Table with settings
+--  @return transforming function
 local function simple_content(s,parameters)
   return function(element)
     local content = process_children(element,parameters)
@@ -102,19 +109,6 @@ local function simple_content(s,parameters)
 end
 
 
-
-local function get_child_element(element, count)
-  -- return specified child element 
-  local i = 0
-  for _, el in ipairs(element:get_children()) do
-    -- count elements 
-    if el:is_element() then
-      -- return the desired numbered element
-      i = i + 1
-      if i == count then return el end
-    end
-  end
-end
 
 -- actions for particular elements
 local actions = {
@@ -233,18 +227,28 @@ end
 
 --- add a new template
 -- @param selector CSS selector that should be matched
--- @param template use %s for element's text, and @name to access attribute "name"
+-- @param template use %s for element's text, and @ {name} to access attribute "name"
 -- @param parameters table with extra parameters
+-- @see add_action
 function Transformer:add_action(selector, template, parameters )
   add_action(selector, template, parameters, self.css)
 end
 
+--- Use function for transformation
+-- @param selector CSS selector that should be matched
+-- @param fn DOM transforming function
+-- @see add_custom_action
 function Transformer:add_custom_action(selector, fn )
   add_custom_action(selector, fn, self.css)
 end
 
 -- all methods that use transformation functions must 
 -- correctly handle the cssquery object that this library uses
+
+--- Parse XML string
+-- @param content String with XML content
+-- @return transformed string
+-- @see parse_xml
 function Transformer:parse_xml(content)
   self:save_css()
   local result = parse_xml(content)
@@ -253,6 +257,11 @@ function Transformer:parse_xml(content)
 end
 
 -- make method for load_file function
+
+--- Transform XML file
+-- @param filename XML file name
+-- @return transformed string
+-- @see load_file
 function Transformer:load_file(filename)
   self:save_css()
   local result = load_file(filename)
@@ -261,6 +270,11 @@ function Transformer:load_file(filename)
 end
 
 -- make method for process_dom function
+
+--- Transform XML DOM object 
+-- @param dom DOM object
+-- @return transformed string
+-- @see process_dom
 function Transformer:process_dom(dom)
   self:save_css()
   local result = process_dom(dom)
