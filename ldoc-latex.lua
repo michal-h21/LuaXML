@@ -1,12 +1,15 @@
 local function escape(s)
   local escapes = {
     _ = "\\_{}",
-    ["\\"] = "\\backspace{}"
+    ["\\"] = "\\backspace{}",
+    ["%"] = "\\%",
+    ["{"] = "\\{",
+    ["}"] = "\\}",
   }
   -- only process strings
   if type(s) == "string" then
     s = s:gsub("%s+", " ")
-    return s:gsub("([_\\])", function(a) return escapes[a] end)
+    return s:gsub("([_\\%%{}])", function(a) return escapes[a] end)
   end
   return s
 end
