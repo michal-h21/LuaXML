@@ -45,8 +45,11 @@ local function process_text(text, parameters)
     t[#t+1] = unicodes[char] or utf8.char(char)
   end
   local text = table.concat(t)
+  if parameters.collapse_newlines==true then
+    text = text:gsub("\n", " ")
+  end
   -- verbatim can be set in parameters table. it prevent collapsing of spaces. 
-  if not verbatim then
+  if not parameters.verbatim then
     text = text:gsub("(%s%s+)", function(a) return a:sub(1,1) end)
   end
   return text
