@@ -39,7 +39,8 @@ describe("Selectors support", function()
   transformer:add_action("x b", "xb: %s")
   transformer:add_action("v b", "vb: %s")
   transformer:add_action(".hello", "hello: %s")
-  transformer:add_action("#id", "id: %s")
+  -- try the alternative syntax for content
+  transformer:add_action("#id", "id: @<.>")
   it("should support css selectors", function()
     assert.same("hello xb: world", transformer:process_dom(dom1))
     assert.same("hello vb: world", transformer:process_dom(dom2))
@@ -70,6 +71,12 @@ describe("Function test", function()
   it("should correctly transform children",function()
     assert.same("hello, world", transformer:process_dom(dom2))
   end)
+  -- try the new syntax
+  local transformer2 = transform.new()
+  transformer2:add_action("x", "@<2>@<1>")
+  it("should correctly transform children using the @<number> syntax", function()
+    assert.same("hello, world", transformer2:process_dom(dom2))
+  end)
   
 end)
 
@@ -95,6 +102,15 @@ describe("Escapes", function()
     assert.same('{}&', transformer2:process_dom(dom1))
   end)
   
+end)
+
+describe("children selection templates", function()
+  local transformer = transform.new()
+  local dom = domobject.parse "<x><a>hello</a> insignificant <a>world</a></x>"
+  transformer:add_action("x", "@<a>", {separator=", "})
+  it("selects just <a> elements", function()
+    assert.same("hello, world", transformer:process_dom(dom))
+  end)
 end)
 
 

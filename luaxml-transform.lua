@@ -45,6 +45,7 @@ local function process_text(text, parameters)
     t[#t+1] = unicodes[char] or utf8.char(char)
   end
   local text = table.concat(t)
+  -- verbatim can be set in parameters table. it prevent collapsing of spaces. 
   if not verbatim then
     text = text:gsub("(%s%s+)", function(a) return a:sub(1,1) end)
   end
@@ -90,6 +91,24 @@ function process_tree(element)
 end
 
 
+--- return nth child element
+-- @param element DOM element to be processed
+-- @param count Number of child element that should be returned
+-- @return DOM object, or nil if it cannot be found
+local function get_child_element(element, count)
+  -- return specified child element 
+  local i = 0
+  for _, el in ipairs(element:get_children()) do
+    -- count elements 
+    if el:is_element() then
+      -- return the desired numbered element
+      i = i + 1
+      if i == count then return el end
+    end
+  end
+end
+
+
 --- Default transforming function. It replaces %s by text content of the
 --  element, and @ {attrname} by value of an attribute
 --  @param s Template string
@@ -101,9 +120,31 @@ local function simple_content(s,parameters)
     -- process attrubutes
     -- attribute should be marked as @{name}
     local expanded = s:gsub("@{(.-)}", function(name)
-      return process_text(element:get_attribute(name) or "")
+      return process_text(element:get_attribute(name) or "", parameters)
     end)
-    -- 
+    -- process child elements
+    expanded = expanded:gsub("@<(.-)>",function(name)
+      -- @<.> return element's content
+      if name == "." then 
+        return content
+      -- @<1> returns first child element's content
+      elseif name:match("^[0-9]+$") then
+        local child = get_child_element(element, tonumber(name))
+        if child then
+          return process_children(child, parameters)
+        end
+      -- @<CSS selector> returns contents of matched selectors
+      else
+        local t = {}
+        for _, child in ipairs(element:query_selector(name)) do
+          t[#t+1] = process_children(child, parameters)
+        end
+        -- concetanate results, separated by parameters.separator
+        local separator = parameters.separator or ""
+        return table.concat(t, separator)
+      end
+    end)
+     
     return expanded:gsub("%%s", function(a) return content end)
   end
 end
@@ -175,22 +216,6 @@ local function print_tex(content)
   end
 end
 
---- return nth child element
--- @param element DOM element to be processed
--- @param count Number of child element that should be returned
--- @return DOM object, or nil if it cannot be found
-local function get_child_element(element, count)
-  -- return specified child element 
-  local i = 0
-  for _, el in ipairs(element:get_children()) do
-    -- count elements 
-    if el:is_element() then
-      -- return the desired numbered element
-      i = i + 1
-      if i == count then return el end
-    end
-  end
-end
 
 -- make Transformer objec
 local Transformer 
