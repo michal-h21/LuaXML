@@ -120,6 +120,7 @@ end
 local function simple_content(s,parameters)
   return function(element)
     local content = process_children(element,parameters)
+    local parameters = parameters or {}
     -- process attrubutes
     -- attribute should be marked as @{name}
     local expanded = s:gsub("@{(.-)}", function(name)
