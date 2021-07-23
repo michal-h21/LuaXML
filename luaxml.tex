@@ -296,6 +296,7 @@ body:replace_node(oldbody)
 
 
 \section{The \texttt{CssQuery} library}
+\label{sec:cssquery_library}
 
 This library serves mainly as a support for the
 \texttt{DOM\_Object:query\_selector} function. It also supports adding
@@ -389,11 +390,256 @@ on CSS selector templates.
 
 It isn't nearly as powerful as XSLT, but it may suffice for simpler tasks.
 
+\subsection{Basic example}
+
+\begin{verbatim}
+local transform = require "luaxml-transform"
+
+local transformer = transform.new()
+local xml_text = [[<section>hello <b>world</b></section>]]
+
+-- transformatio rules
+transformer:add_action("section", "\\section{@<.>}")
+transformer:add_action("b", "\\textbf{@<.>}")
+
+-- transform and print the result to the document
+local result = transformer:parse_xml(xml_text)
+transform.print_tex("\\verb|" .. result .. "|")
+\end{verbatim}
+\begin{framed}
+\begin{luacode*}
+local transform = require "luaxml-transform"
+
+local transformer = transform.new()
+local xml_text = [[<section>hello <b>world</b></section>]]
+
+-- transformatio rules
+transformer:add_action("section", "\\section{@<.>}")
+transformer:add_action("b", "\\textbf{@<.>}")
+
+-- transform and print the result to the document
+local result = transformer:parse_xml(xml_text)
+transform.print_tex("\\verb|" .. result .. "|")
+\end{luacode*}
+\end{framed}
+
+\subsection{The Transform object }
+
+The \texttt{luaxml-transform} library provides several functions. 
+Most important of them is \verb|new()|. It returns a Transform object,
+that can be used for the transformations. It is possible to transform 
+XML using text templates, or Lua functions. In both cases, actions for
+elements are selected using CSS selectors. If there is no action for 
+an element, it's text content and text from transformed child elements,
+is placed to the output string.
+
+There are two methods for action specification, \verb|add_action| for 
+text templates, and \verb|add_custom_action| for Lua functions.
+
+\subsubsection{Transforming using templates}
+
+Template actions can be added using the \verb|add_action| method:
+
+\begin{verbatim}
+transformer:add_action("CSS selector", "template", {parameters table})
+\end{verbatim}
+
+For details about CSS selectors, see the \texttt{CssQuery} library 
+(see page~\pageref{sec:cssquery_library}). Templates can contain 
+arbitrary text, with special instructions that can insert transformed
+text contents of the element, contents of specific element, or element's
+attributes.
 
 
+\noindent\textbf{Instruction syntax:}
+
+\begin{description}
+  \item[\verb|@\{attribute name\}|] insert value of an attribute
+  \item[\verb|@<.>|] insert transformed content of the element
+  \item[\verb|@<number>|] insert transformed content of the child element
+    selected by it's number in the list of children
+  \item[\verb|@<element name>|] insert transformed content of the named child element
+\end{description}
+
+\noindent\textbf{Parameters}
+
+The parameters table can hold following values:
+
+\begin{description}
+  \item[verbatim] -- by default, spaces are collapsed. This is useful in general, but you may want to 
+    keep spaces, for example in program listings. Set \texttt{verbatim=true} in this case.
+  \item[separator] -- when you select element by names (\verb|@<element name>|), you can use this parameter
+    set the separator between possible multiple instances of the child element.
+\end{description}
+
+\noindent\textbf{Examples:}
+
+\noindent\textbf{Process children}
+
+\begin{verbatim}
+local transformer = transform.new()
+transformer:add_action("a", "@<.>")
+-- ignore element <b>
+transformer:add_action("b", "")
+local result = transformer:parse_xml("<x><a>hello</a><b>, world</b></x>")
+transform.print_tex(result)
+\end{verbatim}
+\begin{framed}
+\begin{luacode*}
+
+local transform = require "luaxml-transform"
+
+local transformer = transform.new()
+transformer:add_action("a", "@<.>")
+-- ignore element <b>
+transformer:add_action("b", "")
+local result = transformer:parse_xml("<x><a>hello</a><b>, world</b></x>")
+transform.print_tex(result)
+\end{luacode*}
+\end{framed}
+
+\noindent\textbf{Select elements by their position}
+
+\begin{verbatim}
+local transformer = transform.new()
+-- swap child elements
+transformer:add_action("x", "@<2>, @<1>")
+local result = transformer:parse_xml("<x><a>world</a>, <b>hello</b></x>")
+transform.print_tex(result)
+\end{verbatim}
+
+\begin{framed}
+\begin{luacode*}
+
+local transform = require "luaxml-transform"
+
+local transformer = transform.new()
+transformer:add_action("x", "@<2>, @<1>")
+local result = transformer:parse_xml("<x><a>world</a>, <b>hello</b></x>")
+transform.print_tex(result)
+\end{luacode*}
+\end{framed}
 
 
+\noindent\textbf{Select elements by name}
+\begin{verbatim}
+local transformer = transform.new()
+transformer:add_action("x", "@<a>")
+local result = transformer:parse_xml("<x><a>hello</a><b>, world</b></x>")
+transform.print_tex(result)
+\end{verbatim}
+\begin{framed}
+\begin{luacode*}
 
+local transform = require "luaxml-transform"
+local transformer = transform.new()
+transformer:add_action("x", "@<a>")
+local result = transformer:parse_xml("<x><a>hello</a><b>, world</b></x>")
+transform.print_tex(result)
+\end{luacode*}
+\end{framed}
+
+\noindent\textbf{Select attributes}
+\begin{verbatim}
+local transformer = transform.new()
+transformer:add_action("b", "\\textbf{@<.>}")
+-- this will select only <b> elements with "style" attribute
+transformer:add_action("b[style]", "\\textcolor{@{style}}{\\textbf{@<.>}}")
+local text = '<x><b>hello</b> <b style="red">world</b></x>'
+local result = transformer:parse_xml(text)
+transform.print_tex(result)
+\end{verbatim}
+\begin{framed}
+\begin{luacode*}
+
+local transform = require "luaxml-transform"
+local transformer = transform.new()
+transformer:add_action("b", "\\textbf{@<.>}")
+-- this will select only <b> elements with "style" attribute
+transformer:add_action("b[style]", "\\textcolor{@{style}}{\\textbf{@<.>}}")
+local text = '<x><b>hello</b> <b style="red">world</b></x>'
+local result = transformer:parse_xml(text)
+transform.print_tex("\\verb|" .. result .. "|")
+\end{luacode*}
+\end{framed}
+
+\subsubsection{Transforming using Lua functions}
+
+You can use Lua functions for more complex transformations where simple templates don't suffice. 
+
+\begin{verbatim}
+transformer:add_custom_action("CSS selector", function)
+\end{verbatim}
+
+
+\noindent\textbf{Example}
+\begin{verbatim}
+local transformer = transform.new()
+local xml_text = "<x><a>world</a><b>hello, </b></x>"
+-- load helper functions
+local get_child_element = transform.get_child_element
+local process_children = transform.process_children
+-- define custom action
+transformer:add_custom_action("x", function(el)
+  -- it basically just swaps child elements, 
+  -- like in the template @<2>@<1>
+  local first = process_children(get_child_element(el, 1))
+  local second = process_children(get_child_element(el, 2))
+  return second .. first
+end)
+local result = transformer:parse_xml(xml_text)
+transform.print_tex(result)
+\end{verbatim}
+
+\begin{framed}
+\begin{luacode*}
+
+local transform = require "luaxml-transform"
+local transformer = transform.new()
+local xml_text = "<x><a>world</a><b>hello, </b></x>"
+-- load helper functions
+local get_child_element = transform.get_child_element
+local process_children = transform.process_children
+-- define custom action
+transformer:add_custom_action("x", function(el)
+  -- it basically just swaps child elements, 
+  -- like in the template @<2>@<1>
+  local first = process_children(get_child_element(el, 1))
+  local second = process_children(get_child_element(el, 2))
+  return second .. first
+end)
+local result = transformer:parse_xml(xml_text)
+transform.print_tex(result)
+\end{luacode*}
+\end{framed}
+
+\subsubsection{Character handling}
+
+You may want to escape certain characters, or replace them with
+\LaTeX\ commands. You can use the \texttt{unicodes} table contained 
+in the Transform object:
+
+
+\begin{verbatim}
+local transformer = transform.new()
+-- you must use the Unicode character code
+transformer.unicodes[124] = "\\textbar"
+local text = '<x>|</x>'
+local result = transformer:parse_xml(text)
+transform.print_tex(result)
+\end{verbatim}
+
+\begin{framed}
+\begin{luacode*}
+local transform = require "luaxml-transform"
+local transformer = transform.new()
+-- you must use the Unicode character code
+transformer.unicodes[124] = "\\textbar"
+local text = '<x>|</x>'
+local result = transformer:parse_xml(text)
+transform.print_tex("\\verb|" .. result .. "|")
+\end{luacode*}
+\end{framed}
 
 
 \section{The API documentation}
