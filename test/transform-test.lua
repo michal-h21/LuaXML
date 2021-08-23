@@ -114,3 +114,12 @@ describe("children selection templates", function()
 end)
 
 
+describe("support pseudo classes", function()
+  local transformer = transform.new()
+  local dom = domobject.parse "<x><a>hello</a>, <a>world</a></x>"
+  transformer:add_action("a:last-child", "last")
+  it("select last child", function()
+    assert.same("hello, last", transformer:process_dom(dom))
+  end)
+end)
+
