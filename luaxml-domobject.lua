@@ -392,6 +392,17 @@ local parse = function(
     return false, msg
   end
 
+  -- restore correct links to parent elements
+  local function fix_parents(el)
+    for k,v in ipairs(el._children or {}) do
+      if v:is_element() then
+        v._parent = el
+        fix_parents(v)
+      end
+    end
+  end
+
+
   --- Add child node to the current node
   function DOM_Object:add_child_node( 
     child, --- element to be inserted as a current node child
@@ -399,6 +410,7 @@ local parse = function(
     )
     local parent = self
     child._parent = parent
+    fix_parents(child)
     if position then
       table.insert(parent._children, position, child)
     else
