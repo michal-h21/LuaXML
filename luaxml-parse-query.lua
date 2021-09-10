@@ -18,10 +18,11 @@ local white = S(" \t\n") ^ 0
 -- luaxml doesn't support XML namespaces and elements must be queried using
 -- dom:query_selector("namespace|element")
 local word = (alphanum + S("_-") + S("|")) ^ 1
+local attr_word = (alphanum + S("_-") + S("|:")) ^ 1
 
 local combinators = S(">~+")
 
-local attr_name = (alphanum + S("_-")) ^ 1
+local attr_name = (alphanum + S("_-:")) ^ 1
 local attr_function = S("~|^$*") ^ 0
 
 local attr_content = C((P(1) - quotes) ^ 1)
@@ -45,7 +46,7 @@ parse_query = function(query)
   local first_of_type = P(":first-of-type") / mark("first-of-type")
   local last = P(":last-child") / mark("last-child")
   local last_of_type = P(":last-of-type") / mark("last-of-type")
-  local attr = P("[") * C(word) * P("]") / mark("attr")
+  local attr = P("[") * C(attr_word) * P("]") / mark("attr")
   local attr_value = P("[") * C(attr_name ) * C(attr_function)* P("=") * quotes * attr_content * quotes * P("]") / mark("attr_value")
   local combinator = C(combinators) / mark("combinator")
   local selector = Ct((any + nth + first + first_of_type + last + last_of_type + tag + cls + id + attr + attr_value + combinator) ^ 1)
