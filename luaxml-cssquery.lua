@@ -46,6 +46,8 @@ local function cssquery()
           specificity = specificity + 100
         elseif key == "tag" then
           specificity = specificity + 1
+        elseif key == "any" then
+          -- * has 0 specificity
         else
           specificity = specificity + 10
         end
