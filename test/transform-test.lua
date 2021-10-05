@@ -123,3 +123,14 @@ describe("support pseudo classes", function()
   end)
 end)
 
+describe("children transformation", function()
+  local transformer = transform.new()
+  local dom = domobject.parse "<mfrac><mrow>a+b</mrow><mfrac><mi>a</mi><mi>b</mi></mfrac></mfrac>"
+  transformer:add_action("mfrac","\\frac{@<1>}{@<2>}")
+  -- transformer:add_action("mfrac","\\frac{@<.>}")
+  it("correctly process child elements", function()  
+    assert.same("\\frac{a+b}{\\frac{a}{b}}",transformer:process_dom(dom))
+  end)
+  
+end)
+
