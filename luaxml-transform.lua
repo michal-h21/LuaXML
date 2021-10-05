@@ -142,7 +142,7 @@ local function simple_content(s,parameters)
       elseif name:match("^[0-9]+$") then
         local child = get_child_element(element, tonumber(name))
         if child then
-          return process_children(child, parameters)
+          return process_tree(child)
         end
       -- @<CSS selector> returns contents of matched selectors
       else
