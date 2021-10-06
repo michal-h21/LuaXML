@@ -41,7 +41,9 @@ local function cssquery()
     local query = query or {}
     local specificity = 0
     for _, item in ipairs(query.query or {}) do
-      for key, value in pairs(item) do
+      for _, t in ipairs(item) do
+        local key = t.key
+      -- for key, value in pairs(item) do
         if key == "id" then
           specificity = specificity + 100
         elseif key == "tag" then
@@ -217,7 +219,7 @@ local function cssquery()
         -- ignore combinators in this function
       else
         if type(value) == "table" then value = table.concat(value, ":") end
-        print("unsupported feature", key, value)
+        self:debug_print("unsupported feature", key, value)
         return false
       end
       -- TODO: Add more cases
@@ -228,7 +230,9 @@ local function cssquery()
     local function test_object(query, el)
       -- test one object in CSS selector
       local matched = {}
-      for key, value in pairs(query) do
+      -- for key, value in pairs(query) do
+      for _, part in ipairs(query) do
+        local key, value = part.key, part.value
         local test =  test_part(key, value, el)
         if test~= true then return false end
         matched[#matched+1] = test
@@ -254,9 +258,10 @@ local function cssquery()
       local selector = query[#query] -- get the last item in selector query
       if not selector then return nil end
       -- detect if this selector is a combinator"
-      if selector and selector.combinator  then
+      -- combinator  object must have only one part, so we can assume that it is in the first part
+      if selector and selector[1].key == "combinator"  then
         -- save the combinator and select next selector from the query  
-        combinator = selector.combinator
+        combinator = selector[1].value
         table.remove(query) -- remove combinator from query
       end
       return combinator
@@ -273,7 +278,7 @@ local function cssquery()
 
     local function match_query(query, el)
       local function match_parent(query, el)
-        -- loop over the whole elemnt three and try to mach the css selector
+        -- loop over the whole element tree and try to mach the css selector
         if el and el:is_element() then
           local query = query or {}
           local object = query[#query]
@@ -356,6 +361,7 @@ local function cssquery()
       for _, part in ipairs(item) do
         local t = {}
         for _, atom in ipairs(part) do
+          
           local key = atom[1]
           local value
           if not atom[3] then
@@ -372,7 +378,7 @@ local function cssquery()
             -- to match namespace:element
             value=value:gsub("|", ":")
           end
-          t[key] =  value
+          t[#t+1] = {key=key,  value=value}
         end
         query[#query + 1] = t
       end
