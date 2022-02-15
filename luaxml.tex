@@ -466,8 +466,8 @@ attributes.
 The parameters table can hold following values:
 
 \begin{description}
-  \item[verbatim] -- by default, spaces are collapsed. This is useful in general, but you may want to 
-    keep spaces, for example in program listings. Set \texttt{verbatim=true} in this case.
+  \item[verbatim] -- used for source code listings and similar texts, that should keep their original formatting. 
+    Special characters are not escaped, so you will want to transform the elements into verbatim or listings environment.
   \item[separator] -- when you select element by names (\verb|@<element name>|), you can use this parameter
     set the separator between possible multiple instances of the child element.
 \end{description}

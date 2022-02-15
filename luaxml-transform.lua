@@ -49,7 +49,11 @@ local function process_text(text, parameters)
   -- process all Unicode characters and find if they should be replaced
   for _, char in utf8.codes(text) do
     -- construct new string with replacements or original char
-    t[#t+1] = unicodes[char] or utf8.char(char)
+    if verbatim then
+      t[#t+1] = utf8.char(char)
+    else
+      t[#t+1] = unicodes[char] or utf8.char(char)
+    end
   end
   local text = table.concat(t)
   if parameters.collapse_newlines==true then
