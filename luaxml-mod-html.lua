@@ -2,19 +2,62 @@
 -- inspired by https://browser.engineering/html.html
 local M = {}
 
-local Text = {}
+-- declare  basic node types
+
+local Root = {
+  _type = "root"
+}
+
+function Root:init()
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+  self.__tostring = function (x) return "_ROOT" end
+  o.children = {}
+  return o
+end
+
+function Root:add_child(node)
+  table.insert(self.children, node)
+end
+
+local Doctype = {
+  _type = "doctype"
+}
+function Doctype:init(text, parent)
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+  self.__tostring = function (x) return "<" .. x.text .. ">" end
+  self.add_child = Root.add_child
+  o.parent = parent
+  o.text = table.concat(text)
+  o.children = {}
+  return o
+end
+
+
+local Text = {
+  _type = "text"
+}
 
 function Text:init(text, parent)
   local o = {}
   setmetatable(o, self)
   self.__index = self
   o.text = text
+  self.__tostring = function (x) return "'" ..  x.text .. "'" end
+  self.add_child = Root.add_child
   o.parent = parent
   o.children = {}
   return o
 end
 
-local Element = {}
+
+
+local Element = {
+  _type = "element"
+}
 
 function Element:init(tag, parent)
   local o = {}
@@ -26,10 +69,13 @@ function Element:init(tag, parent)
   else
     o.tag = tag
   end
+  self.__tostring = function(x) return  "<" .. x.tag .. ">" end
+  self.add_child = Root.add_child
   o.children = {}
   o.parent = parent
   return o
 end
+
 
 
 local HtmlParser = {}
@@ -40,13 +86,21 @@ function HtmlParser:init(body)
   self.__index = self
   o.body = body
   -- self.root = Element:init("", {})
-  o.unfinished = {}
+  o.unfinished = {Root:init()}
   return o
 end
 
 -- use local copies of utf8 functions
 local ucodepoint = utf8.codepoint
 local uchar      = utf8.char
+
+-- declare void elements
+local self_closing_tags_list = {"area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr"}
+ 
+local self_closing_tags = {}
+for _,v in ipairs(self_closing_tags_list) do self_closing_tags[v] = true end
+
 
 function HtmlParser:parse()
   -- 
@@ -72,63 +126,94 @@ function HtmlParser:parse()
   return self:finish()
 end
 
+function HtmlParser:get_parent()
+  -- return parent element
+  return self.unfinished[#self.unfinished]
+end
+
+function HtmlParser:close_element()
+  -- return parent element and remove it from the unfinished list
+  return table.remove(self.unfinished)
+end
+
 function HtmlParser:add_text(text)
   local text = table.concat(text)
-  local parent = self.unfinished[#self.unfinished]
+  local parent = self:get_parent()
   local node = Text:init(text, parent)
-  table.insert(parent.children, node)
-  print("text", text)
+  parent:add_child(node)
+end
+
+function HtmlParser:get_tag(text)
+  local tag = {}
+  for _, x in ipairs(text) do 
+    if x~=" " then
+      tag[#tag+1] = x
+    else
+      break
+    end
+  end
+  return table.concat(tag)
 end
 
 function HtmlParser:add_tag(text)
-  if text[1] == "/" then
+  -- main function for handling various tag types
+  local tag = self:get_tag(text)
+  local first_char = text[1] 
+  if first_char == "/" then
     if #self.unfinished==1 then return nil end
-    local node = table.remove(self.unfinished)
-    print("finishing", node.tag)
-    local parent = self.unfinished[#self.unfinished]
-    table.insert(parent.children, node)
-  else
-    local parent = self.unfinished[#self.unfinished] 
-    -- local text = table.concat(text)
+    local node = self:close_element()
+    local parent = self:get_parent()
+    parent:add_child(node)
+  elseif first_char == "!" then
+    local parent = self:get_parent()
+    local node = Doctype:init(text)
+    parent:add_child(node)
+  elseif text[#text] == "/" then
+    -- self closing tag
+    local parent = self:get_parent()
     local node = Element:init(text, parent)
-    print("opening", node.tag)
+    parent:add_child(node)
+  elseif self_closing_tags[tag] then
+    -- self closing tag
+    local parent = self:get_parent()
+    local node = Element:init(text, parent)
+    parent:add_child(node)
+  else
+    local parent = self:get_parent()
+    local node = Element:init(text, parent)
     table.insert(self.unfinished, node)
   end
 end
 
 function HtmlParser:finish()
+  -- close all unclosed elements
   if #self.unfinished == 0 then
+    -- add implicit html tag
     self:add_tag("html")
   end
   while #self.unfinished > 1 do
-    local node = table.remove(self.unfinished)
-    local parent = self.unfinished[#self.unfinished]
-    print("finishing", node.tag, parent.tag)
-    table.insert(parent.children, node)
+    local node = self:close_element()
+    local parent = self:get_parent()
+    parent:add_child(node)
   end
-  print("root", self.unfinished[1].tag)
-  return table.remove(self.unfinished)
+  -- return root element
+  return self:close_element()
 end
 
-
-function dump(o, count)
-  local count = count or 0
-  if type(o) == 'table' then
-    local s = "\n" .. string.rep("  ", count) .. "{\n"
-    for k,v in pairs(o) do
-      if type(k) ~= 'number' then k = '"'..k..'"' end
-      s = s .. string.rep("  ", count) .. '['..k..'] = ' .. dump(v, count + 1) .. ',\n'
-    end
-    return s .. "\n" .. string.rep("  ", count) .. "}"
-  else
-    return tostring(o)
+-- debugging function
+local function print_tree(node, indent)
+  local indent = indent or 0
+  print(string.rep(" ",indent*2) .. tostring(node))
+  for _, child in ipairs(node.children) do
+    print_tree(child, indent + 1)
   end
 end
 
 
-local p = HtmlParser:init("<html><head></head><body><h1>This is my webpage")
+
+local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage</h1><img src='hello' />")
 local dom = p:parse()
--- print(dump(dom))
+print_tree(dom)
 
 
 
@@ -136,4 +221,5 @@ local dom = p:parse()
 M.Text       = Text
 M.Element    = Element
 M.HtmlParser = HtmlParser
-return M
+M.self_closing_tags = self_closing_tags
+return M 
