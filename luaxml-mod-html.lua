@@ -84,10 +84,16 @@ function HtmlParser:init(body)
   local o ={}
   setmetatable(o, self)
   self.__index = self
-  o.body = body
+  o.body = self:normalize_newlines(body) -- HTML string
+  o.position = 0 -- position in the parsed string
   -- self.root = Element:init("", {})
   o.unfinished = {Root:init()}
   return o
+end
+
+function HtmlParser:normalize_newlines(body)
+  -- we must normalize newlines
+  return body:gsub("\r\n", "\n"):gsub("\r", "\n")
 end
 
 -- use local copies of utf8 functions
@@ -110,6 +116,7 @@ function HtmlParser:parse()
   local start_tag = ucodepoint("<")
   local end_tag   = ucodepoint(">")
   for pos, ucode in utf8.codes(self.body) do
+    self.position = pos
     if ucode == start_tag then
       in_tag = true
       if #text > 0 then self:add_text(text) end
