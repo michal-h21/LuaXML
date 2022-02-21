@@ -2,6 +2,10 @@
 -- inspired by https://browser.engineering/html.html
 local M = {}
 
+-- use local copies of utf8 functions
+local ucodepoint = utf8.codepoint
+local uchar      = utf8.char
+
 -- declare  basic node types
 
 local Root = {
@@ -76,12 +80,38 @@ function Element:init(tag, parent)
   return o
 end
 
+
+
 -- state machine functions
 
+-- each function takes HtmlParser as an argument
 local HtmlStates = {}
 
-HtmlStates.data = function() 
+-- declare codepoints for more efficient 
+local less_than      = ucodepoint("<")
+local greater_than   = ucodepoint(">")
+local amperesand     = ucodepoint("&")
 
+HtmlStates.data = function(parser) 
+  -- this is the default state
+  local codepoint = parser.codepoint
+  if codepoint == less_than then
+    -- start of tag
+    return "tag_open"
+  elseif codepoint  == amperesand then
+    -- we must save the current state 
+    -- what we will return to after entity
+    parser.return_state = "data"
+    return "character_reference" 
+  end
+end
+
+HtmlStates.tag_open = function(parser)
+  -- parse tag contents
+end
+
+HtmlStates.character_reference = function(parser)
+  -- parse HTML entities
 end
 
 
@@ -96,6 +126,7 @@ function HtmlParser:init(body)
   -- self.root = Element:init("", {})
   o.unfinished = {Root:init()}
   o.state = "data"
+  o.return_state = "data"
   return o
 end
 
@@ -103,10 +134,6 @@ function HtmlParser:normalize_newlines(body)
   -- we must normalize newlines
   return body:gsub("\r\n", "\n"):gsub("\r", "\n")
 end
-
--- use local copies of utf8 functions
-local ucodepoint = utf8.codepoint
-local uchar      = utf8.char
 
 -- declare void elements
 local self_closing_tags_list = {"area", "base", "br", "col", "embed", "hr", "img", "input",
@@ -119,33 +146,32 @@ for _,v in ipairs(self_closing_tags_list) do self_closing_tags[v] = true end
 
 
 function HtmlParser:parse()
-  -- 
-  local out = {}
+  -- we assume utf8 input, you must convert it yourself if the source is 
+  -- in a different encoding
   self.text = {}
-  local in_tag = false
   self.state = "data"
   for pos, ucode in utf8.codes(self.body) do
+    -- save buffer info and require the tokenize function
     self.position = pos
     self.codepoint = ucode
     self.character = uchar(ucode)
     self.state = self:tokenize(state)
   end
   local text = self.text
-  if not in_tag and #text > 0 then self:add_text(text) end
+  if #text > 0 then self:add_text(text) end
   return self:finish()
 end
 
 function HtmlParser:tokenize(state)
   local state = state or self.state
   local ucode = self.codepoint
-  local start_tag = ucodepoint("<")
-  local end_tag   = ucodepoint(">")
   local text = self.text
-  if ucode == start_tag then
+  
+  if ucode == less_than then
     state = "in_tag"
     if #text > 0 then self:add_text(text) end
     self.text = {}
-  elseif ucode == end_tag then
+  elseif ucode == greater_than then
     state = "data"
     self:add_tag(text)
     self.text = {}
@@ -153,6 +179,18 @@ function HtmlParser:tokenize(state)
     self.text[#text+1] = uchar(ucode)
   end
   return state
+end
+
+function HtmlParser:emit(token)
+  -- state machine functions should use this function to emit tokens
+  local token_type = token.type
+  if token_type     == "character" then
+    table.insert(self.text, token.char)
+  elseif token_type == "doctype" then
+  elseif token_type == "start_tag" then
+  elseif token_type == "end_tag" then
+  elseif token_type == "comment" then
+  end
 end
 
 function HtmlParser:get_parent()
@@ -240,7 +278,7 @@ end
 
 
 
-local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage</h1><img src='hello' />")
+local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
 local dom = p:parse()
 print_tree(dom)
 
