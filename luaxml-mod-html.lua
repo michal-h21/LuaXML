@@ -76,6 +76,13 @@ function Element:init(tag, parent)
   return o
 end
 
+-- state machine functions
+
+local HtmlStates = {}
+
+HtmlStates.data = function() 
+
+end
 
 
 local HtmlParser = {}
@@ -88,6 +95,7 @@ function HtmlParser:init(body)
   o.position = 0 -- position in the parsed string
   -- self.root = Element:init("", {})
   o.unfinished = {Root:init()}
+  o.state = "data"
   return o
 end
 
@@ -108,29 +116,43 @@ local self_closing_tags = {}
 for _,v in ipairs(self_closing_tags_list) do self_closing_tags[v] = true end
 
 
+
+
 function HtmlParser:parse()
   -- 
   local out = {}
-  local text = {}
+  self.text = {}
   local in_tag = false
-  local start_tag = ucodepoint("<")
-  local end_tag   = ucodepoint(">")
+  self.state = "data"
   for pos, ucode in utf8.codes(self.body) do
     self.position = pos
-    if ucode == start_tag then
-      in_tag = true
-      if #text > 0 then self:add_text(text) end
-      text = {}
-    elseif ucode == end_tag then
-      in_tag = false
-      self:add_tag(text)
-      text = {}
-    else
-      text[#text+1] = uchar(ucode)
-    end
+    self.codepoint = ucode
+    self.character = uchar(ucode)
+    self.state = self:tokenize(state)
   end
+  local text = self.text
   if not in_tag and #text > 0 then self:add_text(text) end
   return self:finish()
+end
+
+function HtmlParser:tokenize(state)
+  local state = state or self.state
+  local ucode = self.codepoint
+  local start_tag = ucodepoint("<")
+  local end_tag   = ucodepoint(">")
+  local text = self.text
+  if ucode == start_tag then
+    state = "in_tag"
+    if #text > 0 then self:add_text(text) end
+    self.text = {}
+  elseif ucode == end_tag then
+    state = "data"
+    self:add_tag(text)
+    self.text = {}
+  else
+    self.text[#text+1] = uchar(ucode)
+  end
+  return state
 end
 
 function HtmlParser:get_parent()
