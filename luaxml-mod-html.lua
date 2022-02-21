@@ -155,7 +155,7 @@ function HtmlParser:parse()
     self.position = pos
     self.codepoint = ucode
     self.character = uchar(ucode)
-    self.state = self:tokenize(state)
+    self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
   end
   local text = self.text
   if #text > 0 then self:add_text(text) end
