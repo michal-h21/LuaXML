@@ -157,8 +157,7 @@ function HtmlParser:parse()
     self.character = uchar(ucode)
     self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
   end
-  local text = self.text
-  if #text > 0 then self:add_text(text) end
+  self:add_text()
   return self:finish()
 end
 
@@ -167,16 +166,12 @@ function HtmlParser:tokenize(state)
   local ucode = self.codepoint
   local text = self.text
 
-  
-  
   if ucode == less_than then
     state = "in_tag"
     if #text > 0 then self:add_text(text) end
-    self.text = {}
   elseif ucode == greater_than then
     state = "data"
     self:add_tag(text)
-    self.text = {}
   else
     self.text[#text+1] = uchar(ucode)
   end
@@ -206,6 +201,10 @@ function HtmlParser:close_element()
 end
 
 function HtmlParser:add_text(text)
+  local text = text
+  if not text then
+    text = self.text
+  end
   if type(text) == "table" then
     if #text > 0 then
       text = table.concat(text)
@@ -216,6 +215,7 @@ function HtmlParser:add_text(text)
     local node = Text:init(text, parent)
     parent:add_child(node)
   end
+  self.text = {}
 end
 
 function HtmlParser:get_tag(text)
@@ -258,6 +258,7 @@ function HtmlParser:add_tag(text)
     local node = Element:init(text, parent)
     table.insert(self.unfinished, node)
   end
+  self.text = {}
 end
 
 function HtmlParser:finish()
