@@ -240,9 +240,30 @@ HtmlStates.before_attribute_name = function(parser)
     -- reconsume in after_attribute_name
     return parser:tokenize("after_attribute_name")
   elseif codepoint == equals then
-
+    -- ToDo: handle https://html.spec.whatwg.org/multipage/parsing.html#parse-error-unexpected-equals-sign-before-attribute-name
+  else
+    -- start new attribute
+    parser:set_token_data("current_attr_name", {})
+    parser:set_token_data("current_attr_value", {})
+    return parser:tokenize("attribute_name")
   end
+end
 
+HtmlStates.attribute_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) 
+     or codepoint == solidus
+     or codepoint == greater_than 
+  then
+    return parser:tokenize("after_attribute_name")
+  elseif codepoint == equals then
+    return "before_attribute_value"
+  elseif is_upper_alpha(codepoint) then
+    local lower = string.lower(uchar(codepoint))
+    parser:append_token_data("current_attr_name", lower)
+  else
+    parser:append_token_data("current_attr_name", uchar(codepoint))
+  end
 end
 
 
@@ -330,6 +351,11 @@ function HtmlParser:append_token_data(name, data)
   if token[name] and type(token[name]) == "table" then
     table.insert(token[name], data)
   end
+end
+
+function HtmlParser:set_token_data(name, data)
+  local token = self.current_token or {}
+  token[name] = data
 end
 
 
