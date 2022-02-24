@@ -91,10 +91,43 @@ local HtmlStates = {}
 local less_than      = ucodepoint("<")
 local greater_than   = ucodepoint(">")
 local amperesand     = ucodepoint("&")
+local exclam         = ucodepoint("!")
+local question       = ucodepoint("?")
+local solidus        = ucodepoint("/")
+local equals         = ucodepoint("=")
+
+local function is_upper_alpha(codepoint)
+  if (64 < codepoint and codepoint < 91) then
+    return true
+  end
+end
+local function is_lower_alpha(codepoint)
+  if (96 < codepoint and codepoint < 123) then 
+    return true
+  end
+end
+
+local function is_alpha(codepoint)
+  -- detect if codepoint is alphanumeric
+  if is_upper_alpha(codepoint) or
+     is_lower_alpha(codepoint) then
+       return true
+  end
+  return false
+end
+
+local function is_space(codepoint) 
+  -- detect space characters
+  if codepoint==0x0009 or codepoint==0x000A or codepoint==0x000C or codepoint==0x0020 then
+    return true
+  end
+  return false
+end
 
 HtmlStates.data = function(parser) 
   -- this is the default state
   local codepoint = parser.codepoint
+  print("codepoint", parser.codepoint)
   if codepoint == less_than then
     -- start of tag
     return "tag_open"
@@ -104,14 +137,112 @@ HtmlStates.data = function(parser)
     parser.return_state = "data"
     return "character_reference" 
   end
+  return "data"
 end
 
 HtmlStates.tag_open = function(parser)
   -- parse tag contents
+  local codepoint = parser.codepoint
+  if codepoint == exclam then
+    return "markup_declaration_open"
+  elseif codepoint == solidus then
+    return "end_tag_open"
+  elseif codepoint == question then
+    return "bogus_comment"
+  elseif is_alpha(codepoint) then
+    local data = {
+      name = {},
+      attr = {},
+      current_attr_name = {},
+      current_attr_value = {},
+      self_closing = false
+    }
+    parser:start_token("start_tag", data)
+    return parser:tokenize("tag_name")
+  end
 end
 
 HtmlStates.character_reference = function(parser)
   -- parse HTML entities
+end
+
+HtmlStates.markup_declaration_open = function(parser)
+  -- started by <!
+end
+
+HtmlStates.end_tag_open = function(parser)
+  local codepoint = parser.codepoint
+  if is_alpha(codepoint) then
+    local data = {
+      name = {}
+    }
+    parser:start_token("end_tag", data)
+    return parser:tokenize("tag_name")
+  elseif codepoint == greater_than then
+    return "data"
+  else
+    data = {
+      data = {}
+    }
+    parser:start_token("comment", data)
+    return parser:tokenize("bogus_comment")
+  end
+end
+
+HtmlStates.bogus_comment = function(parser)
+  -- started by <?
+  local codepoint = parser.codepoint
+  if codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else
+    parser:append_token_data("data", uchar(codepoint))
+  end
+end
+
+HtmlStates.tag_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then 
+    return "before_attribute_name"
+  elseif codepoint == solidus then
+    return "self_closing_tag"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif is_upper_alpha(codepoint) then
+    local lower = string.lower(uchar(codepoint))
+    parser:append_token_data("name", lower)
+  else
+    local char = uchar(codepoint)
+    parser:append_token_data("name", char)
+  end
+  return "tag_name"
+
+end
+
+HtmlStates.self_closing_tag = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == greater_than then
+    parser.current_token.self_closing = true
+    return "data"
+  else
+    return parser:tokenize("before_attribute_name")
+  end
+end
+
+
+HtmlStates.before_attribute_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    -- ignore spacing
+    return "before_attribute_name"
+  elseif codepoint == solidus or codepoint == greater_than then
+    -- reconsume in after_attribute_name
+    return parser:tokenize("after_attribute_name")
+  elseif codepoint == equals then
+
+  end
+
 end
 
 
@@ -125,8 +256,10 @@ function HtmlParser:init(body)
   o.position = 0 -- position in the parsed string
   -- self.root = Element:init("", {})
   o.unfinished = {Root:init()}
-  o.state = "data"
-  o.return_state = "data"
+  o.default_state = "data"
+  o.state = o.default_state
+  o.return_state = o.default_state
+  o.current_token = {type="start"}
   return o
 end
 
@@ -149,7 +282,7 @@ function HtmlParser:parse()
   -- we assume utf8 input, you must convert it yourself if the source is 
   -- in a different encoding
   self.text = {}
-  self.state = "data"
+  self.state = self.default_state
   for pos, ucode in utf8.codes(self.body) do
     -- save buffer info and require the tokenize function
     self.position = pos
@@ -167,27 +300,55 @@ function HtmlParser:tokenize(state)
   local text = self.text
 
   if ucode == less_than then
-    state = "in_tag"
-    if #text > 0 then self:add_text(text) end
+    -- state = "in_tag"
+     self:add_text(text) 
   elseif ucode == greater_than then
-    state = "data"
+    -- state = "data"
     self:add_tag(text)
   else
     self.text[#text+1] = uchar(ucode)
   end
-  return state
+  -- execute state machine object and return new state
+  local fn = HtmlStates[state] or function(parser) return self.default_state end
+  local newstate =  fn(self)
+  print("newstate", newstate, state, uchar(ucode))
+  return newstate
 end
+
+function HtmlParser:start_token(typ, data)
+  -- emit the previous token
+  self:emit()
+  data.type = typ
+  self.current_token = data
+end
+
+
+
+function HtmlParser:append_token_data(name, data)
+  -- append data to the current token
+  local token = self.current_token or {}
+  if token[name] and type(token[name]) == "table" then
+    table.insert(token[name], data)
+  end
+end
+
 
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
+  local token = token or self.current_token
   local token_type = token.type
   if token_type     == "character" then
     table.insert(self.text, token.char)
   elseif token_type == "doctype" then
   elseif token_type == "start_tag" then
+    print("Emit start tag", table.concat(token.name))
   elseif token_type == "end_tag" then
+    print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
+  elseif token_type == "empty" then
+
   end
+  self.current_token = {type="empty"}
 end
 
 function HtmlParser:get_parent()
@@ -210,7 +371,7 @@ function HtmlParser:add_text(text)
       text = table.concat(text)
     end
   end
-  if type(text) == "string" then
+  if type(text) == "string" and text~="" then
     local parent = self:get_parent()
     local node = Text:init(text, parent)
     parent:add_child(node)
@@ -287,7 +448,8 @@ end
 
 
 
-local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
+-- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
+local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
 local dom = p:parse()
 print_tree(dom)
 
