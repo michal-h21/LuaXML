@@ -87,7 +87,7 @@ end
 -- each function takes HtmlParser as an argument
 local HtmlStates = {}
 
--- declare codepoints for more efficient 
+-- declare codepoints for more efficient processing
 local less_than      = ucodepoint("<")
 local greater_than   = ucodepoint(">")
 local amperesand     = ucodepoint("&")
@@ -95,6 +95,8 @@ local exclam         = ucodepoint("!")
 local question       = ucodepoint("?")
 local solidus        = ucodepoint("/")
 local equals         = ucodepoint("=")
+local quoting        = ucodepoint('"')
+local apostrophe     = ucodepoint("'")
 
 local function is_upper_alpha(codepoint)
   if (64 < codepoint and codepoint < 91) then
@@ -197,6 +199,7 @@ HtmlStates.bogus_comment = function(parser)
     return "data"
   else
     parser:append_token_data("data", uchar(codepoint))
+    return "bogus_comment"
   end
 end
 
@@ -243,8 +246,7 @@ HtmlStates.before_attribute_name = function(parser)
     -- ToDo: handle https://html.spec.whatwg.org/multipage/parsing.html#parse-error-unexpected-equals-sign-before-attribute-name
   else
     -- start new attribute
-    parser:set_token_data("current_attr_name", {})
-    parser:set_token_data("current_attr_value", {})
+    parser:start_attribute()
     return parser:tokenize("attribute_name")
   end
 end
@@ -259,13 +261,104 @@ HtmlStates.attribute_name = function(parser)
   elseif codepoint == equals then
     return "before_attribute_value"
   elseif is_upper_alpha(codepoint) then
+    -- lowercase attribute names
     local lower = string.lower(uchar(codepoint))
     parser:append_token_data("current_attr_name", lower)
+    return "attribute_name"
   else
     parser:append_token_data("current_attr_name", uchar(codepoint))
+    return "attribute_name"
   end
 end
 
+HtmlStates.after_attribute_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "after_attribute_name"
+  elseif codepoint == equals then
+    return "before_attribute_value"
+  elseif codepoint == solidus then
+    return "self_closing tag"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else
+    parser:start_attribute()
+    return parser:tokenize("attribute_name")
+  end
+end
+
+HtmlStates.before_attribute_value = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "before_attribute_value" 
+  elseif codepoint == quoting then
+    return "attribute_value_quoting"
+  elseif codepoint == apostrophe then
+    return "attribute_value_apostrophe"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else
+    return  parser:tokenize("attribute_value_unquoted")
+  end
+end
+
+HtmlStates.attribute_value_quoting = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == quoting then
+    return "after_attribute_value_quoting"
+  elseif codepoint == amperesand then
+    parser.return_state = "attribute_value_quoting"
+    return "character_reference"
+  else
+    parser:append_token_data("current_attr_value", uchar(codepoint))
+    return "attribute_value_quoting"
+  end
+end
+
+HtmlStates.attribute_value_apostrophe = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == apostrophe then
+    return "after_attribute_value_quoting"
+  elseif codepoint == amperesand then
+    parser.return_state = "attribute_value_apostrophe"
+    return "character_reference"
+  else
+    parser:append_token_data("current_attr_value", uchar(codepoint))
+    return "attribute_value_apostrophe"
+  end
+end
+
+HtmlStates.attribute_value_unquoted = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "before_attribute_name"
+  elseif codepoint == amperesand then
+    parser.return_state = "attribute_value_unquoted"
+    return "character_reference"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else
+    parser:append_token_data("current_attr_value", uchar(codepoint))
+    return "attribute_value_unquoted"
+  end
+end
+
+HtmlStates.after_attribute_value_quoting = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "before_attribute_name"
+  elseif codepoint == solidus then
+    return "self_closing_tag"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else 
+    return parser:tokenize("before_attribute_name")
+  end
+end
 
 local HtmlParser = {}
 
@@ -358,16 +451,33 @@ function HtmlParser:set_token_data(name, data)
   token[name] = data
 end
 
+function HtmlParser:start_attribute()
+  local token = self.current_token or {}
+  if token.type == "start_tag" then
+    local attr_name = table.concat(token.current_attr_name)
+    local attr_value = table.concat(token.current_attr_value) or ""
+    if attr_name ~= "" then
+      token.attr[attr_name] = attr_value
+      print("saving attribute", attr_name, attr_value)
+    end
+    self:set_token_data("current_attr_name", {})
+    self:set_token_data("current_attr_value", {})
+  end
+end
+
 
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
   local token = token or self.current_token
+  print("Emit", token.type)
   local token_type = token.type
   if token_type     == "character" then
     table.insert(self.text, token.char)
   elseif token_type == "doctype" then
   elseif token_type == "start_tag" then
+    self:start_attribute()
     print("Emit start tag", table.concat(token.name))
+    -- save last attribute
   elseif token_type == "end_tag" then
     print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
@@ -475,7 +585,8 @@ end
 
 
 -- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
-local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
+-- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
+local p = HtmlParser:init("<img src='hello' alt=\"sample hello\" id=image />")
 local dom = p:parse()
 print_tree(dom)
 
