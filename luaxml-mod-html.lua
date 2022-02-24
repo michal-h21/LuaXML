@@ -227,6 +227,7 @@ HtmlStates.self_closing_tag = function(parser)
   local codepoint = parser.codepoint
   if codepoint == greater_than then
     parser.current_token.self_closing = true
+    parser:emit()
     return "data"
   else
     return parser:tokenize("before_attribute_name")
@@ -278,7 +279,7 @@ HtmlStates.after_attribute_name = function(parser)
   elseif codepoint == equals then
     return "before_attribute_value"
   elseif codepoint == solidus then
-    return "self_closing tag"
+    return "self_closing_tag"
   elseif codepoint == greater_than then
     parser:emit()
     return "data"
