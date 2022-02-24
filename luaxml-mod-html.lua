@@ -166,6 +166,8 @@ function HtmlParser:tokenize(state)
   local state = state or self.state
   local ucode = self.codepoint
   local text = self.text
+
+  
   
   if ucode == less_than then
     state = "in_tag"
@@ -204,10 +206,16 @@ function HtmlParser:close_element()
 end
 
 function HtmlParser:add_text(text)
-  local text = table.concat(text)
-  local parent = self:get_parent()
-  local node = Text:init(text, parent)
-  parent:add_child(node)
+  if type(text) == "table" then
+    if #text > 0 then
+      text = table.concat(text)
+    end
+  end
+  if type(text) == "string" then
+    local parent = self:get_parent()
+    local node = Text:init(text, parent)
+    parent:add_child(node)
+  end
 end
 
 function HtmlParser:get_tag(text)
