@@ -73,14 +73,34 @@ function Element:init(tag, parent)
   else
     o.tag = tag
   end
-  self.__tostring = function(x) return  "<" .. x.tag .. ">" end
+  self.__tostring = function(x) 
+    local attr = {}
+    for _, el in ipairs(x.attr) do 
+      -- handle attributes
+      local value
+      if el.value:match('"') then
+        value = "'" .. el.value .. "'"
+      else
+        value = '"' .. el.value .. '"'
+      end
+      attr[#attr+1] =  el.name .. "=" .. value
+    end
+    local closing = ">"
+    if x.self_closing then
+      closing = " />"
+    end
+    if #attr > 0 then
+      return "<" .. x.tag .. " " .. table.concat(attr, " ") .. closing 
+    else
+      return "<" .. x.tag .. closing
+    end
+  end
   self.add_child = Root.add_child
   o.children = {}
+  o.attr     = {}
   o.parent = parent
   return o
 end
-
-
 
 -- state machine functions
 
@@ -166,10 +186,11 @@ HtmlStates.tag_open = function(parser)
     parser:start_token("start_tag", data)
     return parser:tokenize("tag_name")
   else
-    -- emit < and reconsume current character as data
+    -- invalid tag
+    -- emit "<" and reconsume current character as data
     local data = {char="<"}
     parser:start_token("character", data)
-    -- parser:emit()
+    parser:emit()
     return parser:tokenize("data")
   end
 end
@@ -426,10 +447,10 @@ function HtmlParser:tokenize(state)
 
   if ucode == less_than then
     -- state = "in_tag"
-     self:add_text(text) 
+     -- self:add_text(text) 
   elseif ucode == greater_than then
     -- state = "data"
-    self:add_tag(text)
+    -- self:add_tag(text)
   elseif self.position ~= self.last_position then
     -- self.text[#text+1] = uchar(ucode)
   end
@@ -463,20 +484,6 @@ function HtmlParser:set_token_data(name, data)
   token[name] = data
 end
 
-function HtmlParser:start_attribute()
-  local token = self.current_token or {}
-  if token.type == "start_tag" then
-    local attr_name = table.concat(token.current_attr_name)
-    local attr_value = table.concat(token.current_attr_value) or ""
-    if attr_name ~= "" then
-      token.attr[attr_name] = attr_value
-      print("saving attribute", attr_name, attr_value)
-    end
-    self:set_token_data("current_attr_name", {})
-    self:set_token_data("current_attr_value", {})
-  end
-end
-
 
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
@@ -486,13 +493,18 @@ function HtmlParser:emit(token)
   if token_type     == "character" then
     table.insert(self.text, token.char)
   elseif token_type == "doctype" then
+    self:add_text()
   elseif token_type == "start_tag" then
-    self:start_attribute()
+    self:add_text()
+    -- self:start_attribute()
+    self:start_tag()
     print("Emit start tag", table.concat(token.name))
     -- save last attribute
   elseif token_type == "end_tag" then
+    self:add_text()
     print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
+    self:start_attribute()
   elseif token_type == "empty" then
 
   end
@@ -510,6 +522,7 @@ function HtmlParser:close_element()
 end
 
 function HtmlParser:add_text(text)
+  -- process current text node
   local text = text
   if not text then
     text = self.text
@@ -538,6 +551,40 @@ function HtmlParser:get_tag(text)
   end
   return table.concat(tag)
 end
+
+function HtmlParser:start_attribute()
+  local token = self.current_token or {}
+  if token.type == "start_tag" then
+    local attr_name = table.concat(token.current_attr_name)
+    local attr_value = table.concat(token.current_attr_value) or ""
+    if attr_name ~= "" then
+      -- token.attr[attr_name] = attr_value
+      table.insert(token.attr, {name = attr_name, value = attr_value})
+      print("saving attribute", attr_name, attr_value)
+    end
+    self:set_token_data("current_attr_name", {})
+    self:set_token_data("current_attr_value", {})
+  end
+end
+
+function HtmlParser:start_tag()
+  local token = self.current_token
+  if token.type == "start_tag" then
+    -- close all currently opened attributes
+    self:start_attribute()
+    local name = table.concat(token.name)
+    local parent = self:get_parent()
+    local node = Element:init(name, parent)
+    node.attr = token.attr
+    node.self_closing = token.self_closing
+    if token.self_closing or self_closing_tags[name] then
+      parent:add_child(node)
+    else
+      table.insert(self.unfinished, node)
+    end
+  end
+end
+
 
 function HtmlParser:add_tag(text)
   -- main function for handling various tag types
@@ -598,8 +645,8 @@ end
 
 -- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
 -- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
--- local p = HtmlParser:init("Hello <čau> text, hello <img src='hello' alt=\"sample <worldik> hello\" id=image title=<!this-comment /> image")
-local p = HtmlParser:init("Hello <čau> text")
+local p = HtmlParser:init("Hello <čau> text, hello <img src='hello \"quotes\"' alt=\"sample <worldik> 'hello'\" id=image title=<!this-comment /> image")
+-- local p = HtmlParser:init("<i>Hello <čau> text</i>")
 local dom = p:parse()
 print_tree(dom)
 
