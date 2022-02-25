@@ -138,6 +138,10 @@ HtmlStates.data = function(parser)
     -- what we will return to after entity
     parser.return_state = "data"
     return "character_reference" 
+  else
+    local data = {char = uchar(codepoint)}
+    parser:start_token("character", data)
+    parser:emit()
   end
   return "data"
 end
@@ -161,6 +165,12 @@ HtmlStates.tag_open = function(parser)
     }
     parser:start_token("start_tag", data)
     return parser:tokenize("tag_name")
+  else
+    -- emit < and reconsume current character as data
+    local data = {char="<"}
+    parser:start_token("character", data)
+    -- parser:emit()
+    return parser:tokenize("data")
   end
 end
 
@@ -421,7 +431,7 @@ function HtmlParser:tokenize(state)
     -- state = "data"
     self:add_tag(text)
   elseif self.position ~= self.last_position then
-    self.text[#text+1] = uchar(ucode)
+    -- self.text[#text+1] = uchar(ucode)
   end
   self.last_position = self.position
   -- execute state machine object and return new state
@@ -588,7 +598,8 @@ end
 
 -- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
 -- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
-local p = HtmlParser:init("<img src='hello' alt=\"sample hello\" id=image />")
+-- local p = HtmlParser:init("Hello <čau> text, hello <img src='hello' alt=\"sample <worldik> hello\" id=image title=<!this-comment /> image")
+local p = HtmlParser:init("Hello <čau> text")
 local dom = p:parse()
 print_tree(dom)
 
