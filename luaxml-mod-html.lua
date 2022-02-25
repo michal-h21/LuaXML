@@ -7,6 +7,49 @@ local M = {}
 local ucodepoint = utf8.codepoint
 local uchar      = utf8.char
 
+-- we must make search tree for named entities, as their support 
+-- is quite messy
+local named_entities = require "luaxml-namedentities"
+
+local entity_tree = {children = {}}
+
+local function update_tree(tree, char)
+  local children = tree.children or {}
+  local current = children[char] or {}
+  children[char] = current
+  tree.children = children
+  return current
+end
+
+-- loop over named entities and update tree
+for entity, char in pairs(named_entities) do
+  local tree = entity_tree
+  for char in entity:gmatch(".") do
+    tree = update_tree(tree,char)
+  end
+  tree.entity = entity
+  tree.char   = char
+end
+
+local function print_tree(tree, indent)
+  local indent = indent or 0
+  local xxx = string.rep("  ", indent)
+  if tree.children then
+    for char, sub in pairs(tree.children) do
+      if char == "char" then
+        print(xxx .. " = " .. sub)
+      else
+        print(xxx .. char)
+        print_tree(sub, indent+1)
+      end
+    end
+  else
+    print(xxx .. (tree.char or ".novalue"))
+  end
+end
+
+
+
 -- declare  basic node types
 
 local Root = {
@@ -139,6 +182,17 @@ local function is_alpha(codepoint)
   return false
 end
 
+
+local function is_numeric(codepoint)
+  if 47 < codepoint and codepoint < 58 then
+    return true
+  end
+end
+
+local function is_alphanumeric(codepoint)
+  return is_alpha(codepoint) or is_numeric(codepoint)
+end
+
 local function is_space(codepoint) 
   -- detect space characters
   if codepoint==0x0009 or codepoint==0x000A or codepoint==0x000C or codepoint==0x0020 then
@@ -146,6 +200,7 @@ local function is_space(codepoint)
   end
   return false
 end
+
 
 HtmlStates.data = function(parser) 
   -- this is the default state
@@ -198,6 +253,25 @@ end
 
 HtmlStates.character_reference = function(parser)
   -- parse HTML entities
+  -- initialize temp buffer
+  parser.temp_buffer = {"&"}
+  local codepoint = parser.codepoint
+  if is_alphanumeric(codepoint) then
+    return parser:tokenize("named_character_reference")
+  elseif codepoint == numbersign then
+    table.insert(parser.temp_buffer, uchar(codepoint))
+    return "numeric_character_reference"
+  else
+    parser:flush_temp_buffer()
+    return parser.return_state
+  end
+
+end
+
+HtmlStates.named_character_reference = function(parser)
+end
+
+HtmlStates.numeric_character_reference = function(parser)
 end
 
 HtmlStates.markup_declaration_open = function(parser)
@@ -398,15 +472,15 @@ local HtmlParser = {}
 function HtmlParser:init(body)
   local o ={}
   setmetatable(o, self)
-  self.__index = self
-  o.body = self:normalize_newlines(body) -- HTML string
-  o.position = 0 -- position in the parsed string
-  -- self.root = Element:init("", {})
-  o.unfinished = {Root:init()}
-  o.default_state = "data"
-  o.state = o.default_state
-  o.return_state = o.default_state
-  o.current_token = {type="start"}
+  self.__index    = self
+  o.body          = self:normalize_newlines(body) -- HTML string
+  o.position      = 0                -- position in the parsed string
+  o.unfinished    = {Root:init()}    -- insert Root node into the list of opened elements
+  o.default_state = "data"           -- default state machine state
+  o.state         = o.default_state  -- working state of the machine
+  o.return_state  = o.default_state  -- special state set by entities parsing
+  o.temp_buffer   = {}               -- keep temporary data
+  o.current_token = {type="start"}   -- currently processed token
   return o
 end
 
@@ -485,6 +559,23 @@ function HtmlParser:set_token_data(name, data)
   token[name] = data
 end
 
+function HtmlParser:flush_temp_buffer()
+  -- write stuff from the temp buffer back to the document
+  local token = self.current_token
+  if token.type == "start_tag" then
+    -- in start tag, entities can be only in attribute value
+    for _, char in ipairs(self.temp_buffer) do
+      table.insert(token.current_attr_value, char)
+    end
+  elseif self.return_state == "data" then
+    -- handle entities in text
+    for _, char in ipairs(self.temp_buffer) do
+      self:start_token("character", {char=char})
+      self:emit()
+    end
+  end
+  self.temp_buffer = {}
+end
 
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
@@ -667,8 +758,6 @@ local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=devi
 -- local p = HtmlParser:init("<i>Hello <čau> text</i>")
 local dom = p:parse()
 print_tree(dom)
-
-
 
 -- 
 M.Text       = Text
