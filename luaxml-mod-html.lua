@@ -1,5 +1,6 @@
 -- HTML parser
 -- inspired by https://browser.engineering/html.html
+-- but then redone using https://html.spec.whatwg.org/multipage/parsing.html
 local M = {}
 
 -- use local copies of utf8 functions
@@ -502,6 +503,7 @@ function HtmlParser:emit(token)
     -- save last attribute
   elseif token_type == "end_tag" then
     self:add_text()
+    self:end_tag()
     print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
     self:start_attribute()
@@ -572,21 +574,37 @@ function HtmlParser:start_tag()
   if token.type == "start_tag" then
     -- close all currently opened attributes
     self:start_attribute()
+    -- initiate Element object, pass attributes and info about self_closing
     local name = table.concat(token.name)
     local parent = self:get_parent()
     local node = Element:init(name, parent)
     node.attr = token.attr
     node.self_closing = token.self_closing
-    if token.self_closing or self_closing_tags[name] then
+    -- 
+    if token.self_closing        -- <img />
+      or self_closing_tags[name] -- void elements
+    then
       parent:add_child(node)
     else
+      -- add to the unfinished list
       table.insert(self.unfinished, node)
     end
   end
 end
 
+function HtmlParser:end_tag()
+  -- close current opened element
+  local token = self.current_token
+  if token.type == "end_tag" then
+    if #self.unfinished==1 then return nil end
+    local node = self:close_element()
+    local parent = self:get_parent()
+    parent:add_child(node)
+  end
+end
 
 function HtmlParser:add_tag(text)
+  -- this code is obsolete, it is remainder from the older code
   -- main function for handling various tag types
   local tag = self:get_tag(text)
   local first_char = text[1] 
@@ -644,8 +662,8 @@ end
 
 
 -- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
--- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
-local p = HtmlParser:init("Hello <čau> text, hello <img src='hello \"quotes\"' alt=\"sample <worldik> 'hello'\" id=image title=<!this-comment /> image")
+local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
+-- local p = HtmlParser:init("Hello <čau> text, hello <img src='hello \"quotes\"' alt=\"sample <worldik> 'hello'\" id=image title=<!this-comment /> image")
 -- local p = HtmlParser:init("<i>Hello <čau> text</i>")
 local dom = p:parse()
 print_tree(dom)
@@ -656,5 +674,6 @@ print_tree(dom)
 M.Text       = Text
 M.Element    = Element
 M.HtmlParser = HtmlParser
-M.self_closing_tags = self_closing_tags
+M.HtmlStates = HtmlStates -- table with functions for particular parser states
+M.self_closing_tags = self_closing_tags -- list of void elements
 return M 
