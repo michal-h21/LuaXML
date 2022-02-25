@@ -420,9 +420,10 @@ function HtmlParser:tokenize(state)
   elseif ucode == greater_than then
     -- state = "data"
     self:add_tag(text)
-  else
+  elseif self.position ~= self.last_position then
     self.text[#text+1] = uchar(ucode)
   end
+  self.last_position = self.position
   -- execute state machine object and return new state
   local fn = HtmlStates[state] or function(parser) return self.default_state end
   local newstate =  fn(self)
