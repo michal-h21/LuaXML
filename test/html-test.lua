@@ -60,6 +60,9 @@ describe("Test attribute parsing", function()
  it("Should handle funky comments", function()
    local first = get_first_element("<p title=<!this-comment>Test 2</p>")
    assert.same(first.attr[1].value, "<!this-comment")
+   local first = get_first_element("<p title='hello>world'>")
+   assert.same(first.attr[1].value, "hello>world")
+
  end)
 
 end)
