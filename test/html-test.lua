@@ -31,6 +31,7 @@ describe("Basic features", function()
   local first = get_first_element('<p title="<!-- this is a comment-->">Test 1</p>')
   it("Element should be table", function()
     assert.same(type(first), "table")
+    assert.same(first._type, "element")
   end)
   it("tostring should serialize element to HTML tag", function()
    assert.same(tostring(first), '<p title="<!-- this is a comment-->">')
@@ -40,8 +41,11 @@ describe("Basic features", function()
    -- this img is not self closing
    assert.same(tostring(doublequotes), '<img alt="hello \'world\'">')
  end)
-  
-
+ it("shouldn't parse elements starting with nonalpha characters", function()
+   local cau = get_first_element("<čau>")
+   assert.same(cau._type, "text")
+   assert.same(cau.text, "<čau>")
+ end)
 end)
 
 
@@ -59,6 +63,8 @@ describe("Test attribute parsing", function()
  end)
 
 end)
+
+
 
 
 -- local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
