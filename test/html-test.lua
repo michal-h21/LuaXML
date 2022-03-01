@@ -99,6 +99,8 @@ describe("Test entities", function()
     -- just return & 
     local seventh = tostring(get_first_element("<img alt='hello & world'>"))
     assert.same(seventh, '<img alt="hello & world">')
+    local notit = tostring(get_first_element("I'm &notit; I tell you"))
+    print(notit)
   end)
 end)
 
