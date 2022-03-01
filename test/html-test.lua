@@ -67,6 +67,41 @@ describe("Test attribute parsing", function()
 
 end)
 
+describe("Test entities", function()
+  it("Should find named entities", function()
+    local amp = html.search_entity_tree {"a","m","p"}
+    assert.same(type(amp), "table")
+    assert.same(amp.char, "&")
+    -- this entity doesn't exist
+    local random = html.search_entity_tree {"r", "a", "n", "d", "o","m"}
+    assert.same(type(random), "nil")
+  end)
+  it("Should support named entites", function()
+    -- support named entites
+    local first  = tostring(get_first_element("Hello &lt; world"))
+    assert.same(first, "'Hello < world'")
+    -- return unknown named entites as text
+    local second = tostring(get_first_element("Hello &nonexistent; world"))
+    assert.same(second, "'Hello &nonexistent; world'")
+    -- match partial named entites
+    -- &amp is translated to &, rest is returend as text
+    local third  = tostring(get_first_element("hello &amperesand; world"))
+    assert.same(third, "'hello &eresand; world'")
+    -- in attribute values, &amp isn't matched 
+    local fourth = tostring(get_first_element("<img alt='hello &amperesand; world'>"))
+    assert.same(fourth, '<img alt="hello &amperesand; world">')
+    -- but &amp; is
+    local fifth  = tostring(get_first_element("<img alt='hello &amp; world'>"))
+    assert.same(fifth, '<img alt="hello & world">')
+    -- and &amp should be too
+    local sixth  = tostring(get_first_element("<img alt='hello &amp world'>"))
+    assert.same(sixth, '<img alt="hello & world">')
+    -- just return & 
+    local seventh = tostring(get_first_element("<img alt='hello & world'>"))
+    assert.same(seventh, '<img alt="hello & world">')
+  end)
+end)
+
 
 
 

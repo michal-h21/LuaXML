@@ -31,23 +31,20 @@ for entity, char in pairs(named_entities) do
   tree.char   = char
 end
 
-local function print_tree(tree, indent)
-  local indent = indent or 0
-  local xxx = string.rep("  ", indent)
-  if tree.children then
-    for char, sub in pairs(tree.children) do
-      if char == "char" then
-        print(xxx .. " = " .. sub)
-      else
-        print(xxx .. char)
-        print_tree(sub, indent+1)
-      end
+local function search_entity_tree(tbl) 
+  -- get named entity for the list of characters
+  local tree = entity_tree
+  for _,char in ipairs(tbl) do 
+    if tree.children then
+      tree = tree.children[char]
+      if not tree then return nil end
+    else
+      return nil
     end
-  else
-    print(xxx .. (tree.char or ".novalue"))
   end
+  print("tree", tree.char)
+  return tree
 end
-
 
 
 -- declare  basic node types
@@ -161,6 +158,7 @@ local solidus        = ucodepoint("/")
 local equals         = ucodepoint("=")
 local quoting        = ucodepoint('"')
 local apostrophe     = ucodepoint("'")
+local semicolon      = ucodepoint(";")
 
 local function is_upper_alpha(codepoint)
   if (64 < codepoint and codepoint < 91) then
@@ -263,12 +261,65 @@ HtmlStates.character_reference = function(parser)
     return "numeric_character_reference"
   else
     parser:flush_temp_buffer()
-    return parser.return_state
+    return parser:tokenize(parser.return_state)
   end
 
 end
 
 HtmlStates.named_character_reference = function(parser)
+  -- named entity parsing is pretty complicated 
+  -- https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state
+  local codepoint = parser.codepoint
+  -- test if the current entity name is included in the named entity list
+  local search_table = {}
+  -- first char in temp buffer is &, which we don't want to lookup in the search tree
+  for i=2, #parser.temp_buffer do search_table[#search_table+1] = parser.temp_buffer[i] end
+  if codepoint == semicolon then
+    -- close named entity
+    local entity = search_entity_tree(search_table) 
+    if entity and entity.char then
+      parser:add_entity(entity.char)
+    else
+      -- if the current name doesn't correspond to any named entity, flush everything into text
+      parser:flush_temp_buffer()
+    end
+    return parser.return_state
+  else
+    local char = uchar(codepoint)
+    -- try if the current entity name is in the named entity search tree
+    table.insert(search_table, char)
+    local entity = search_entity_tree(search_table)
+    if entity then
+      -- keep parsing name entity while we match a name
+      table.insert(parser.temp_buffer, char)
+      return "named_character_reference"
+    else
+      -- here this will be more complicated
+      if #search_table > 1 then
+        local token = parser.current_token
+        if token.type == "start_tag" and (codepoint == equals or is_alphanumeric(codepoint)) then
+          -- in attribute value, flush characters and retokenize  
+          parser:flush_temp_buffer()
+          return parser:tokenize(parser.return_state)
+        else
+          -- try to get entity for characters preceding the current character
+          table.remove(search_table)
+          local newentity = search_entity_tree(search_table)
+          if newentity and newentity.char then
+            parser:add_entity(newentity.char)
+          else
+            parser:flush_temp_buffer()
+          end
+          return parser:tokenize(parser.return_state)
+        end
+      else
+        -- search table contains only the current character
+        parser:flush_temp_buffer()
+        return parser:tokenize(parser.return_state)
+      end
+    end
+  end
+
 end
 
 HtmlStates.numeric_character_reference = function(parser)
@@ -577,6 +628,17 @@ function HtmlParser:flush_temp_buffer()
   self.temp_buffer = {}
 end
 
+function HtmlParser:add_entity(char)
+  local token = self.current_token
+  if token.type == "start_tag" then
+    table.insert(token.current_attr_value, char)
+  elseif self.return_state == "data" then
+    self:start_token("character", {char=char})
+    self:emit()
+  end
+  self.temp_buffer = {}
+end
+
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
   local token = token or self.current_token
@@ -747,4 +809,5 @@ M.Element    = Element
 M.HtmlParser = HtmlParser
 M.HtmlStates = HtmlStates -- table with functions for particular parser states
 M.self_closing_tags = self_closing_tags -- list of void elements
+M.search_entity_tree = search_entity_tree
 return M 
