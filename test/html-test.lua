@@ -109,7 +109,16 @@ describe("Test entities", function()
     local no = tostring(get_first_element("I'm &no; I tell you"))
     assert.same(no, "'I'm &no; I tell you'")
   end)
+  it("Should support numeric entities", function()
+    -- local decimal = tostring(get_first_element("hello &#64;"))
+    local hexa    = tostring(get_first_element("hello &#x40;"))
+    local wrong_hexa = tostring(get_first_element("hello &#xh0;"))
+    -- print(decimal)
+    print(hexa)
+    print(wrong_hexa)
+  end)
 end)
+
 
 
 

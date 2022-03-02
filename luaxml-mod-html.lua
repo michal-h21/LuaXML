@@ -159,6 +159,10 @@ local equals         = ucodepoint("=")
 local quoting        = ucodepoint('"')
 local apostrophe     = ucodepoint("'")
 local semicolon      = ucodepoint(";")
+local numbersign     = ucodepoint("#")
+local smallx         = ucodepoint("x")
+local bigx           = ucodepoint("X")
+local EOF            = nil -- special character, meaning end of stream
 
 local function is_upper_alpha(codepoint)
   if (64 < codepoint and codepoint < 91) then
@@ -186,6 +190,28 @@ local function is_numeric(codepoint)
     return true
   end
 end
+
+local function is_upper_hex(codepoint)
+  if 64 < codepoint and codepoint < 71 then
+    return true
+  end
+end
+
+local function is_lower_hex(codepoint)
+  if 96 < codepoint and codepoint < 103 then
+    return true
+  end
+end
+
+local function is_hexadecimal(codepoint) 
+  if is_numeric(codepoint) or
+     is_lower_hex(codepoint) or
+     is_upper_hex(codepoint)
+  then 
+    return true
+  end
+end
+
 
 local function is_alphanumeric(codepoint)
   return is_alpha(codepoint) or is_numeric(codepoint)
@@ -309,7 +335,7 @@ HtmlStates.named_character_reference = function(parser)
           if newentity and newentity.char then
             parser:add_entity(newentity.char)
           else
-            -- we need to find, if parts of the current substring match a named entity
+            -- we need to find if parts of the current substring match a named entity
             -- for example &notit; -> ¬it; but &notin; -> ∉
             local rest = {}
             -- loop over the table with characters, and try to find if it matches entity
@@ -340,7 +366,66 @@ HtmlStates.named_character_reference = function(parser)
 end
 
 HtmlStates.numeric_character_reference = function(parser)
+  -- this variable will hold the number
+  local codepoint = parser.codepoint
+  parser.character_reference_code = 0
+  if codepoint == smallx or codepoint == bigx then
+    -- hexadecimal entity
+    table.insert(parser.temp_buffer, uchar(codepoint))
+    return "hexadecimal_character_reference_start"
+  else
+    -- try decimal entity
+    return parser:tokenize("decimal_character_reference_start")
+  end
+
 end
+
+HtmlStates.hexadecimal_character_reference_start = function(parser)
+  local codepoint = parser.codepoint
+  if is_hexadecimal(codepoint) then
+    return parser:tokenize("hexadecimal_character_reference")
+  else
+    parser:flush_temp_buffer()
+    return parser:tokenize(parser.return_state)
+  end
+end
+
+HtmlStates.decimal_character_reference_start = function(parser)
+  local codepoint = parser.codepoint
+end
+
+HtmlStates.hexadecimal_character_reference = function(parser)
+  local codepoint = parser.codepoint
+  -- helper functions for easier working with the character_reference_code
+  local function multiply(number)
+    parser.character_reference_code = parser.character_reference_code * number
+  end
+  local function add(number)
+    parser.character_reference_code = parser.character_reference_code + number
+  end
+  if is_numeric(codepoint) then
+    multiply(16)
+    add(codepoint - 0x30)
+  elseif is_upper_hex(codepoint) then
+    multiply(16)
+    add(codepoint - 0x37)
+  elseif is_lower_hex(codepoint) then
+    multiply(16)
+    add(codepoint - 0x57)
+  elseif codepoint == semicolon then
+    return "numeric_reference_end_state"
+  else
+    return parser:tokenize("numeric_reference_end_state")
+  end
+  return "hexadecimal_character_reference"
+end
+
+HtmlStates.numeric_reference_end_state = function(parser)
+  local codepoint = parser.codepoint
+  parser:add_entity(uchar(parser.character_reference_code))
+  return parser.return_state
+end
+
 
 HtmlStates.markup_declaration_open = function(parser)
   -- started by <!
@@ -579,7 +664,6 @@ function HtmlParser:parse()
     self.character = uchar(ucode)
     self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
   end
-  self:add_text()
   return self:finish()
 end
 
@@ -806,6 +890,9 @@ function HtmlParser:add_tag(text)
 end
 
 function HtmlParser:finish()
+  self:add_text()
+  self.character = EOF
+  self:tokenize(self.state)
   -- close all unclosed elements
   if #self.unfinished == 0 then
     -- add implicit html tag
