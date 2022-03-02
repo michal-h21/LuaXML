@@ -238,6 +238,9 @@ HtmlStates.data = function(parser)
     -- what we will return to after entity
     parser.return_state = "data"
     return "character_reference" 
+  elseif codepoint == EOF then
+    parser:start_token("end_of_file", {})
+    parser:emit()
   else
     local data = {char = uchar(codepoint)}
     parser:start_token("character", data)
@@ -265,6 +268,11 @@ HtmlStates.tag_open = function(parser)
     }
     parser:start_token("start_tag", data)
     return parser:tokenize("tag_name")
+  elseif codepoint == EOF then
+    parser:start_token("character", {char=">"})
+    parser:emit()
+    parser:start_token("end_of_file", {})
+    parser:emit()
   else
     -- invalid tag
     -- emit "<" and reconsume current character as data
@@ -685,7 +693,7 @@ function HtmlParser:tokenize(state)
   -- execute state machine object and return new state
   local fn = HtmlStates[state] or function(parser) return self.default_state end
   local newstate =  fn(self)
-  print("newstate", newstate, state, uchar(ucode))
+  print("newstate", newstate, state, uchar(ucode or 32))
   return newstate
 end
 
@@ -890,9 +898,10 @@ function HtmlParser:add_tag(text)
 end
 
 function HtmlParser:finish()
-  self:add_text()
-  self.character = EOF
+  -- tokenize without any real character
+  self.codepoint = EOF
   self:tokenize(self.state)
+  self:add_text()
   -- close all unclosed elements
   if #self.unfinished == 0 then
     -- add implicit html tag
