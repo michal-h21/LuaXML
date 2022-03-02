@@ -99,8 +99,15 @@ describe("Test entities", function()
     -- just return & 
     local seventh = tostring(get_first_element("<img alt='hello & world'>"))
     assert.same(seventh, '<img alt="hello & world">')
+    -- support entities, where names match only partly
     local notit = tostring(get_first_element("I'm &notit; I tell you"))
-    print(notit)
+    assert.same(notit, "'I'm ¬it; I tell you'")
+    -- &notin; is named entity
+    local notin = tostring(get_first_element("I'm &notin; I tell you"))
+    assert.same(notin, "'I'm ∉ I tell you'")
+    -- &no; is nothing
+    local no = tostring(get_first_element("I'm &no; I tell you"))
+    assert.same(no, "'I'm &no; I tell you'")
   end)
 end)
 

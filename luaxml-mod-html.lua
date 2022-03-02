@@ -282,6 +282,7 @@ HtmlStates.named_character_reference = function(parser)
     else
       -- if the current name doesn't correspond to any named entity, flush everything into text
       parser:flush_temp_buffer()
+      return parser:tokenize(parser.return_state)
     end
     return parser.return_state
   else
@@ -308,6 +309,22 @@ HtmlStates.named_character_reference = function(parser)
           if newentity and newentity.char then
             parser:add_entity(newentity.char)
           else
+            -- we need to find, if parts of the current substring match a named entity
+            -- for example &notit; -> ¬it; but &notin; -> ∉
+            local rest = {}
+            -- loop over the table with characters, and try to find if it matches entity
+            for i = #search_table, 1,-1 do
+              local removed_char = table.remove(search_table)
+              -- 
+              table.insert(rest, 1, removed_char)
+              newentity = search_entity_tree(search_table)
+              if newentity and newentity.char then
+                parser:add_entity(newentity.char)
+                parser.temp_buffer = rest
+                break
+              end
+            end
+            -- replace temporary buffer witch characters that followed the matched entity
             parser:flush_temp_buffer()
           end
           return parser:tokenize(parser.return_state)
