@@ -113,7 +113,7 @@ function Comment:init(text, parent)
   setmetatable(o, self)
   self.__index = self
   o.text = text
-  self.__tostring = function (x) return "<!-- " ..  x.text .. " -->" end
+  self.__tostring = function (x) return "<!--" ..  x.text .. "-->" end
   self.add_child = Root.add_child
   o.parent = parent
   o.children = {}
@@ -181,6 +181,7 @@ local equals         = ucodepoint("=")
 local quoting        = ucodepoint('"')
 local apostrophe     = ucodepoint("'")
 local semicolon      = ucodepoint(";")
+local hyphen         = ucodepoint("-")
 local numbersign     = ucodepoint("#")
 local smallx         = ucodepoint("x")
 local bigx           = ucodepoint("X")
@@ -539,6 +540,164 @@ end
 
 HtmlStates.markup_declaration_open = function(parser)
   -- started by <!
+  -- we now need to find the following text, to find if we started comment, doctype, or cdata
+  local comment_pattern =  "^%-%-"
+  local start_pos = parser.position
+  local text = parser.body
+  if text:match(comment_pattern, start_pos) then
+    -- local _, newpos = text:find(comment_pattern, start_pos)
+    -- we need to ignore next few characters
+    parser.ignored_pos = start_pos + 1
+    parser:start_token("comment", {data = {}})
+    return "comment_start"
+  elseif text:match(doctype_pattern, start_pos) then
+    print("doctype")
+  end
+  -- local start, stop = string.find(parser.body, comment_pattern, parser.position)
+end
+
+
+HtmlStates.comment_start = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    return "comment_start_dash"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  else
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment_start_dash = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    return "comment_end"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return data
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file", {})
+    parser:emit()
+  else
+    parser:append_token_data("data", "-")
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == less_than then
+    parser:append_token_data("data", uchar(codepoint))
+    return "comment_less_than"
+  elseif codepoint == hyphen then
+    return "comment_end_dash"
+  elseif codepoint == null then
+    parser:append_token_data("data", uchar(0xFFFD))
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file", {})
+    parser:emit()
+  else
+    parser:append_token_data("data", uchar(codepoint))
+  end
+  return "comment"
+end
+
+HtmlStates.comment_less_than = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == exclam then
+    parser:append_token_data("data", uchar(codepoint))
+    return "comment_less_than_bang"
+  elseif codepoint == less_than then
+    parser:append_token_data("data", uchar(codepoint))
+    return "comment_less_than"
+  else
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment_less_than_bang = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    return "comment_less_than_bang_dash"
+  else
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment_less_than_bang_dash = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    return "comment_less_than_bang_dash_dash"
+  else
+    return parser:tokenize("comment_end_dash")
+  end
+
+end
+
+HtmlStates.comment_less_than_bang_dash_dash = function(parser)
+  -- these comment states start to be ridiculous
+  local codepoint = parser.codepoint
+  if codepoint == greater_than or codepoint == EOF then
+    return parser:tokenize("comment_end")
+  else
+    parser:append_token_data("data", "--")
+    return parser:tokenize("comment_end_dash")
+  end
+end
+
+HtmlStates.comment_end_dash = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    return "comment_end"
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file", {})
+    parser:emit()
+  else
+    parser:append_token_data("data", uchar(codepoint))
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment_end = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif codepoint == exclam then
+    return "comment_end_bang"
+  elseif codepoint == hyphen then
+    parser:append_token_data("data", "-")
+    return "comment_end"
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file")
+    parser:emit()
+  else
+    parser:append_token_data("data", "--")
+    return parser:tokenize("comment")
+  end
+end
+
+HtmlStates.comment_end_bang = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    parser:append_token_data("data", "--!")
+    return "comment_end_dash"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file")
+    parser:emit()
+  else
+    parser:append_token_data("data", "--!")
+    return parser:tokenize("comment")
+  end
 end
 
 HtmlStates.end_tag_open = function(parser)
@@ -1027,6 +1186,7 @@ function HtmlParser:finish()
   -- tokenize without any real character
   self.codepoint = EOF
   self:tokenize(self.state)
+  self:emit()
   self:add_text()
   -- close all unclosed elements
   if #self.unfinished == 0 then

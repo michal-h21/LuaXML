@@ -127,7 +127,18 @@ describe("Test entities", function()
   end)
 end)
 
-
+describe("Comments and other specials", function()
+  it("Should convert XML processing instructions to comments", function()
+    -- convert XML processing instruction to comment
+    local pi = tostring(get_first_element('<?xml-stylesheet type="text/css" href="style.css"?>'))
+    assert.same(pi, '<!--xml-stylesheet type="text/css" href="style.css"?-->')
+    local comment = tostring(get_first_element('<!-- text in --! comment ---!>'))
+    assert.same(comment, '<!-- text in --! comment --->')
+    local nested_comment = tostring(get_first_element("<!-- <!-- nested --> -->"))
+    assert.same(nested_comment, "<!-- <!-- nested -->")
+    print(nested_comment )
+  end)
+end)
 
 
 
