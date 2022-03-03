@@ -104,6 +104,22 @@ function Text:init(text, parent)
   return o
 end
 
+local Comment = {
+  _type = "comment"
+}
+
+function Comment:init(text, parent)
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+  o.text = text
+  self.__tostring = function (x) return "<!-- " ..  x.text .. " -->" end
+  self.add_child = Root.add_child
+  o.parent = parent
+  o.children = {}
+  return o
+end
+
 
 
 local Element = {
@@ -298,6 +314,7 @@ HtmlStates.tag_open = function(parser)
   elseif codepoint == solidus then
     return "end_tag_open"
   elseif codepoint == question then
+    parser:start_token("comment",{data={}})
     return "bogus_comment"
   elseif is_alpha(codepoint) then
     local data = {
@@ -859,7 +876,9 @@ function HtmlParser:emit(token)
     self:end_tag()
     print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
-    self:start_attribute()
+    self:add_text()
+    self:add_comment()
+    -- self:start_attribute()
   elseif token_type == "empty" then
 
   end
@@ -952,6 +971,17 @@ function HtmlParser:end_tag()
     if #self.unfinished==1 then return nil end
     local node = self:close_element()
     local parent = self:get_parent()
+    parent:add_child(node)
+  end
+end
+
+function HtmlParser:add_comment()
+  local token = self.current_token
+  if token.type == "comment" then
+    self:start_attribute()
+    local parent = self:get_parent()
+    local text = table.concat(token.data)
+    local node = Comment:init(text, parent)
     parent:add_child(node)
   end
 end
