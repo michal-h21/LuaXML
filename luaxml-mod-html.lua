@@ -773,12 +773,17 @@ function HtmlParser:parse()
   -- in a different encoding
   self.text = {}
   self.state = self.default_state
+  -- this should enable us to pass over some characters that we want to ignore
+  -- for example scripts, css, etc.
+  self.ignored_pos = -1
   for pos, ucode in utf8.codes(self.body) do
     -- save buffer info and require the tokenize function
-    self.position = pos
-    self.codepoint = ucode
-    self.character = uchar(ucode)
-    self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
+    if pos > self.ignored_pos then
+      self.position = pos
+      self.codepoint = ucode
+      self.character = uchar(ucode)
+      self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
+    end
   end
   return self:finish()
 end
