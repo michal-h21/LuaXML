@@ -48,7 +48,7 @@ local function search_entity_tree(tbl)
       return nil
     end
   end
-  print("tree", tree.char)
+  -- print("tree", tree.char)
   return tree
 end
 
@@ -169,6 +169,7 @@ local numbersign     = ucodepoint("#")
 local smallx         = ucodepoint("x")
 local bigx           = ucodepoint("X")
 local EOF            = -1 -- special character, meaning end of stream
+local null           = 0
 
 local function is_upper_alpha(codepoint)
   if (64 < codepoint and codepoint < 91) then
@@ -269,7 +270,7 @@ character_entity_replace_table = {
 HtmlStates.data = function(parser) 
   -- this is the default state
   local codepoint = parser.codepoint
-  print("codepoint", parser.codepoint)
+  -- print("codepoint", parser.codepoint)
   if codepoint == less_than then
     -- start of tag
     return "tag_open"
@@ -548,6 +549,12 @@ HtmlStates.bogus_comment = function(parser)
   if codepoint == greater_than then
     parser:emit()
     return "data"
+  elseif codepoint == EOF then
+    parser:emit()
+    parser:start_token("end_of_file", {})
+    parser:emit()
+  elseif codepoint == null then
+    parser:append_token_data("data", uchar(0xFFFD))
   else
     parser:append_token_data("data", uchar(codepoint))
     return "bogus_comment"
@@ -777,7 +784,7 @@ function HtmlParser:tokenize(state)
   -- execute state machine object and return new state
   local fn = HtmlStates[state] or function(parser) return self.default_state end
   local newstate =  fn(self)
-  print("newstate", newstate, state, uchar(ucode or 32))
+  -- print("newstate", newstate, state, uchar(ucode or 32))
   return newstate
 end
 
