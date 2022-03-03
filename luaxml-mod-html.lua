@@ -5,7 +5,13 @@ local M = {}
 
 -- use local copies of utf8 functions
 local ucodepoint = utf8.codepoint
-local uchar      = utf8.char
+local utfchar      = utf8.char
+local function uchar(codepoint)
+  if codepoint and codepoint > -1 then
+    return utfchar(codepoint)
+  end
+  return ""
+end
 
 -- we must make search tree for named entities, as their support 
 -- is quite messy
@@ -162,7 +168,7 @@ local semicolon      = ucodepoint(";")
 local numbersign     = ucodepoint("#")
 local smallx         = ucodepoint("x")
 local bigx           = ucodepoint("X")
-local EOF            = nil -- special character, meaning end of stream
+local EOF            = -1 -- special character, meaning end of stream
 
 local function is_upper_alpha(codepoint)
   if (64 < codepoint and codepoint < 91) then
@@ -225,6 +231,9 @@ local function is_space(codepoint)
   return false
 end
 
+local function is_surrogate(codepoint)
+  return  0xD800 <= codepoint and codepoint <= 0xDFFF
+end
 
 HtmlStates.data = function(parser) 
   -- this is the default state
@@ -400,6 +409,36 @@ end
 
 HtmlStates.decimal_character_reference_start = function(parser)
   local codepoint = parser.codepoint
+  if is_numeric(codepoint) then
+    return parser:tokenize("decimal_character_reference")
+  else
+    parser:flush_temp_buffer()
+    return parser:tokenize(parser.return_state)
+  end
+end
+
+
+HtmlStates.decimal_character_reference = function(parser)
+  local codepoint = parser.codepoint
+  -- helper functions for easier working with the character_reference_code
+  local function multiply(number)
+    parser.character_reference_code = parser.character_reference_code * number
+  end
+  local function add(number)
+    parser.character_reference_code = parser.character_reference_code + number
+  end
+  if is_numeric(codepoint) then
+    multiply(10)
+    add(codepoint - 0x30)
+  elseif codepoint == semicolon then
+    return "numeric_reference_end_state"
+  else
+    -- this adds current entity
+    parser:tokenize("numeric_reference_end_state")
+    -- now tokenize the current character
+    return parser:tokenize(parser.return_state)
+  end
+  return "decimal_character_reference"
 end
 
 HtmlStates.hexadecimal_character_reference = function(parser)
@@ -423,14 +462,25 @@ HtmlStates.hexadecimal_character_reference = function(parser)
   elseif codepoint == semicolon then
     return "numeric_reference_end_state"
   else
-    return parser:tokenize("numeric_reference_end_state")
+    -- this adds current entity
+    parser:tokenize("numeric_reference_end_state")
+    -- now tokenize the current character
+    return parser:tokenize(parser.return_state)
   end
   return "hexadecimal_character_reference"
 end
 
 HtmlStates.numeric_reference_end_state = function(parser)
-  local codepoint = parser.codepoint
-  parser:add_entity(uchar(parser.character_reference_code))
+  -- in this state, we don't need to 
+  local character = parser.character_reference_code
+  -- we need to clean invalid character codes
+  if character == 0x00 or 
+     character >  0x10FFFF or
+     is_surrogate(character) 
+  then
+    character = 0xFFFD
+  end
+  parser:add_entity(uchar(character))
   return parser.return_state
 end
 
