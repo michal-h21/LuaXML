@@ -310,9 +310,7 @@ HtmlStates.data = function(parser)
     parser:start_token("end_of_file", {})
     parser:emit()
   else
-    local data = {char = uchar(codepoint)}
-    parser:start_token("character", data)
-    parser:emit()
+    parser:emit_character(uchar(codepoint))
   end
   return "data"
 end
@@ -338,16 +336,13 @@ HtmlStates.tag_open = function(parser)
     parser:start_token("start_tag", data)
     return parser:tokenize("tag_name")
   elseif codepoint == EOF then
-    parser:start_token("character", {char=">"})
-    parser:emit()
+    parser:emit_character(">")
     parser:start_token("end_of_file", {})
     parser:emit()
   else
     -- invalid tag
     -- emit "<" and reconsume current character as data
-    local data = {char="<"}
-    parser:start_token("character", data)
-    parser:emit()
+    parser:emit_character("<")
     return parser:tokenize("data")
   end
 end
@@ -1028,17 +1023,19 @@ HtmlStates.rcdata = function(parser)
     return "character_reference" 
   elseif codepoint == null then
     local data = {char = uchar(0xFFFD)}
-    parser:start_token("character", data)
-    parser:emit()
+    parser:emit_character(uchar(0xFFFD))
   elseif codepoint == EOF then
     parser:start_token("end_of_file", {})
     parser:emit()
   else
-    local data = {char = uchar(codepoint)}
-    parser:start_token("character", data)
-    parser:emit()
+    parser:emit_character(uchar(codepoint))
   end
   return "rcdata"
+end
+
+local function discard_rcdata_end_tag(parser, text)
+    parser:discard_token()
+    parser:emit_character(text)
 end
 
 HtmlStates.rcdata_less_than = function(parser)
@@ -1046,11 +1043,53 @@ HtmlStates.rcdata_less_than = function(parser)
   if codepoint == solidus then
     return "rcdata_end_tag_open"
   else
-    local data = {char = "<"}
-    parser:start_token("character", data)
-    parser:emit()
+    discard_rcdata_end_tag(parser, "<")
     return parser:tokenize("rcdata")
   end
+end
+
+HtmlStates.rcdata_end_tag_open = function(parser)
+  local codepoint = parser.codepoint
+  if is_alpha(codepoint) then
+    parser:start_token("end_tag", {name={}})
+    return parser:tokenize("rcdata_end_tag_name")
+  else
+    discard_rcdata_end_tag(parser, "</")
+    return parser:tokenize("rcdata")
+  end
+end
+
+
+
+HtmlStates.rcdata_end_tag_name = function(parser)
+  -- we need to find name of the currently opened tag
+  local parent = parser:get_parent() or {}
+  local opened_tag = parent.tag 
+  local current_tag = table.concat(parser.current_token.name or {})
+  local codepoint = parser.codepoint
+  if is_upper_alpha(codepoint) then
+    parser:append_token_data("name", uchar(codepoint + 0x20))
+    return "rcdata_end_tag_name"
+  elseif is_lower_alpha(codepoint) then
+    parser:append_token_data("name", uchar(codepoint))
+    return "rcdata_end_tag_name"
+  elseif opened_tag == current_tag then
+    if is_space(codepoint) then
+      return "before_attribute_name"
+    elseif codepoint == solidus then
+      return "self_closing_tag"
+    elseif codepoint == greater_than then
+      parser:emit()
+      return "data"
+    end
+  else
+    discard_rcdata_end_tag(parser, "</" .. current_tag)
+    return parser:tokenize("rcdata")
+  end
+end
+
+HtmlStates.rawtext = function(parser)
+
 end
 
 local HtmlParser = {}
@@ -1137,6 +1176,10 @@ function HtmlParser:start_token(typ, data)
   self.current_token = data
 end
 
+function HtmlParser:discard_token()
+  self.current_token = {type="empty"}
+end
+
 
 
 function HtmlParser:append_token_data(name, data)
@@ -1209,6 +1252,11 @@ function HtmlParser:emit(token)
 
   end
   self.current_token = {type="empty"}
+end
+
+function HtmlParser:emit_character(text)
+  self:start_token("character", {char=text})
+  self:emit()
 end
 
 function HtmlParser:get_parent()
