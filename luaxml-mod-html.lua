@@ -75,16 +75,26 @@ end
 local Doctype = {
   _type = "doctype"
 }
-function Doctype:init(text, parent)
+function Doctype:init(name, parent)
   local o = {}
   setmetatable(o, self)
   self.__index = self
-  self.__tostring = function (x) return "<" .. x.text .. ">" end
+  self.__tostring = function (x) 
+    if x.data then
+      return "<!DOCTYPE " .. x.name .. " " .. x.data ..  ">" 
+    else
+      return "<!DOCTYPE " .. x.name .. ">" 
+    end
+  end
   self.add_child = Root.add_child
   o.parent = parent
-  o.text = table.concat(text)
+  o.name = name
   o.children = {}
   return o
+end
+
+function Doctype:add_data(data)
+  self.data = data
 end
 
 
@@ -542,6 +552,7 @@ HtmlStates.markup_declaration_open = function(parser)
   -- started by <!
   -- we now need to find the following text, to find if we started comment, doctype, or cdata
   local comment_pattern =  "^%-%-"
+  local doctype_pattern = "^[Dd][Oo][Cc][Tt][Yy][Pp][Ee]"
   local start_pos = parser.position
   local text = parser.body
   if text:match(comment_pattern, start_pos) then
@@ -551,7 +562,9 @@ HtmlStates.markup_declaration_open = function(parser)
     parser:start_token("comment", {data = {}})
     return "comment_start"
   elseif text:match(doctype_pattern, start_pos) then
-    print("doctype")
+    parser.ignored_pos = start_pos + 6
+    parser:start_token("doctype", {name = {}, data = {}, force_quirks = false})
+    return "doctype"
   end
   -- local start, stop = string.find(parser.body, comment_pattern, parser.position)
 end
@@ -643,8 +656,7 @@ HtmlStates.comment_less_than_bang_dash_dash = function(parser)
   if codepoint == greater_than or codepoint == EOF then
     return parser:tokenize("comment_end")
   else
-    parser:append_token_data("data", "--")
-    return parser:tokenize("comment_end_dash")
+    return parser:tokenize("comment_end")
   end
 end
 
@@ -734,6 +746,104 @@ HtmlStates.bogus_comment = function(parser)
   else
     parser:append_token_data("data", uchar(codepoint))
     return "bogus_comment"
+  end
+end
+
+local function doctype_eof(parser)
+    parser:set_token_data("force_quirks", true)
+    parser:emit()
+    parser:start_token("end_of_file")
+    parser:emit()
+end
+
+HtmlStates.doctype = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "before_doctype_name"
+  elseif codepoint == greater_than then
+    return parser:tokenize("before_doctype_name")
+  elseif codepoint == EOF then
+    doctype_eof(parser)
+  else
+    return parser:tokenize("before_doctype_name")
+  end
+end
+
+HtmlStates.before_doctype_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "before_doctype_name"
+  elseif codepoint == null then
+    parser:set_token_data("name", {0xFFFD})
+    return "doctype_name"
+  elseif codepoint == greater_than then
+    parser:set_token_data("force_quirks", true)
+    parser:emit()
+    return "data"
+  elseif codepoint == EOF then
+    doctype_eof(parser)
+  elseif is_upper_alpha(codepoint) then
+    -- add lowercase name
+    parser:append_token_data("name", uchar(codepoint + 0x20))
+    return "doctype_name"
+  else
+    parser:append_token_data("name", uchar(codepoint))
+    return "doctype_name"
+  end
+end
+
+HtmlStates.doctype_name = function(parser)
+
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "after_doctype_name"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif codepoint == null then
+    parser:append_token_data("name", 0xFFFD)
+    return "doctype_name"
+  elseif codepoint == EOF then
+    doctype_eof(parser)
+  elseif is_upper_alpha(codepoint) then
+    -- add lowercase name
+    parser:append_token_data("name", uchar(codepoint + 0x20))
+    return "doctype_name"
+  else
+    parser:append_token_data("name", uchar(codepoint))
+    return "doctype_name"
+  end
+end
+
+HtmlStates.after_doctype_name = function(parser)
+  local codepoint = parser.codepoint
+  if is_space(codepoint) then
+    return "after_doctype_name"
+  elseif codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif codepoint == EOF then
+    doctype_eof(parser)
+  else
+    parser:append_token_data("data", uchar(codepoint))
+    -- there are lot of complicated rules how to consume doctype, 
+    -- but I think that for our purpose they aren't interesting.
+    -- so everything until EOF or > is consumed as token.data
+    return "consume_doctype_data"
+  end
+end
+
+HtmlStates.consume_doctype_data = function(parser)
+  -- this state just reads everything inside doctype as data
+  local codepoint = parser.codepoint
+  if codepoint == greater_than then
+    parser:emit()
+    return "data"
+  elseif codepoint == EOF then
+    doctype_eof(parser)
+  else
+    parser:append_token_data("data", uchar(codepoint))
+    return "consume_doctype_data"
   end
 end
 
@@ -1029,6 +1139,7 @@ function HtmlParser:emit(token)
     table.insert(self.text, token.char)
   elseif token_type == "doctype" then
     self:add_text()
+    self:add_doctype()
   elseif token_type == "start_tag" then
     self:add_text()
     -- self:start_attribute()
@@ -1146,6 +1257,20 @@ function HtmlParser:add_comment()
     local parent = self:get_parent()
     local text = table.concat(token.data)
     local node = Comment:init(text, parent)
+    parent:add_child(node)
+  end
+end
+
+function HtmlParser:add_doctype()
+  local token = self.current_token
+  if token.type == "doctype" then
+    self:start_attribute()
+    local parent = self:get_parent()
+    local name = table.concat(token.name)
+    local node = Doctype:init(name, parent)
+    if #token.data > 0 then
+      node:add_data(table.concat(token.data))
+    end
     parent:add_child(node)
   end
 end
