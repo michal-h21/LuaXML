@@ -307,8 +307,7 @@ HtmlStates.data = function(parser)
     parser.return_state = "data"
     return "character_reference" 
   elseif codepoint == EOF then
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     parser:emit_character(uchar(codepoint))
   end
@@ -337,8 +336,7 @@ HtmlStates.tag_open = function(parser)
     return parser:tokenize("tag_name")
   elseif codepoint == EOF then
     parser:emit_character(">")
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     -- invalid tag
     -- emit "<" and reconsume current character as data
@@ -595,8 +593,7 @@ HtmlStates.comment_start_dash = function(parser)
     return data
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     parser:append_token_data("data", "-")
     return parser:tokenize("comment")
@@ -614,8 +611,7 @@ HtmlStates.comment = function(parser)
     parser:append_token_data("data", uchar(0xFFFD))
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     parser:append_token_data("data", uchar(codepoint))
   end
@@ -670,8 +666,7 @@ HtmlStates.comment_end_dash = function(parser)
     return "comment_end"
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     parser:append_token_data("data", uchar(codepoint))
     return parser:tokenize("comment")
@@ -690,8 +685,7 @@ HtmlStates.comment_end = function(parser)
     return "comment_end"
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file")
-    parser:emit()
+    parser:emit_eof()
   else
     parser:append_token_data("data", "--")
     return parser:tokenize("comment")
@@ -708,8 +702,7 @@ HtmlStates.comment_end_bang = function(parser)
     return "data"
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file")
-    parser:emit()
+    parser:emit_eof()
   else
     parser:append_token_data("data", "--!")
     return parser:tokenize("comment")
@@ -743,8 +736,7 @@ HtmlStates.bogus_comment = function(parser)
     return "data"
   elseif codepoint == EOF then
     parser:emit()
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   elseif codepoint == null then
     parser:append_token_data("data", uchar(0xFFFD))
   else
@@ -756,8 +748,7 @@ end
 local function doctype_eof(parser)
     parser:set_token_data("force_quirks", true)
     parser:emit()
-    parser:start_token("end_of_file")
-    parser:emit()
+    parser:emit_eof()
 end
 
 HtmlStates.doctype = function(parser)
@@ -1025,8 +1016,7 @@ HtmlStates.rcdata = function(parser)
     local data = {char = uchar(0xFFFD)}
     parser:emit_character(uchar(0xFFFD))
   elseif codepoint == EOF then
-    parser:start_token("end_of_file", {})
-    parser:emit()
+    parser:emit_eof()
   else
     parser:emit_character(uchar(codepoint))
   end
@@ -1256,6 +1246,11 @@ end
 
 function HtmlParser:emit_character(text)
   self:start_token("character", {char=text})
+  self:emit()
+end
+
+function HtmlParser:emit_eof()
+  self:start_token("end_of_file", {})
   self:emit()
 end
 
