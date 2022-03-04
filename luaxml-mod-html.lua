@@ -1169,7 +1169,7 @@ end
 
 function HtmlParser:start_token(typ, data)
   -- emit the previous token
-  self:emit()
+  -- self:emit()
   data.type = typ
   self.current_token = data
 end
@@ -1249,7 +1249,7 @@ function HtmlParser:emit(token)
   elseif token_type == "empty" then
 
   end
-  self.current_token = {type="empty"}
+  -- self.current_token = {type="empty"}
 end
 
 function HtmlParser:emit_character(text)
@@ -1416,7 +1416,7 @@ function HtmlParser:finish()
   -- tokenize without any real character
   self.codepoint = EOF
   self:tokenize(self.state)
-  self:emit()
+  -- self:emit()
   self:add_text()
   -- close all unclosed elements
   if #self.unfinished == 0 then
