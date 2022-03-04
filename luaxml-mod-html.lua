@@ -551,8 +551,9 @@ end
 HtmlStates.markup_declaration_open = function(parser)
   -- started by <!
   -- we now need to find the following text, to find if we started comment, doctype, or cdata
-  local comment_pattern =  "^%-%-"
+  local comment_pattern = "^%-%-"
   local doctype_pattern = "^[Dd][Oo][Cc][Tt][Yy][Pp][Ee]"
+  local cdata_pattern   = "^%[CDATA%["
   local start_pos = parser.position
   local text = parser.body
   if text:match(comment_pattern, start_pos) then
@@ -565,6 +566,14 @@ HtmlStates.markup_declaration_open = function(parser)
     parser.ignored_pos = start_pos + 6
     parser:start_token("doctype", {name = {}, data = {}, force_quirks = false})
     return "doctype"
+  elseif text:match(cdata_pattern, start_pos) then
+    parser.ignored_pos = start_pos + 6
+    -- we change CDATA simply to comments
+    parser:start_token("comment", {data = {"[CDATA["}})
+    return "bogus_comment"
+  else
+    parser:start_token("comment", {data = {}})
+    return "bogus_comment"
   end
   -- local start, stop = string.find(parser.body, comment_pattern, parser.position)
 end
