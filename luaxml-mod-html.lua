@@ -1014,6 +1014,10 @@ HtmlStates.after_attribute_value_quoting = function(parser)
   end
 end
 
+HtmlStates.rcdata = function(parser)
+  return "data"
+end
+
 local HtmlParser = {}
 
 function HtmlParser:init(body)
@@ -1060,7 +1064,7 @@ function HtmlParser:parse()
       self.position = pos
       self.codepoint = ucode
       self.character = uchar(ucode)
-      self.state = self:tokenize(state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
+      self.state = self:tokenize(self.state) or self.state -- if tokenizer don't return new state, assume that it continues in the current state
     end
   end
   return self:finish()
@@ -1081,9 +1085,12 @@ function HtmlParser:tokenize(state)
     -- self.text[#text+1] = uchar(ucode)
   end
   self.last_position = self.position
+  self.element_state = false
   -- execute state machine object and return new state
   local fn = HtmlStates[state] or function(parser) return self.default_state end
   local newstate =  fn(self)
+  -- this should enable changing state from elements that needs special treatment, like <script> or <style>
+  if self.element_state then return self.element_state end
   -- print("newstate", newstate, state, uchar(ucode or 32))
   return newstate
 end
@@ -1244,6 +1251,9 @@ function HtmlParser:start_tag()
     else
       -- add to the unfinished list
       table.insert(self.unfinished, node)
+    end
+    if name == "style" then 
+      self.element_state = "rcdata" 
     end
   end
 end

@@ -153,6 +153,11 @@ describe("Comments and other specials", function()
 end)
 
 
+describe("Parse special elements", function()
+  local p = HtmlParser:init("<style type='text/css'>p > a:before{xxxx: 'hello <world> &amp';}</style>")
+  local dom = p:parse()
+  print_tree(dom)
+end)
 
 local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
 -- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
