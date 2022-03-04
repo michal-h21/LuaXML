@@ -1174,7 +1174,7 @@ function HtmlParser:add_entity(char)
   local token = self.current_token
   if token.type == "start_tag" then
     table.insert(token.current_attr_value, char)
-  elseif self.return_state == "data" then
+  else
     self:start_token("character", {char=char})
     self:emit()
   end
