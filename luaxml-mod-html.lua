@@ -719,6 +719,10 @@ HtmlStates.end_tag_open = function(parser)
     return parser:tokenize("tag_name")
   elseif codepoint == greater_than then
     return "data"
+  elseif codepoint == EOF then
+    parser:discard_token()
+    parser:emit_character("</")
+    parser:emit_eof()
   else
     data = {
       data = {}
@@ -844,6 +848,7 @@ end
 
 HtmlStates.tag_name = function(parser)
   local codepoint = parser.codepoint
+  if codepoint == null then codepoint = 0xFFFD end
   if is_space(codepoint) then 
     return "before_attribute_name"
   elseif codepoint == solidus then
@@ -854,6 +859,9 @@ HtmlStates.tag_name = function(parser)
   elseif is_upper_alpha(codepoint) then
     local lower = string.lower(uchar(codepoint))
     parser:append_token_data("name", lower)
+  elseif codepoint==EOF then
+    parser:emit()
+    parser:emit_eof()
   else
     local char = uchar(codepoint)
     parser:append_token_data("name", char)
