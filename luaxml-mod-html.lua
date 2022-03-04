@@ -1015,7 +1015,42 @@ HtmlStates.after_attribute_value_quoting = function(parser)
 end
 
 HtmlStates.rcdata = function(parser)
-  return "data"
+  -- this is the default state
+  local codepoint = parser.codepoint
+  -- print("codepoint", parser.codepoint)
+  if codepoint == less_than then
+    -- start of tag
+    return "rcdata_less_than"
+  elseif codepoint  == amperesand then
+    -- we must save the current state 
+    -- what we will return to after entity
+    parser.return_state = "rcdata"
+    return "character_reference" 
+  elseif codepoint == null then
+    local data = {char = uchar(0xFFFD)}
+    parser:start_token("character", data)
+    parser:emit()
+  elseif codepoint == EOF then
+    parser:start_token("end_of_file", {})
+    parser:emit()
+  else
+    local data = {char = uchar(codepoint)}
+    parser:start_token("character", data)
+    parser:emit()
+  end
+  return "rcdata"
+end
+
+HtmlStates.rcdata_less_than = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == solidus then
+    return "rcdata_end_tag_open"
+  else
+    local data = {char = "<"}
+    parser:start_token("character", data)
+    parser:emit()
+    return parser:tokenize("rcdata")
+  end
 end
 
 local HtmlParser = {}
