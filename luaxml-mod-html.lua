@@ -1087,6 +1087,64 @@ HtmlStates.rcdata_end_tag_name = function(parser)
 end
 
 HtmlStates.rawtext = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == null then codepoint = 0xFFFD end
+  if codepoint == less_than then
+    return "rawtext_less_than"
+  elseif codepoint == EOF then
+    parser:emit_eof()
+  else
+    parser:emit_character(uchar(codepoint))
+    return "rawtext"
+  end
+end
+
+HtmlStates.rawtext_less_than = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == solidus then
+    return "rawtext_end_tag_open"
+  else
+    parser:emit_character("<")
+    return parser:tokenize("rawtext")
+  end
+end
+
+HtmlStates.rawtext_end_tag_open = function(parser)
+  local codepoint = parser.codepoint
+  if is_alpha(codepoint) then
+    parser:start_token("end_tag", {name={}})
+    return parser:tokenize("rawtext_end_tag_name")
+  else
+    parser:emit_character("</")
+    return parser:tokenize("rawtext")
+  end
+end
+
+HtmlStates.rawtext_end_tag_name = function(parser)
+  -- we need to find name of the currently opened tag
+  local parent = parser:get_parent() or {}
+  local opened_tag = parent.tag 
+  local current_tag = table.concat(parser.current_token.name or {})
+  local codepoint = parser.codepoint
+  if is_upper_alpha(codepoint) then
+    parser:append_token_data("name", uchar(codepoint + 0x20))
+    return "rawtext_end_tag_name"
+  elseif is_lower_alpha(codepoint) then
+    parser:append_token_data("name", uchar(codepoint))
+    return "rawtext_end_tag_name"
+  elseif opened_tag == current_tag then
+    if is_space(codepoint) then
+      return "before_attribute_name"
+    elseif codepoint == solidus then
+      return "self_closing_tag"
+    elseif codepoint == greater_than then
+      parser:emit()
+      return "data"
+    end
+  else
+    discard_rcdata_end_tag(parser, "</" .. current_tag)
+    return parser:tokenize("rawtext")
+  end
 
 end
 
@@ -1338,8 +1396,10 @@ function HtmlParser:start_tag()
       -- add to the unfinished list
       table.insert(self.unfinished, node)
     end
-    if name == "style" then 
+    if name == "title" then 
       self.element_state = "rcdata" 
+    elseif name == "style" then
+      self.element_state = "rawtext" 
     end
   end
 end
