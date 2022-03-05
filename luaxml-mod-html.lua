@@ -1050,6 +1050,7 @@ HtmlStates.rcdata_end_tag_open = function(parser)
   local codepoint = parser.codepoint
   if is_alpha(codepoint) then
     parser:start_token("end_tag", {name={}})
+    parser.temp_buffer = {}
     return parser:tokenize("rcdata_end_tag_name")
   else
     discard_rcdata_end_tag(parser, "</")
@@ -1067,9 +1068,12 @@ HtmlStates.rcdata_end_tag_name = function(parser)
   local codepoint = parser.codepoint
   if is_upper_alpha(codepoint) then
     parser:append_token_data("name", uchar(codepoint + 0x20))
+    -- insert current char to temp buffer
+    table.insert(parser.temp_buffer, uchar(codepoint))
     return "rcdata_end_tag_name"
   elseif is_lower_alpha(codepoint) then
     parser:append_token_data("name", uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint))
     return "rcdata_end_tag_name"
   elseif opened_tag == current_tag then
     if is_space(codepoint) then
@@ -1081,7 +1085,8 @@ HtmlStates.rcdata_end_tag_name = function(parser)
       return "data"
     end
   else
-    discard_rcdata_end_tag(parser, "</" .. current_tag)
+    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
+    parser.temp_buffer = {}
     return parser:tokenize("rcdata")
   end
 end
@@ -1113,6 +1118,7 @@ HtmlStates.rawtext_end_tag_open = function(parser)
   local codepoint = parser.codepoint
   if is_alpha(codepoint) then
     parser:start_token("end_tag", {name={}})
+    parser.temp_buffer = {}
     return parser:tokenize("rawtext_end_tag_name")
   else
     parser:emit_character("</")
@@ -1128,9 +1134,11 @@ HtmlStates.rawtext_end_tag_name = function(parser)
   local codepoint = parser.codepoint
   if is_upper_alpha(codepoint) then
     parser:append_token_data("name", uchar(codepoint + 0x20))
+    table.insert(parser.temp_buffer, uchar(codepoint))
     return "rawtext_end_tag_name"
   elseif is_lower_alpha(codepoint) then
     parser:append_token_data("name", uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint))
     return "rawtext_end_tag_name"
   elseif opened_tag == current_tag then
     if is_space(codepoint) then
@@ -1142,7 +1150,8 @@ HtmlStates.rawtext_end_tag_name = function(parser)
       return "data"
     end
   else
-    discard_rcdata_end_tag(parser, "</" .. current_tag)
+    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
+    parser.temp_buffer = {}
     return parser:tokenize("rawtext")
   end
 
