@@ -155,7 +155,8 @@ end)
 
 describe("Parse special elements", function()
   -- local p = HtmlParser:init("<title>hello <world> &amp'</title>")
-  local p = HtmlParser:init("<style type='text/css'>p > a:before{xxxx: 'hello <world> &amp';}</style>")
+  -- local p = HtmlParser:init("<style type='text/css'>p > a:before{xxxx: 'hello <world> &amp';}</STYLE>")
+  local p = HtmlParser:init("<script>if(a<2){let x=3;} else {print('</section>');}</SCRIPT>")
   local dom = p:parse()
   print_tree(dom)
 
