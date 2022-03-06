@@ -192,6 +192,7 @@ local quoting        = ucodepoint('"')
 local apostrophe     = ucodepoint("'")
 local semicolon      = ucodepoint(";")
 local hyphen         = ucodepoint("-")
+local dash           = ucodepoint("-")
 local numbersign     = ucodepoint("#")
 local smallx         = ucodepoint("x")
 local bigx           = ucodepoint("X")
@@ -293,6 +294,14 @@ character_entity_replace_table = {
 [0x9E] =  0x017E,  
 [0x9F] =  0x0178  
 }
+
+local function fix_null(codepoint)
+  if codepoint == null then
+    return 0xFFFD
+  else
+    return codepoint
+  end
+end
 
 HtmlStates.data = function(parser) 
   -- this is the default state
@@ -602,13 +611,12 @@ end
 
 HtmlStates.comment = function(parser)
   local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
   if codepoint == less_than then
     parser:append_token_data("data", uchar(codepoint))
     return "comment_less_than"
   elseif codepoint == hyphen then
     return "comment_end_dash"
-  elseif codepoint == null then
-    parser:append_token_data("data", uchar(0xFFFD))
   elseif codepoint == EOF then
     parser:emit()
     parser:emit_eof()
@@ -735,14 +743,13 @@ end
 HtmlStates.bogus_comment = function(parser)
   -- started by <?
   local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
   if codepoint == greater_than then
     parser:emit()
     return "data"
   elseif codepoint == EOF then
     parser:emit()
     parser:emit_eof()
-  elseif codepoint == null then
-    parser:append_token_data("data", uchar(0xFFFD))
   else
     parser:append_token_data("data", uchar(codepoint))
     return "bogus_comment"
@@ -770,11 +777,9 @@ end
 
 HtmlStates.before_doctype_name = function(parser)
   local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
   if is_space(codepoint) then
     return "before_doctype_name"
-  elseif codepoint == null then
-    parser:set_token_data("name", {0xFFFD})
-    return "doctype_name"
   elseif codepoint == greater_than then
     parser:set_token_data("force_quirks", true)
     parser:emit()
@@ -794,14 +799,12 @@ end
 HtmlStates.doctype_name = function(parser)
 
   local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
   if is_space(codepoint) then
     return "after_doctype_name"
   elseif codepoint == greater_than then
     parser:emit()
     return "data"
-  elseif codepoint == null then
-    parser:append_token_data("name", 0xFFFD)
-    return "doctype_name"
   elseif codepoint == EOF then
     doctype_eof(parser)
   elseif is_upper_alpha(codepoint) then
@@ -848,7 +851,7 @@ end
 
 HtmlStates.tag_name = function(parser)
   local codepoint = parser.codepoint
-  if codepoint == null then codepoint = 0xFFFD end
+  codepoint = fix_null(codepoint)
   if is_space(codepoint) then 
     return "before_attribute_name"
   elseif codepoint == solidus then
@@ -1012,6 +1015,7 @@ HtmlStates.rcdata = function(parser)
   -- this is the default state
   local codepoint = parser.codepoint
   -- print("codepoint", parser.codepoint)
+  codepoint = fix_null(codepoint)
   if codepoint == less_than then
     -- start of tag
     return "rcdata_less_than"
@@ -1020,9 +1024,6 @@ HtmlStates.rcdata = function(parser)
     -- what we will return to after entity
     parser.return_state = "rcdata"
     return "character_reference" 
-  elseif codepoint == null then
-    local data = {char = uchar(0xFFFD)}
-    parser:emit_character(uchar(0xFFFD))
   elseif codepoint == EOF then
     parser:emit_eof()
   else
@@ -1093,7 +1094,7 @@ end
 
 HtmlStates.rawtext = function(parser)
   local codepoint = parser.codepoint
-  if codepoint == null then codepoint = 0xFFFD end
+  codepoint = fix_null(codepoint)
   if codepoint == less_than then
     return "rawtext_less_than"
   elseif codepoint == EOF then
@@ -1158,7 +1159,7 @@ end
 
 HtmlStates.script_data = function(parser)
   local codepoint = parser.codepoint
-  if codepoint == null then codepoint = 0xFFFD end
+  codepoint = fix_null(codepoint)
   if codepoint == less_than then
     return "script_data_less_than"
   elseif codepoint == EOF then
@@ -1226,6 +1227,52 @@ HtmlStates.script_data_end_tag_name = function(parser)
 end
 
 HtmlStates.script_data_escape_start = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    parser:emit_character("-")
+    return "script_data_escape_start_dash"
+  else
+    parser:tokenize("script_data")
+  end
+end
+
+HtmlStates.script_data_escape_start_dash = function()
+  local codepoint = parser.codepoint
+  if codepoint == hyphen then
+    parser:emit_character("-")
+    return "script_data_escaped_dash_dash"
+  else
+    parser:tokenize("script_data")
+  end
+
+end
+
+HtmlStates.script_data_escaped_dash_dash = function(parser)
+  local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
+  if codepoint == hyphen then
+    parser:emit_character("-")
+    return "script_data_escaped_dash_dash"
+  elseif codepoint == less_than then
+    return "script_data_escaped_less_than_sign"
+  elseif codepoint == greater_than then
+    parser:emit_character(">")
+    return "script_data"
+  elseif codepoint == EOF then
+    parser:emit_eof()
+  else
+    parser:emit_character(uchar(codepoint))
+    return "script_data_escaped"
+  end
+
+end
+
+HtmlStates.script_data_escaped = function(parser)
+  local codepoint = parser.codepoint
+
+end
+
+HtmlStates.script_data_escaped_less_than_sign = function(parser)
 end
 
 local HtmlParser = {}
