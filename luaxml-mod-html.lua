@@ -1309,7 +1309,7 @@ HtmlStates.script_data_escaped_less_than_sign = function(parser)
   elseif is_alpha(codepoint) then
     parser.temp_buffer = {}
     parser:emit_character("<")
-    return_parser:tokenize("script_data_double_escape_start")
+    return parser:tokenize("script_data_double_escape_start")
   else
     parser:emit_character("<")
     return parser:tokenize("script_data_escaped")
@@ -1358,9 +1358,106 @@ HtmlStates.script_data_escaped_end_tag_name = function(parser)
 end
 
 HtmlStates.script_data_double_escape_start = function(parser)
-  -- ToDo: https://html.spec.whatwg.org/multipage/parsing.html#script-data-double-escape-start-state
+  local codepoint = parser.codepoint
+  if is_alpha(codepoint) or
+     codepoint == solidus or 
+     codepoint == greater_than 
+  then
+    local current_tag = table.concat(parser.current_token.name or {})
+    parser:emit_character(uchar(codepoint))
+    if current_tag == "script" then
+      return "script_data_double_escaped"
+    else
+      return "script_data_escaped"
+    end
+  elseif is_upper_alpha(codepoint) then
+    parser:emit_character(uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint) + 0x20)
+    return "script_data_double_escape_start"
+  elseif is_lower_alpha(codepoint) then
+    parser:emit_character(uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint))
+    return "script_data_double_escape_start"
+  else
+    return parser:tokenize("script_data_escaped")
+  end
+end
+
+HtmlStates.script_data_double_escaped = function(parser)
+  local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
+  if codepoint == hyphen then
+    parser:emit_character("-")
+    return "script_data_double_escaped_dash"
+  elseif codepoint == less_than then
+    parser:emit_character("<")
+    return "script_data_double_escaped_less_than_sign"
+  elseif codepoint == EOF then
+    parser:emit_eof()
+  else
+    parser:emit_character(uchar(codepoint))
+    return "script_data_double_escaped"
+  end
+end
+
+HtmlStates.script_data_double_escaped_dash = function(parser)
+  local codepoint = parser.codepoint
+  codepoint = fix_null(codepoint)
+  if codepoint == hyphen then
+    parser:emit_character("-")
+    return "script_data_double_escaped_dash"
+  elseif codepoint == less_than then
+    parser:emit_character("<")
+    return "script_data_double_escaped_less_than_sign"
+  elseif codepoint == greater_than then
+    parser:emit_character(">")
+    return "script_data"
+  elseif codepoint == EOF then
+    parser:emit_eof()
+  else
+    parser:emit_character(uchar(codepoint))
+    return "script_data_double_escaped"
+  end
+end
+
+HtmlStates.script_data_double_escaped_less_than_sign = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == solidus then
+    parser:emit("/")
+    return "script_data_double_escape_end"
+  else
+    return parser:tokenize("script_data_double_escaped")
+  end
+end
+
+HtmlStates.script_data_double_escape_end = function(parser)
+  local codepoint = parser.codepoint
+  if is_alpha(codepoint) or
+     codepoint == solidus or 
+     codepoint == greater_than 
+  then
+    local current_tag = table.concat(parser.current_token.name or {})
+    parser:emit_character(uchar(codepoint))
+    if current_tag == "script" then
+      return "script_data_escaped"
+    else
+      return "script_data_double_escaped"
+    end
+  elseif is_upper_alpha(codepoint) then
+    parser:emit_character(uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint) + 0x20)
+    return "script_data_double_escape_start"
+  elseif is_lower_alpha(codepoint) then
+    parser:emit_character(uchar(codepoint))
+    table.insert(parser.temp_buffer, uchar(codepoint))
+    return "script_data_double_escape_start"
+  else
+    return parser:tokenize("script_data_double_escaped")
+  end
 
 end
+
+
 
 
 local HtmlParser = {}
