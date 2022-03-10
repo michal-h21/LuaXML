@@ -1457,6 +1457,17 @@ HtmlStates.script_data_double_escape_end = function(parser)
 
 end
 
+local formatting_element_names ={
+   a = true, b = true, big = true, code = true, em = true, font = true, i = true, nobr = true, s = true, small = true, strike = true, strong = true, tt = true, u = true
+}
+local function is_formatting_element(name)
+  return formatting_element_names[name]
+end
+
+local HtmlTreeStates = {}
+
+
+
 
 
 
@@ -1465,15 +1476,18 @@ local HtmlParser = {}
 function HtmlParser:init(body)
   local o ={}
   setmetatable(o, self)
-  self.__index    = self
-  o.body          = self:normalize_newlines(body) -- HTML string
-  o.position      = 0                -- position in the parsed string
-  o.unfinished    = {Root:init()}    -- insert Root node into the list of opened elements
-  o.default_state = "data"           -- default state machine state
-  o.state         = o.default_state  -- working state of the machine
-  o.return_state  = o.default_state  -- special state set by entities parsing
-  o.temp_buffer   = {}               -- keep temporary data
-  o.current_token = {type="start"}   -- currently processed token
+  self.__index        = self
+  o.body              = self:normalize_newlines(body) -- HTML string
+  o.position          = 0                -- position in the parsed string
+  o.unfinished        = {Root:init()}    -- insert Root node into the list of opened elements
+  o.default_state     = "data"           -- default state machine state
+  o.state             = o.default_state  -- working state of the machine
+  o.return_state      = o.default_state  -- special state set by entities parsing
+  o.temp_buffer       = {}               -- keep temporary data
+  o.current_token     = {type="start"}   -- currently processed token
+  o.insertion_mode    = "initial"        -- tree construction state
+  o.head_pointer      = nil              -- pointer to the Head element
+  o.active_formatting = {}
   return o
 end
 
@@ -1595,7 +1609,7 @@ end
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
   local token = token or self.current_token
-  print("Emit", token.type)
+  -- print("Emit", token.type)
   local token_type = token.type
   if token_type     == "character" then
     table.insert(self.text, token.char)
@@ -1606,12 +1620,12 @@ function HtmlParser:emit(token)
     self:add_text()
     -- self:start_attribute()
     self:start_tag()
-    print("Emit start tag", table.concat(token.name))
+    -- print("Emit start tag", table.concat(token.name))
     -- save last attribute
   elseif token_type == "end_tag" then
     self:add_text()
     self:end_tag()
-    print("Emit end tag", table.concat(token.name))
+    -- print("Emit end tag", table.concat(token.name))
   elseif token_type == "comment" then
     self:add_text()
     self:add_comment()
@@ -1681,7 +1695,7 @@ function HtmlParser:start_attribute()
     if attr_name ~= "" then
       -- token.attr[attr_name] = attr_value
       table.insert(token.attr, {name = attr_name, value = attr_value})
-      print("saving attribute", attr_name, attr_value)
+      -- print("saving attribute", attr_name, attr_value)
     end
     self:set_token_data("current_attr_name", {})
     self:set_token_data("current_attr_value", {})
@@ -1752,6 +1766,53 @@ function HtmlParser:add_doctype()
     end
     parent:add_child(node)
   end
+end
+
+function HtmlParser:switch_insertion(name)
+  self.insertion_mode = name
+end
+
+function HtmlParser:current_node()
+  return self.unfinished[#self.unfinished]
+end
+
+function HtmlParser:adjusted_current_node()
+  -- we don't support this feature yet
+  -- https://html.spec.whatwg.org/multipage/parsing.html#adjusted-current-node
+  return self:current_node()
+end
+
+
+function HtmlParser:reset_insertion_mode()
+  -- https://html.spec.whatwg.org/multipage/parsing.html#reset-the-insertion-mode-appropriately
+  local last = false
+  for position = #self.unfinished, 1, -1 do
+    local node = self.unfinished[position]
+    if position == 1 then last = true end
+    local name = node.tag
+    -- switch to insertion mode based on the current element name
+    -- there is lot of other cases, but we support only basic ones
+    -- we can support other insertion modes in the future
+    if name == "head" and last == true then
+      self:switch_insertion("in_head")
+      return
+    elseif name == "body" then
+      self:switch_insertion("in_body")
+      return
+    elseif name == "html" then
+      if self.head_pointer then
+        self:switch_insertion("before_head")
+        return
+      else
+        self:switch_insertion("after_head")
+      end
+    elseif last == true then
+      self:switch_insertion("in_body")
+      return
+    end
+  end
+  -- by default use in_body
+  self:switch_insertion("in_body")
 end
 
 function HtmlParser:add_tag(text)
