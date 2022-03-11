@@ -13,6 +13,16 @@ local function uchar(codepoint)
   return ""
 end
 
+-- declare namespaces
+local xmlns = {
+  HTML = "http://www.w3.org/1999/xhtml",
+  MathML = "http://www.w3.org/1998/Math/MathML",
+  SVG = "http://www.w3.org/2000/svg",
+  XLink = "http://www.w3.org/1999/xlink",
+  XML = "http://www.w3.org/XML/1998/namespace",
+  XMLNS = "http://www.w3.org/2000/xmlns/", 
+}
+
 -- we must make search tree for named entities, as their support 
 -- is quite messy
 local named_entities = require "luaxml-namedentities"
@@ -173,7 +183,7 @@ function Element:init(tag, parent)
   o.attr     = {}
   o.parent = parent
   -- default xmlns
-  o.xmlns  = "http://www.w3.org/1999/xhtml"
+  o.xmlns  = xmlns.HTML
   return o
 end
 
@@ -1696,7 +1706,13 @@ function HtmlParser:start_tag()
     node.attr = token.attr
     node.self_closing = token.self_closing
     -- handle xmlns
-    if node.attr.xmlns then node.xmlns = node.attr.xmlns end
+    if node.attr.xmlns then 
+      -- when it is set explicitly in tag attributes
+      node.xmlns = node.attr.xmlns 
+    else
+      -- use parent's xmlns or default xmlns
+      node.xmlns = parent.xmlns or xmlns.HTML
+    end
     -- 
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
