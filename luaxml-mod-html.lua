@@ -1552,11 +1552,11 @@ local implied_endtags_thoroughly = {dd=true, dt=true, li = true, optgroup = true
       tfoot = true, th = true, thead = true, tr = true
 }
 
--- find if unclosed tags list contain a tag
+-- find if unfinished tags list contain a tag
 -- it fails if any element from element_list is matched before that tag
 local function is_in_scope(parser, target, element_list)
-  for i = #parser.unclosed, 1, -1 do
-    local node = parser.unclosed[i] 
+  for i = #parser.unfinished, 1, -1 do
+    local node = parser.unfinished[i] 
     local tag = node.tag
     if tag == target then 
       return true
@@ -1604,8 +1604,8 @@ end
 -- select scope
 local function is_in_select_scope(parser, target)
   -- this scope is specific, because it supports all tags except two
-  for i = #parser.unclosed, 1, -1 do
-    local node = parser.unclosed[i] 
+  for i = #parser.unfinished, 1, -1 do
+    local node = parser.unfinished[i] 
     local tag = node.tag
     if tag == target then 
       return true
@@ -1981,7 +1981,7 @@ function HtmlParser:generate_implied_endtags(included, ignored)
   local current = self:current_node() or {}
   -- keep removing elements while they are in the "included" list
   if included[current.tag] then
-    table.remove(self.unclosed)
+    table.remove(self.unfinished)
     self:generate_implied_endtags(ignored)
   end
 end
@@ -1992,7 +1992,7 @@ function HtmlParser:finish()
   self:tokenize(self.state)
   -- self:emit()
   self:add_text()
-  -- close all unclosed elements
+  -- close all unfinished elements
   if #self.unfinished == 0 then
     -- add implicit html tag
     self:start_tag("html")
@@ -2013,4 +2013,10 @@ M.HtmlParser = HtmlParser
 M.HtmlStates = HtmlStates -- table with functions for particular parser states
 M.self_closing_tags = self_closing_tags -- list of void elements
 M.search_entity_tree = search_entity_tree
+M.is_in_particular_scope = is_in_particular_scope
+M.is_in_list_item_scope = is_in_list_item_scope
+M.is_in_button_scope = is_in_button_scope
+M.is_in_table_scope = is_in_table_scope
+M.is_in_select_scope = is_in_select_scope
+
 return M 
