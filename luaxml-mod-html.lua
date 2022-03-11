@@ -172,6 +172,8 @@ function Element:init(tag, parent)
   o.children = {}
   o.attr     = {}
   o.parent = parent
+  -- default xmlns
+  o.xmlns  = "http://www.w3.org/1999/xhtml"
   return o
 end
 
@@ -1666,17 +1668,6 @@ function HtmlParser:add_text(text)
   self.text = {}
 end
 
-function HtmlParser:get_tag(text)
-  local tag = {}
-  for _, x in ipairs(text) do 
-    if x~=" " then
-      tag[#tag+1] = x
-    else
-      break
-    end
-  end
-  return table.concat(tag)
-end
 
 function HtmlParser:start_attribute()
   local token = self.current_token or {}
@@ -1704,6 +1695,8 @@ function HtmlParser:start_tag()
     local node = Element:init(name, parent)
     node.attr = token.attr
     node.self_closing = token.self_closing
+    -- handle xmlns
+    if node.attr.xmlns then node.xmlns = node.attr.xmlns end
     -- 
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
@@ -1804,38 +1797,6 @@ function HtmlParser:reset_insertion_mode()
   end
   -- by default use in_body
   self:switch_insertion("in_body")
-end
-
-function HtmlParser:add_tag(text)
-  -- this code is obsolete, it is remainder from the older code
-  -- main function for handling various tag types
-  local tag = self:get_tag(text)
-  local first_char = text[1] 
-  if first_char == "/" then
-    if #self.unfinished==1 then return nil end
-    local node = self:close_element()
-    local parent = self:get_parent()
-    parent:add_child(node)
-  elseif first_char == "!" then
-    local parent = self:get_parent()
-    local node = Doctype:init(text)
-    parent:add_child(node)
-  elseif text[#text] == "/" then
-    -- self closing tag
-    local parent = self:get_parent()
-    local node = Element:init(text, parent)
-    parent:add_child(node)
-  elseif self_closing_tags[tag] then
-    -- self closing tag
-    local parent = self:get_parent()
-    local node = Element:init(text, parent)
-    parent:add_child(node)
-  else
-    local parent = self:get_parent()
-    local node = Element:init(text, parent)
-    table.insert(self.unfinished, node)
-  end
-  self.text = {}
 end
 
 function HtmlParser:finish()
