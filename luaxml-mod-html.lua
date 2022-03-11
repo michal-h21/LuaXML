@@ -1521,6 +1521,104 @@ local function is_formatting_element(name)
   return formatting_element_names[name]
 end
 
+local special_elements = {}
+
+local special_elements_list = {"address", "applet", "area", "article", "aside",
+"base", "basefont", "bgsound", "blockquote", "body", "br", "button", "caption",
+"center", "col", "colgroup", "dd", "details", "dir", "div", "dl", "dt",
+"embed", "fieldset", "figcaption", "figure", "footer", "form", "frame",
+"frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup",
+"hr", "html", "iframe", "img", "input", "keygen", "li", "link", "listing",
+"main", "marquee", "menu", "meta", "nav", "noembed", "noframes", "noscript",
+"object", "ol", "p", "param", "plaintext", "pre", "script", "section",
+"select", "source", "style", "summary", "table", "tbody", "td", "template",
+"textarea", "tfoot", "th", "thead", "title", "tr", "track", "ul", "wbr", "xmp",
+"mi","mo","mn","ms","mtext", "annotation-xml","foreignObject","desc", "title"
+}
+
+for k,v in ipairs(special_elements_list) do
+  special_elements[v] = true
+end
+
+
+local function is_special(name)
+  return special_elements[name]
+end
+
+-- these lists are used in HtmlParser:generate_implied_endtags()
+local implied_endtags = {dd=true, dt=true, li = true, optgroup = true, option = true, p = true, rb = true, rp = true, rd = true, trc = true}
+local implied_endtags_thoroughly = {dd=true, dt=true, li = true, optgroup = true, option = true, p = true, 
+      rb = true, rp = true, rd = true, trc = true, caption = true, colgroup = true, tbody = true, td = true, 
+      tfoot = true, th = true, thead = true, tr = true
+}
+
+-- find if unclosed tags list contain a tag
+-- it fails if any element from element_list is matched before that tag
+local function is_in_scope(parser, target, element_list)
+  for i = #parser.unclosed, 1, -1 do
+    local node = parser.unclosed[i] 
+    local tag = node.tag
+    if tag == target then 
+      return true
+    elseif element_list[tag] then
+      return false
+    end
+  end
+  return false
+end
+
+local particular_scope_elements = { applet = true, caption = true, html = true, table = true, td = true,
+      th = true, marquee = true, object = true, template = true, mi = true, mo = true, mn = true,
+      ms = true, mtext = true, ["annotation-xml"] = true, foreignObject = true, desc = true, title = true,
+}
+
+local function is_in_particular_scope(parser, target)
+  return is_in_scope(parser, target, particular_scope_elements)
+end
+
+-- derived scope lists
+--
+-- list_item scope
+local list_item_scope_elements = {ol = true, ul = true}
+for k,v in pairs(particular_scope_elements) do list_item_scope_elements[k] = v end
+
+local function is_in_list_item_scope(parser, target)
+  return is_in_scope(parser, target, list_item_scope_elements)
+end
+
+-- button scope
+local button_scope_elements = {button = true}
+for k,v in pairs(particular_scope_elements) do button_scope_elements[k] = v end
+
+local function is_in_button_scope(parser, target)
+  return is_in_scope(parser, target, button_scope_elements)
+end
+
+-- table scope
+local table_scope_elements = {html = true, table = true, template = true}
+
+local function is_in_table_scope(parser, target)
+  return is_in_scope(parser, target, table_scope_elements)
+end
+
+-- select scope
+local function is_in_select_scope(parser, target)
+  -- this scope is specific, because it supports all tags except two
+  for i = #parser.unclosed, 1, -1 do
+    local node = parser.unclosed[i] 
+    local tag = node.tag
+    if tag == target then 
+      return true
+    elseif tag == "optgroup" or tag == "option" then
+      -- only these two tags are supported
+    else
+      return false
+    end
+  end
+  return false
+end
+
+
 local HtmlTreeStates = {}
 
 
@@ -1872,6 +1970,20 @@ function HtmlParser:reset_insertion_mode()
   end
   -- by default use in_body
   self:switch_insertion("in_body")
+end
+
+
+function HtmlParser:generate_implied_endtags(included, ignored)
+  local included = included or implied_endtags
+  -- parser can pass list of elements that should be removed from the "included" list
+  local ignored = ignored or {}
+  for _, name in ipairs(ignored) do included[name] = nil end
+  local current = self:current_node() or {}
+  -- keep removing elements while they are in the "included" list
+  if included[current.tag] then
+    table.remove(self.unclosed)
+    self:generate_implied_endtags(ignored)
+  end
 end
 
 function HtmlParser:finish()
