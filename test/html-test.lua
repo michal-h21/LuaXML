@@ -164,6 +164,29 @@ describe("Comments and other specials", function()
   end)
 end)
 
+describe("Special scope detection", function()
+  it("Should support basic scoping", function()
+    -- we cannot just parse HTML, because it has closed unfinished table,
+    -- so we just recreate similar strcture to test scoping
+    local element = html.Element
+    local html_el = element:init("html", {})
+    local body = element:init("body", {})
+    local p = element:init("p", {})
+    local span = element:init("span", {})
+    local caption = element:init("caption", {})
+
+    local x = {unfinished = {html, body, p, span}}
+    assert.truthy(html.is_in_button_scope(x, "p"))
+    -- b is not in scope
+    assert.falsy(html.is_in_button_scope(x, "b"))
+    -- caption is in list of elemetns which should return false for the scoping function
+    local notp = {unfinished = {html, body, p, caption, span}}
+    assert.falsy(html.is_in_button_scope(notp, "p"))
+    -- table scope ignores only table, template and html
+    assert.truthy(html.is_in_table_scope(notp, "p"))
+  end)
+end)
+
 
 describe("Parse special elements", function()
   -- local p = HtmlParser:init("<title>hello <world> &amp'</title>")
