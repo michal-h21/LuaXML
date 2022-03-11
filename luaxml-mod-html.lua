@@ -1531,15 +1531,6 @@ function HtmlParser:tokenize(state)
   local ucode = self.codepoint
   local text = self.text
 
-  if ucode == less_than then
-    -- state = "in_tag"
-     -- self:add_text(text) 
-  elseif ucode == greater_than then
-    -- state = "data"
-    -- self:add_tag(text)
-  elseif self.position ~= self.last_position then
-    -- self.text[#text+1] = uchar(ucode)
-  end
   self.last_position = self.position
   self.element_state = false
   -- execute state machine object and return new state
