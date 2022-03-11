@@ -209,6 +209,7 @@ local dash           = ucodepoint("-")
 local numbersign     = ucodepoint("#")
 local smallx         = ucodepoint("x")
 local bigx           = ucodepoint("X")
+local right_square   = ucodepoint("]")
 local EOF            = -1 -- special character, meaning end of stream
 local null           = 0
 
@@ -584,7 +585,6 @@ HtmlStates.markup_declaration_open = function(parser)
   elseif text:match(cdata_pattern, start_pos) then
     parser.ignored_pos = start_pos + 6
     local current_element = parser:current_node()
-    print("current xmlns", current_element.xmlns)
     if current_element.xmlns == xmlns.HTML or not current_element.xmlns then
       -- we change CDATA simply to comments
       parser:start_token("comment", {data = {"[CDATA["}})
@@ -601,6 +601,40 @@ HtmlStates.markup_declaration_open = function(parser)
 end
 
 
+HtmlStates.cdata_section = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == right_square then
+    return "cdata_section_bracket"
+  elseif codepoint == EOF then
+    parser:emit_eof()
+  else
+    parser:emit_character(uchar(codepoint))
+    return "cdata_section"
+  end
+end
+
+HtmlStates.cdata_section_bracket = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == right_square then
+    return "cdata_section_end"
+  else
+    parser:emit_character("]")
+    return parser:tokenize("cdata_section")
+  end
+end
+
+HtmlStates.cdata_section_end = function(parser)
+  local codepoint = parser.codepoint
+  if codepoint == right_square then
+    parser:emit_character("]")
+    return "cdata_section_end"
+  elseif codepoint == greater_than then
+    return "data"
+  else
+    parser:emit_character("]")
+    return parser:tokenize("cdata_section")
+  end
+end
 
 
 HtmlStates.comment_start = function(parser)
@@ -1707,7 +1741,7 @@ end
 function HtmlParser:set_xmlns(node, parent)
   -- handle xmlns
   local in_attr = false
-  -- try to find xmlns in node's attributes
+  -- try to find xmlns in node's attributes first
   for _, attr in ipairs(node.attr) do
     if attr.name == "xmlns" then
       node.xmlns = attr.value
@@ -1716,7 +1750,8 @@ function HtmlParser:set_xmlns(node, parent)
     end
   end
   if not in_attr then
-    -- use parent's xmlns or default xmlns
+    -- if we cannot find xmlns attribute, then use 
+    --  xmlns from the parent element, or the default xmlns 
     local parent = self:get_parent()
     node.xmlns = parent.xmlns or xmlns.HTML
   end

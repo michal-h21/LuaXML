@@ -27,6 +27,15 @@ local function get_first_element(text)
   return tree.children[1]
 end
 
+local function get_first_children(text)
+  -- helper function that returns first element
+  local tree = get_html(text)
+  local first = tree.children[1] or {}
+  local children = first.children or {}
+  return children[1]
+end
+
+
 describe("Basic features", function()
   local first = get_first_element('<p title="<!-- this is a comment-->">Test 1</p>')
   it("Element should be table", function()
@@ -149,6 +158,9 @@ describe("Comments and other specials", function()
     local cdata = tostring(get_first_element('<![CDATA[ Within this Character Data block I can use double dashes as much as I want (along with <, &, \', and ") *and* %MyParamEntity; will be expanded to the text "Has been expanded" ... however, I can\'t use the CEND sequence. If I need to use CEND I must escape one of the brackets or the greater-than sign using concatenated CDATA sections.  ]]>'))
     -- CDATA are transformed to comments
     assert.same(cdata, '<!--[CDATA[ Within this Character Data block I can use double dashes as much as I want (along with <, &, \', and ") *and* %MyParamEntity; will be expanded to the text "Has been expanded" ... however, I can\'t use the CEND sequence. If I need to use CEND I must escape one of the brackets or the greater-than sign using concatenated CDATA sections.  ]]-->')
+    -- but cdata in XML should be transformed to text
+    local cdata = tostring(get_first_children("<math xmlns='http://www.w3.org/1998/Math/MathML'><![CDATA[Hello CDATA]]></math>"))
+    assert.same(cdata, "'Hello CDATA'")
   end)
 end)
 
