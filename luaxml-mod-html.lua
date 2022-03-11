@@ -1513,6 +1513,7 @@ HtmlStates.script_data_double_escape_end = function(parser)
 
 end
 
+-- formatting elements needs special treatment
 local formatting_element_names ={
    a = true, b = true, big = true, code = true, em = true, font = true, i = true, nobr = true, s = true, small = true, strike = true, strong = true, tt = true, u = true
 }
@@ -1535,7 +1536,8 @@ function HtmlParser:init(body)
   self.__index        = self
   o.body              = self:normalize_newlines(body) -- HTML string
   o.position          = 0                -- position in the parsed string
-  o.unfinished        = {Root:init()}    -- insert Root node into the list of opened elements
+  o.unfinished        = {}    -- insert Root node into the list of opened elements
+  o.Document          = Root:init()
   o.default_state     = "data"           -- default state machine state
   o.state             = o.default_state  -- working state of the machine
   o.return_state      = o.default_state  -- special state set by entities parsing
@@ -1543,7 +1545,8 @@ function HtmlParser:init(body)
   o.current_token     = {type="start"}   -- currently processed token
   o.insertion_mode    = "initial"        -- tree construction state
   o.head_pointer      = nil              -- pointer to the Head element
-  o.active_formatting = {}
+  o.form_pointer     = nil
+  o.active_formatting = {}               -- list of active formatting elements
   return o
 end
 
@@ -1695,7 +1698,7 @@ end
 
 function HtmlParser:get_parent()
   -- return parent element
-  return self.unfinished[#self.unfinished]
+  return self.unfinished[#self.unfinished] or self.Document
 end
 
 function HtmlParser:close_element()
@@ -1792,7 +1795,7 @@ function HtmlParser:end_tag()
   -- close current opened element
   local token = self.current_token
   if token.type == "end_tag" then
-    if #self.unfinished==1 then return nil end
+    if #self.unfinished==0 then return nil end
     local node = self:close_element()
     local parent = self:get_parent()
     parent:add_child(node)
@@ -1829,7 +1832,7 @@ function HtmlParser:switch_insertion(name)
 end
 
 function HtmlParser:current_node()
-  return self.unfinished[#self.unfinished]
+  return self:get_parent()
 end
 
 function HtmlParser:adjusted_current_node()
@@ -1880,15 +1883,15 @@ function HtmlParser:finish()
   -- close all unclosed elements
   if #self.unfinished == 0 then
     -- add implicit html tag
-    self:add_tag("html")
+    self:start_tag("html")
   end
-  while #self.unfinished > 1 do
+  while #self.unfinished > 0 do
     local node = self:close_element()
     local parent = self:get_parent()
     parent:add_child(node)
   end
   -- return root element
-  return self:close_element()
+  return self.Document -- self:close_element()
 end
 
 -- 
