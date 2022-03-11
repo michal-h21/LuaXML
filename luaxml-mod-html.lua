@@ -66,7 +66,8 @@ end
 -- declare  basic node types
 
 local Root = {
-  _type = "root"
+  _type = "root",
+  xmlns = xmlns.HTML
 }
 
 function Root:init()
@@ -582,15 +583,24 @@ HtmlStates.markup_declaration_open = function(parser)
     return "doctype"
   elseif text:match(cdata_pattern, start_pos) then
     parser.ignored_pos = start_pos + 6
-    -- we change CDATA simply to comments
-    parser:start_token("comment", {data = {"[CDATA["}})
-    return "bogus_comment"
+    local current_element = parser:current_node()
+    print("current xmlns", current_element.xmlns)
+    if current_element.xmlns == xmlns.HTML or not current_element.xmlns then
+      -- we change CDATA simply to comments
+      parser:start_token("comment", {data = {"[CDATA["}})
+      return "bogus_comment"
+    else
+      -- we are in XML mode, this happens for included SVG or MathML
+      return "cdata_section"
+    end
   else
     parser:start_token("comment", {data = {}})
     return "bogus_comment"
   end
   -- local start, stop = string.find(parser.body, comment_pattern, parser.position)
 end
+
+
 
 
 HtmlStates.comment_start = function(parser)
@@ -1694,6 +1704,24 @@ function HtmlParser:start_attribute()
   end
 end
 
+function HtmlParser:set_xmlns(node, parent)
+  -- handle xmlns
+  local in_attr = false
+  -- try to find xmlns in node's attributes
+  for _, attr in ipairs(node.attr) do
+    if attr.name == "xmlns" then
+      node.xmlns = attr.value
+      in_attr = true
+      break
+    end
+  end
+  if not in_attr then
+    -- use parent's xmlns or default xmlns
+    local parent = self:get_parent()
+    node.xmlns = parent.xmlns or xmlns.HTML
+  end
+end
+
 function HtmlParser:start_tag()
   local token = self.current_token
   if token.type == "start_tag" then
@@ -1705,14 +1733,7 @@ function HtmlParser:start_tag()
     local node = Element:init(name, parent)
     node.attr = token.attr
     node.self_closing = token.self_closing
-    -- handle xmlns
-    if node.attr.xmlns then 
-      -- when it is set explicitly in tag attributes
-      node.xmlns = node.attr.xmlns 
-    else
-      -- use parent's xmlns or default xmlns
-      node.xmlns = parent.xmlns or xmlns.HTML
-    end
+    self:set_xmlns(node)
     -- 
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
