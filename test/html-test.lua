@@ -174,16 +174,19 @@ describe("Special scope detection", function()
     local p = element:init("p", {})
     local span = element:init("span", {})
     local caption = element:init("caption", {})
+    local caption = element:init("table", {})
 
     local x = {unfinished = {html, body, p, span}}
     assert.truthy(html.is_in_button_scope(x, "p"))
     -- b is not in scope
     assert.falsy(html.is_in_button_scope(x, "b"))
     -- caption is in list of elemetns which should return false for the scoping function
-    local notp = {unfinished = {html, body, p, caption, span}}
+    local notp = {unfinished = {html, body, p, table, caption, span}}
     assert.falsy(html.is_in_button_scope(notp, "p"))
     -- table scope ignores only table, template and html
-    assert.truthy(html.is_in_table_scope(notp, "p"))
+    -- assert.falsy(html.is_in_table_scope(notp, "table"))
+    -- <table> is child of p, so the is_in_table_scope returns false before it matches <p>
+    assert.falsy(html.is_in_table_scope(notp, "p"))
   end)
 end)
 
