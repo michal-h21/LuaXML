@@ -1632,6 +1632,10 @@ local function is_in_select_scope(parser, target)
   return false
 end
 
+-- List of active formatting elements
+-- https://html.spec.whatwg.org/multipage/parsing.html#the-list-of-active-formatting-elements
+-- we don't implement it yet, but maybe in the future. 
+
 
 local HtmlTreeStates = {}
 
@@ -1657,8 +1661,9 @@ function HtmlParser:init(body)
   o.current_token     = {type="start"}   -- currently processed token
   o.insertion_mode    = "initial"        -- tree construction state
   o.head_pointer      = nil              -- pointer to the Head element
-  o.form_pointer     = nil
+  o.form_pointer      = nil
   o.active_formatting = {}               -- list of active formatting elements
+  o.scripting_flag    = false            -- we will not support scripting
   return o
 end
 
@@ -1987,6 +1992,7 @@ function HtmlParser:reset_insertion_mode()
 end
 
 
+-- https://html.spec.whatwg.org/multipage/parsing.html#closing-elements-that-have-implied-end-tags
 function HtmlParser:generate_implied_endtags(included, ignored)
   local included = included or implied_endtags
   -- parser can pass list of elements that should be removed from the "included" list
