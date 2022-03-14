@@ -1,6 +1,20 @@
--- HTML parser
--- inspired by https://browser.engineering/html.html
+-- Copyright Michal Hoftich, 2022
+-- HTML parser inspired by https://browser.engineering/html.html
 -- but then redone using https://html.spec.whatwg.org/multipage/parsing.html
+--
+-- There main purpose of this module is to create an useful DOM for later processing
+-- using LuaXML functions. Either for cleanup, or for translation to output formats, 
+-- for example LaTeX. 
+--
+-- It should be possible to serialize DOM back to the original HTML code. 
+--
+-- We attempt to do some basic fixes, like to close paragraphs or list items that 
+-- aren't closed correctly in the original code. We don't fix tables or 
+-- formatting elements (see https://html.spec.whatwg.org/multipage/parsing.html#the-list-of-active-formatting-elements)
+-- as these features don't seem necessary for the purpose of this module. We may change
+-- this policy in the future, if it turns out that they are necessary. 
+--
+--
 local M = {}
 
 -- use local copies of utf8 functions
