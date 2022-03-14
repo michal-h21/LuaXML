@@ -164,6 +164,27 @@ describe("Comments and other specials", function()
   end)
 end)
 
+
+-- helper function that will convert HTML text to DOM, and rebuild unfinished list
+local function dom_with_unfinished(text)
+  local p = HtmlParser:init(text)
+  p:parse()
+  local function reconstruct(children)
+    if children then
+      for _,child in ipairs(children.children) do
+        if child.tag then
+          table.insert(p.unfinished, child)
+          reconstruct(child)
+          return true
+        end
+      end
+    end
+  end
+  reconstruct(p.Document)
+  return p
+end
+
+
 describe("Special scope detection", function()
   it("Should support basic scoping", function()
     -- we cannot just parse HTML, because it has closed unfinished table,
@@ -187,6 +208,16 @@ describe("Special scope detection", function()
     -- assert.falsy(html.is_in_table_scope(notp, "table"))
     -- <table> is child of p, so the is_in_table_scope returns false before it matches <p>
     assert.falsy(html.is_in_table_scope(notp, "p"))
+  end)
+  it("Should generate implied endtags", function()
+    local dom = dom_with_unfinished("<html><body><div><p>")
+    assert.same(#dom.unfinished, 4)
+    dom:generate_implied_endtags()
+    assert.same(#dom.unfinished, 3)
+    local dom = dom_with_unfinished("<html><body><div><p><b>")
+    -- don't close anything in this case, because current node is not <p>
+    dom:generate_implied_endtags()
+    assert.same(#dom.unfinished, 5)
   end)
 end)
 
