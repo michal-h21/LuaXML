@@ -266,6 +266,8 @@ local parse = function(
     for _, el in ipairs(current:get_children()) do
       if el:is_text() then
         text[#text+1] = el._text or ""
+      elseif  el._type == "CDATA" then
+        text[#text+1] = el._text or ""
       elseif el:is_element() then
         text[#text+1] = el:get_text()
       end
