@@ -15,7 +15,11 @@ then clone this repository and run
     make install
 
 Please note that you will need [LDoc](http://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) and 
-[dkjson](http://dkolf.de/src/dkjson-lua.fsl/home) Lua modules installed on your system.
+[dkjson](http://dkolf.de/src/dkjson-lua.fsl/home) Lua modules installed on your system. You can install them using:
+
+    $ luarocks install --local ldoc
+    $ luarocks install --local dkjso
+
 
 License:
 ========
