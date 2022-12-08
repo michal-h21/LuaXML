@@ -9,6 +9,9 @@ local css_query = require("luaxml-cssquery")
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}
 
+-- support also upper case names
+for k,v in pairs(void) do void[string.upper(k)] = true end
+
 local escapes = {
   [">"] = "&gt;",
   ["<"] = "&lt;",
