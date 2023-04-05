@@ -9,9 +9,18 @@
 -- Initial Import
 --
 
-modxml = require('luaxml-mod-xml')
-handler = require('luaxml-mod-handler')
-pretty = require('luaxml-pretty')
+local modxml
+local handler
+local pretty
+if kpse then
+    modxml = require('luaxml-mod-xml')
+    handler = require('luaxml-mod-handler')
+    pretty = require('luaxml-pretty')
+else
+    modxml = require('luaxml.mod-xml')
+    handler = require('luaxml.mod-handler')
+    pretty = require('luaxml.pretty')
+end
 
 
 -- Defaults
