@@ -2,9 +2,19 @@
 -- @module luaxml-domobject
 -- @author Michal Hoftich <michal.h21@gmail.com
 local dom = {}
-local xml = require("luaxml-mod-xml")
-local handler = require("luaxml-mod-handler")
-local css_query = require("luaxml-cssquery")
+
+local xml
+local handler
+local css_query
+if kpse then
+  xml = require("luaxml-mod-xml")
+  handler = require("luaxml-mod-handler")
+  css_query = require("luaxml-cssquery")
+else
+  xml = require("luaxml.mod-xml")
+  handler = require("luaxml.mod-handler")
+  css_query = require("luaxml.cssquery")
+end
 
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}

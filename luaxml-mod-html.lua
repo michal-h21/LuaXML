@@ -39,7 +39,12 @@ local xmlns = {
 
 -- we must make search tree for named entities, as their support 
 -- is quite messy
-local named_entities = require "luaxml-namedentities"
+local named_entities
+if kpse then
+  named_entities = require "luaxml-namedentities"
+else
+  named_entities = require "luaxml.namedentities"
+end
 
 local entity_tree = {children = {}}
 

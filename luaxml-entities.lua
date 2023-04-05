@@ -1,6 +1,11 @@
 local M = {}
 local char = unicode and unicode.utf8.char or utf8.char
-local named_entities = require "luaxml-namedentities"
+local named_entities
+if kpse then
+  named_entities = require "luaxml-namedentities"
+else
+  named_entities = require "luaxml.namedentities"
+end
 local hexchartable = {}
 local decchartable = {}
 

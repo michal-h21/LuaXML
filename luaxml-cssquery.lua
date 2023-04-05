@@ -1,7 +1,12 @@
 --- CSS query module for LuaXML
 -- @module luaxml-cssquery
 -- @author Michal Hoftich <michal.h21@gmail.com
-local parse_query = require("luaxml-parse-query")
+local parse_query
+if kpse then
+  parse_query = require("luaxml-parse-query")
+else
+  parse_query = require("luaxml.parse-query")
+end
 
 -- the string.explode function is provided by LuaTeX
 -- this is alternative for stock Lua

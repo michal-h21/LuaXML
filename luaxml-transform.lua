@@ -4,8 +4,15 @@
 
 -- code originaly comes from from https://github.com/michal-h21/luaxml-mathml
 --
-local domobject = require "luaxml-domobject"
-local cssquery = require "luaxml-cssquery"
+local domobject
+local cssquery
+if kpse then
+  domobject = require "luaxml-domobject"
+  cssquery = require "luaxml-cssquery"
+else
+  domobject = require "luaxml.domobject"
+  cssquery = require "luaxml.cssquery"
+end
 -- initialize CSS selector object
 local css = cssquery()
 

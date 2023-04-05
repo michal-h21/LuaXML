@@ -112,8 +112,16 @@
 --@returns Returns a string representation of table
 
 local M = {}
-local stack = require("luaxml-stack")
-local entities = require("luaxml-entities")
+
+local stack
+local entities
+if kpse then
+    stack = require("luaxml-stack")
+    entities = require("luaxml-entities")
+else
+    stack = require("luaxml.stack")
+    entities = require("luaxml.entities")
+end
 
 local function showTable(t)
     local sep = ''
