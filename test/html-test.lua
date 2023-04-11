@@ -228,16 +228,16 @@ describe("Parse special elements", function()
   -- local p = HtmlParser:init("<script><!-- if(a<2){let x=3;} else {print('</section>');}</SCRIPT>")
   print "***************************************"
   local p = HtmlParser:init(
-  -- [[<!DOCTYPE html>
-  -- Before
-  -- <script>"<script>"</script>
-  -- fine
-  -- <script>"<!--"</script>
-  -- still fine
-  -- <script>"<!--<a>"</script>
-  -- fine again
-  -- <script>"<!--<script>"</script>
-  -- Won't print
+  [[<!DOCTYPE html>
+  Before
+  <script>"<script>"</script>
+  fine
+  <script>"<!--"</script>
+  still fine
+  <script>"<!--<a>"</script>
+  fine again
+  <script>"<!--<script>"</script>
+  Won't print
   [[<script>
     <!--    //hide from non-JS browsers
       function doSomething() {
@@ -245,7 +245,6 @@ describe("Parse special elements", function()
         document.write(coolScript);
       }
       // And if you forget to close your comment here, things go funnny
-      -->
   </script>]])
   local dom = p:parse()
   print_tree(dom)
