@@ -360,8 +360,8 @@ local parse = function(
   -- The traversing of child elements of a given node can be disabled when the executed
   -- function returns false.
   function DOM_Object:traverse(
-    fn, --- 
-    current ---
+    fn, --- function which will be executed on the current element and all it's children
+    current --- [optional] element to be selected
     )
     local current = current or self --
     -- Following situation may happen when this method is called directly on the parsed object
@@ -381,7 +381,7 @@ local parse = function(
   end
 
   --- Execute function on the current element and all it's children elements.
-  -- The traversing of child elements of a given node can be disabled when the executed
+  --- The traversing of child elements of a given node can be disabled when the executed
   -- function returns false.
   -- @return nothing
   function DOM_Object:traverse_elements(
@@ -396,9 +396,10 @@ local parse = function(
     end)
   end
 
-  --- Get table with the inner text of an element. Every text node is a separate table item. 
+  --- Get table with the inner text of an element, every text node is a separate table item. 
+  --- @return table
   function DOM_Object:strings(
-    current
+    current --- [optional] element to be selected
     )
     local strings = {}
     local current = current or self
@@ -410,10 +411,10 @@ local parse = function(
     return strings
   end
 
-  --- Get table with the inner text of an element. Leading and trailing spaces are removed and 
-  --  elements that contain only white space are ignored.
+  --- Get table with the inner text of an element -- leading and trailing spaces are removed and elements that contain only white space are ignored.
+  --- @return table 
   function DOM_Object:stripped_strings(
-    current
+    current --- [optional] element to be selected
     )
     local current = current or self
     local strings = current:strings()
