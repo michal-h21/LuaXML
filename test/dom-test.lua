@@ -29,6 +29,23 @@ describe("Basic DOM functions", function()
     assert.truthy(path[1]:is_element())
     assert.same(#path[1]:get_children(),  9)
   end)
+
+  describe("Node traversing should work", function()
+    it("Should get all nodes", function()
+      local t = {}
+      obj:traverse(function(node)
+        t[#t+1] = node
+      end)
+      assert.same(#t, 21)
+    end)
+    it("Should get stripped strings", function()
+      assert.same(#obj:stripped_strings(), 3)
+    end)
+    it("Should get all strings", function()
+      assert.same(#obj:strings(),12)
+    end)
+  end)
+
  
   describe("Basic DOM traversing should work", function()
     local matched = false

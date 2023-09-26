@@ -354,6 +354,32 @@ local parse = function(
     return el._parent
   end
 
+  --- Execute function on the current element and all it's children nodes.
+  -- The differenct to DOM_Object:traverse_elements() is that it executes the function 
+  -- also on text nodes and all other kinds of XML nodes.
+  -- The traversing of child elements of a given node can be disabled when the executed
+  -- function returns false.
+  function DOM_Object:traverse(
+    fn, --- 
+    current ---
+    )
+    local current = current or self --
+    -- Following situation may happen when this method is called directly on the parsed object
+    if not current:get_node_type() then
+      current = self:root_node() 
+    end
+    local status = true
+    local status = fn(current)
+    if current:is_element() or current:get_node_type() == "ROOT" then
+      -- don't traverse child nodes when the user function return false
+      if status ~= false then
+        for _, child in ipairs(current:get_children()) do
+          self:traverse(fn, child)
+        end
+      end
+    end
+  end
+
   --- Execute function on the current element and all it's children elements.
   -- The traversing of child elements of a given node can be disabled when the executed
   -- function returns false.
@@ -363,21 +389,46 @@ local parse = function(
     current --- [optional] element to be selected
     )
     local current = current or self --
-    -- Following situation may happen when this method is called directly on the parsed object
-    if not current:get_node_type() then
-      current = self:root_node() 
-    end
-    local status = true
-    if self:is_element(current) or self:get_node_type(current) == "ROOT"then
-      local status = fn(current)
-      -- don't traverse child nodes when the user function return false
-      if status ~= false then
-        for _, child in ipairs(self:get_children(current)) do
-          self:traverse_elements(fn, child)
-        end
+    current:traverse(function(node)
+      if node:is_element() or node:get_node_type() == "ROOT" then
+        fn(node)
+      end
+    end)
+  end
+
+  --- Get table with the inner text of an element. Every text node is a separate table item. 
+  function DOM_Object:strings(
+    current
+    )
+    local strings = {}
+    local current = current or self
+    current:traverse(function(node)
+      if node:get_node_type() == "TEXT" then
+        table.insert(strings, node._text or "")
+      end
+    end)
+    return strings
+  end
+
+  --- Get table with the inner text of an element. Leading and trailing spaces are removed and 
+  --  elements that contain only white space are ignored.
+  function DOM_Object:stripped_strings(
+    current
+    )
+    local current = current or self
+    local strings = current:strings()
+    local cleaned = {}
+    for k,v in ipairs(strings) do
+      v = v:gsub("^%s*", ""):gsub("%s*$", "")
+      if v ~= "" then
+        table.insert(cleaned, v)
       end
     end
+    return cleaned
   end
+
+
+
 
   --- Execute function on list of elements returned by DOM_Object:get_path()
   function DOM_Object:traverse_node_list( 
