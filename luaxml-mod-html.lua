@@ -2007,7 +2007,7 @@ function HtmlParser:generate_implied_endtags(included, ignored)
   -- keep removing elements while they are in the "included" list
   if included[current.tag] then
     table.remove(self.unfinished)
-    self:generate_implied_endtags(ignored)
+    self:generate_implied_endtags(included, ignored)
   end
 end
 
