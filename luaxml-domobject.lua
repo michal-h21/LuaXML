@@ -91,9 +91,14 @@ local function serialize_dom(parser, current,level, output)
     local format = get_action(typ, "start")
     insert(format, el, prepare_attributes(attr))
   end
-  local function text(typ, text)
+  local function text(typ, text, parent)
+    local parent = parent or {}
     local format = get_action(typ, "text")
-    insert(format, escape_element(text))
+    if parent.verbatim then
+      insert(format, text)
+    else
+      insert(format, escape_element(text))
+    end
   end
   local function stop(typ, el)
     local format = get_action(typ, "stop")
@@ -141,7 +146,7 @@ local function serialize_dom(parser, current,level, output)
   end
 
   start(xtype, name, attributes)
-  text(xtype,text_content) 
+  text(xtype,text_content, (current or {})._parent) 
   local children = root._children or {}
   for _, child in ipairs(children) do
     output = serialize_dom(parser,child, level + 1, output)
@@ -612,7 +617,7 @@ local parse = function(
   -- include the methods to all xml nodes
   save_methods(parser._handler.root)
   -- parser:
-  return parser
+  return parser, DOM_Object
 end
 
 --- @export
