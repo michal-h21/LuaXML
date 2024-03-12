@@ -6,16 +6,20 @@ local dom = {}
 local xml
 local handler
 local css_query
+local html
 if kpse then
   xml = require("luaxml-mod-xml")
   handler = require("luaxml-mod-handler")
   css_query = require("luaxml-cssquery")
+  html = require("luaxml-mod-html")
 else
   xml = require("luaxml.mod-xml")
   handler = require("luaxml.mod-handler")
   css_query = require("luaxml.cssquery")
+  html = require("luaxml.mod-html")
 end
 
+local HtmlParser = html.HtmlParser
 
 local void = {area = true, base = true, br = true, col = true, hr = true, img = true, input = true, link = true, meta = true, param = true}
 
@@ -620,8 +624,80 @@ local parse = function(
   return parser, DOM_Object
 end
 
+-- table of elements that should be kept without XML escaping in the DOM serialization
+local verbatim_elements = {script=true, style=true}
+
+local function html_to_dom(html_object)
+  -- convert parsed HTML DOM to the XML DOM
+  local dom, DOM_Object = parse("") -- use empty text to just initialize the DOM object
+  -- use root of the DOM object as the original parent
+  local current_parent = dom._handler.root
+
+  local function create_node(tbl)
+    -- create node suitable for LuaXML DOM object
+    tbl._children = {}
+    -- this should copy methods from the DOM object to the newly created object
+    tbl.__index = DOM_Object
+    return setmetatable(tbl, DOM_Object)
+  end
+
+  local function build_tree(object)
+    -- convert tree produced by the HTML parser to LuaXML DOM 
+    local typ = object._type 
+    -- process particular node types from the HTML parser
+    if typ == "doctype" then
+      current_parent:add_child_node(create_node {_name=object.name, _type="DTD"})
+    elseif typ == "comment" then
+      current_parent:add_child_node(create_node {_text=object.text, _type="COMMENT"})
+    elseif typ == "element" then
+      local attributes = {}
+      -- convert attributes to the form expected by the DOM object
+      for _, attr in ipairs(object.attr) do 
+        attributes[attr.name] = attr.value
+      end
+      local element = current_parent:create_element(object.tag, attributes)
+      -- disable escaping of text in dom:serialize() for <script> or <style> elements
+      if verbatim_elements[string.lower(object.tag)] then element.verbatim = true end
+      current_parent:add_child_node(element)
+      -- set the current element as parent for the processing of children
+      local old_parent = current_parent
+      current_parent = element
+      -- process children
+      for k,v in ipairs(object.children) do
+        build_tree(v)
+      end
+      -- restore original parent
+      current_parent = old_parent
+    elseif typ == "text" then
+      local text = current_parent:create_text_node(object.text)
+      current_parent:add_child_node(text)
+    else
+      -- for other node types, just process the children
+      for k,v in ipairs(object.children) do
+        build_tree(v)
+      end
+    end
+
+  end
+  build_tree(html_object)
+  return dom
+end
+
+--- Parse HTML text as a DOM object.
+--  It supports all methods as the object returned by the parse() function.
+-- @param html_str  string with the HTML code to be parsed
+-- @return DOM_Object
+local function html_parse(html_str)
+  local html_obj = HtmlParser:init(html_str)
+  local html_dom = html_obj:parse()
+  return html_to_dom(html_dom)
+end
+
+
+
 --- @export
 return {
   parse = parse, 
-  serialize_dom= serialize_dom
+  serialize_dom= serialize_dom,
+  html_parse = html_parse
 }
