@@ -420,8 +420,8 @@ local parse = function(
     return strings
   end
 
-  --- Get table with the inner text of an element -- leading and trailing spaces are removed and elements that contain only white space are ignored.
-  --- @return table 
+  --- Get table with the inner text of an element - leading and trailing spaces are removed and elements that contain only white space are ignored.
+  --  @return table 
   function DOM_Object:stripped_strings(
     current --- [optional] element to be selected
     )
