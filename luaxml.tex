@@ -641,6 +641,35 @@ transform.print_tex("\\verb|" .. result .. "|")
 \end{luacode*}
 \end{framed}
 
+\section{Character sets handling}
+
+The \texttt{luaxml-encodings} library provides functions to convert texts in legacy 8-bit encodings such as WINDOWS-1250 
+or ISO-8859-2 to UTF-8. This can be useful in fixing document encoding before HTML parsing using the \texttt{luaxml-mod-html}
+library. 
+
+\subsection{Example}
+
+
+\begin{verbatim}
+kpse.set_program_name "luatex"
+local encodings = require "luaxml-encodings"
+
+--read HTML page from the standard input
+local text = io.read("*all")
+-- find the character encoding in HTML metadata
+local enc = encodings.find_html_encoding(text)
+if enc then
+  -- local conversion table for the found encoding
+  local mapping = encodings.load_mapping(enc)
+  if mapping then
+    -- if the mapping exists, recode the HTML input and print it
+    local converted = encodings.recode(text, mapping)
+    print(converted)
+  end
+end
+\end{verbatim}
+
+
 
 \section{The API documentation}
 
