@@ -22,6 +22,7 @@ build = {
       ["luaxml.cssquery"] = "luaxml-cssquery.lua",
       ["luaxml.domobject"] = "luaxml-domobject.lua",
       ["luaxml.entities"] = "luaxml-entities.lua",
+      ["luaxml.encodings"] = "luaxml-encodings.lua",
       ["luaxml.mod-handler"] = "luaxml-mod-handler.lua",
       ["luaxml.mod-html"] = "luaxml-mod-html.lua",
       ["luaxml.mod-xml"] = "luaxml-mod-xml.lua",

@@ -76,7 +76,7 @@ else
   print "return {"
 
   for k,v in ipairs(encodings) do
-    print(v.name .. " = '" .. v.encoding .. "'")
+    print("['" .. v.name .. "'] = '" .. v.encoding .. "',")
   end
 
   print "}"
