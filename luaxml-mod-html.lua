@@ -1689,7 +1689,7 @@ for _,v in ipairs(self_closing_tags_list) do self_closing_tags[v] = true end
 
 function HtmlParser:parse()
   -- we assume utf8 input, you must convert it yourself if the source is 
-  -- in a different encoding
+  -- in a different encoding. for example using luaxml-encodings library
   self.text = {}
   self.state = self.default_state
   -- this should enable us to pass over some characters that we want to ignore
