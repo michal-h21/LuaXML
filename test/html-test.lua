@@ -1,6 +1,7 @@
 require "busted.runner" ()
 kpse.set_program_name "luatex"
 local html = require "luaxml-mod-html"
+local encodings = require "luaxml-encodings"
 
 -- debugging function
 local function print_tree(node, indent)
@@ -221,6 +222,34 @@ describe("Special scope detection", function()
   end)
 end)
 
+describe("Test 8-bit text encoding handling", function()
+  it("Should find text encoding in HTML", function()
+    local text = [[<!doctype html>
+    <html lang="cs" class="css-d" itemscope itemtype="https://schema.org/NewsArticle">
+    <head>
+        <meta charset="windows-1250">
+        <meta http-equiv="cache-control" content="no-cache">
+     ]]
+     assert.same(encodings.find_html_encoding(text), "windows-1250")
+     local text = [[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+             "http://www.w3.org/TR/html4/loose.dtd">
+             <html lang="cs">
+             <head>
+              <title>Technomorous - Čtvrtá grafika pro Blackbird</title>
+                <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-2">]]
+     -- encodings are always lowercase, even if they were specified as uppercase in HTML
+     assert.same(encodings.find_html_encoding(text), "iso-8859-2")
+  end)
+  it("Should translate characters to utf-8", function()
+    -- construct text with diacritics in windows-1250 encoding
+    local text = string.char(232, 237, 158)
+    local mapping = encodings.load_mapping("windows-1250")
+    assert.table(mapping)
+    -- convert windows-1250 text to utf-8
+    assert.same(encodings.recode(text, mapping), "číž")
+
+  end)
+end)
 
 describe("Parse special elements", function()
   -- local p = HtmlParser:init("<title>hello <world> &amp'</title>")
