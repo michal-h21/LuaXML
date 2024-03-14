@@ -1986,6 +1986,7 @@ function HtmlParser:reset_insertion_mode()
         return
       else
         self:switch_insertion("after_head")
+        return
       end
     elseif last == true then
       self:switch_insertion("in_body")
