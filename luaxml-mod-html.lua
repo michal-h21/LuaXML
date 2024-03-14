@@ -2007,7 +2007,9 @@ function HtmlParser:generate_implied_endtags(included, ignored)
   local current = self:current_node() or {}
   -- keep removing elements while they are in the "included" list
   if included[current.tag] then
-    table.remove(self.unfinished)
+    local node = self:close_element() -- table.remove(self.unfinished)
+    local parent = self:get_parent()
+    parent:add_child(node)
     self:generate_implied_endtags(included, ignored)
   end
 end
