@@ -1964,6 +1964,21 @@ function HtmlParser:adjusted_current_node()
 end
 
 
+local simple_modes = {
+  body = "in_body",
+  td = "in_cell",
+  th = "in_cell",
+  tr = "in_row",
+  tbody = "in_table_body",
+  thead = "in_table_body",
+  tfoot = "in_table_body",
+  caption = "in_caption",
+  colgroup = "in_column_group",
+  table = "in_table",
+  template = "current_template_insertion_mode",
+  frameset = "in_frameset"
+}
+
 function HtmlParser:reset_insertion_mode()
   -- https://html.spec.whatwg.org/multipage/parsing.html#reset-the-insertion-mode-appropriately
   local last = false
@@ -1977,17 +1992,33 @@ function HtmlParser:reset_insertion_mode()
     if name == "head" and last == true then
       self:switch_insertion("in_head")
       return
-    elseif name == "body" then
-      self:switch_insertion("in_body")
-      return
     elseif name == "html" then
-      if self.head_pointer then
+      if not self.head_pointer then
         self:switch_insertion("before_head")
         return
       else
         self:switch_insertion("after_head")
         return
       end
+    elseif name == "select" then
+      if not last then
+        for x = position -1, 1, -1 do
+          if x == 1 then break end
+          local ancestor = self.unfinished[x] 
+          local ancestor_name = ancestor.tag
+          if ancestor_name == "template" then
+            break
+          elseif ancestor_name == "table" then
+            self:switch_insertion("in_select_in_table")
+            return 
+          end
+        end
+      end
+      self:switch_insertion("in_select")
+      return
+    elseif simple_modes[name] then
+      self:switch_insertion(simple_modes[name])
+      return
     elseif last == true then
       self:switch_insertion("in_body")
       return

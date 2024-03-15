@@ -222,6 +222,54 @@ describe("Special scope detection", function()
   end)
 end)
 
+local function build_simple_tree(str, options)
+  -- build simple DOM using string like html/body/p/b
+  local tree = HtmlParser:init("")
+  tree:parse()
+  local options = options or {}
+
+  -- local tree = {unfinished = {}}
+  for tag in str:gmatch("([^/]+)") do
+    local element = html.Element
+    table.insert(tree.unfinished, element:init(tag, {}))
+  end
+  -- allow setting of extra options
+  for k,v in pairs(options) do
+    print(k,tree[k], v)
+    tree[k] = v
+  end
+  return tree
+end
+
+describe("Insertion mode switching", function()
+  local function get_insertion_node(path, options)
+    local dom = build_simple_tree(path, options)
+    dom:reset_insertion_mode()
+    return dom.insertion_mode
+  end
+  it("Should handle select", function()
+    assert.same(get_insertion_node("html/body/select"), "in_select")
+    assert.same(get_insertion_node("html/body/table/select"), "in_select_in_table")
+  end)
+  it("Should handle table elements", function()
+    assert.same(get_insertion_node("html/body/table/tr/td"), "in_cell")
+    assert.same(get_insertion_node("html/body/table/tr/th/span"), "in_cell")
+    assert.same(get_insertion_node("html/body/table/tr"), "in_row")
+    assert.same(get_insertion_node("html/body/table/thead"), "in_table_body")
+    assert.same(get_insertion_node("html/body/table"), "in_table")
+  end)
+  it("Should handle head", function()
+    assert.same(get_insertion_node("html/head", {head_pointer = nil}), "before_head")
+    assert.same(get_insertion_node("html/head", {head_pointer = true}), "after_head")
+    print(get_insertion_node("html/body/p"))
+  end)
+  it("Should handle body", function()
+    assert.same(get_insertion_node("html/body/p"), "in_body")
+    assert.same(get_insertion_node("p"), "in_body")
+  end)
+
+end)
+
 describe("Test 8-bit text encoding handling", function()
   it("Should find text encoding in HTML", function()
     local text = [[<!doctype html>
