@@ -1914,6 +1914,11 @@ function HtmlParser:close_paragraph()
   end
 end
 
+function HtmlParser:current_element_name()
+  -- return name of the current element
+  return self.unfinished[#self.unfinished].tag
+end
+
 function HtmlParser:handle_insertion_mode(token)
   -- simple handling of https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
   -- we don't support most rules, just the most important for avoiding mismatched tags
@@ -1928,7 +1933,10 @@ function HtmlParser:handle_insertion_mode(token)
         if is_in_button_scope(self, "p") then
           self:close_paragraph()
         end
-
+        -- close current element if it is already header 
+        if close_headers[self:current_element_name()] then
+          self:pop_element()
+        end
       end
     end
   end
