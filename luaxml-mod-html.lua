@@ -1540,9 +1540,15 @@ local function is_formatting_element(name)
   return formatting_element_names[name]
 end
 
+local function hash_from_array(tbl)
+  local t = {}
+  for _, v in ipairs(tbl) do t[v] = true end
+  return t
+end
+
 local special_elements = {}
 
-local special_elements_list = {"address", "applet", "area", "article", "aside",
+local special_elements_list = hash_from_array {"address", "applet", "area", "article", "aside",
 "base", "basefont", "bgsound", "blockquote", "body", "br", "button", "caption",
 "center", "col", "colgroup", "dd", "details", "dir", "div", "dl", "dt",
 "embed", "fieldset", "figcaption", "figure", "footer", "form", "frame",
@@ -1555,9 +1561,9 @@ local special_elements_list = {"address", "applet", "area", "article", "aside",
 "mi","mo","mn","ms","mtext", "annotation-xml","foreignObject","desc", "title"
 }
 
-for k,v in ipairs(special_elements_list) do
-  special_elements[v] = true
-end
+-- for k,v in ipairs(special_elements_list) do
+--   special_elements[v] = true
+-- end
 
 
 local function is_special(name)
@@ -1791,6 +1797,7 @@ function HtmlParser:emit(token)
   elseif token_type == "start_tag" then
     self:add_text()
     -- self:start_attribute()
+    self:reset_insertion_mode()
     self:start_tag()
     -- print("Emit start tag", table.concat(token.name))
     -- save last attribute
@@ -1882,6 +1889,46 @@ function HtmlParser:set_xmlns(node, parent)
   end
 end
 
+
+local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul"}
+
+local close_headers = hash_from_array {"h1", "h2", "h3", "h4", "h5", "h6"}
+
+local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select", "in_table", "in_table_body", "in_frameset"}
+
+
+function HtmlParser:close_paragraph()
+  -- close currently open <p> elements
+  for i = #self.unfinished, 1, -1 do
+    local el = self:close_element()
+    local parent = self:get_parent()
+    parent:add_child(el)
+    if el.tag == "p" then
+      break
+    end
+  end
+end
+
+function HtmlParser:handle_insertion_mode(token)
+  -- simple handling of https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
+  -- we don't support most rules, just the most important for avoiding mismatched tags
+  if body_modes[self.insertion_mode] then
+    if token.type == "start_tag" then
+      local name = table.concat(token.name)
+      if close_p_at_start[name] and
+         is_in_button_scope(self, "p") 
+      then
+        self:close_paragraph()
+      elseif close_headers[name] then
+        if is_in_button_scope(self, "p") then
+          self:close_paragraph()
+        end
+
+      end
+    end
+  end
+end
+
 function HtmlParser:start_tag()
   local token = self.current_token
   if token.type == "start_tag" then
@@ -1894,7 +1941,8 @@ function HtmlParser:start_tag()
     node.attr = token.attr
     node.self_closing = token.self_closing
     self:set_xmlns(node)
-    -- 
+    -- in this handler we should close <p> or <li> elements without explicit closing tags
+    self:handle_insertion_mode(token)
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
     then
