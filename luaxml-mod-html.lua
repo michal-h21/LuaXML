@@ -1889,6 +1889,13 @@ function HtmlParser:set_xmlns(node, parent)
   end
 end
 
+function HtmlParser:pop_element()
+  -- close the current element and add it to the DOM
+  local el = self:close_element()
+  local parent = self:get_parent()
+  parent:add_child(el)
+  return el
+end
 
 local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul"}
 
@@ -1900,9 +1907,7 @@ local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select",
 function HtmlParser:close_paragraph()
   -- close currently open <p> elements
   for i = #self.unfinished, 1, -1 do
-    local el = self:close_element()
-    local parent = self:get_parent()
-    parent:add_child(el)
+    local el = self:pop_element()
     if el.tag == "p" then
       break
     end
@@ -1966,9 +1971,7 @@ function HtmlParser:end_tag()
   local token = self.current_token
   if token.type == "end_tag" then
     if #self.unfinished==0 then return nil end
-    local node = self:close_element()
-    local parent = self:get_parent()
-    parent:add_child(node)
+    self:pop_element()
   end
 end
 
@@ -2086,9 +2089,7 @@ function HtmlParser:generate_implied_endtags(included, ignored)
   local current = self:current_node() or {}
   -- keep removing elements while they are in the "included" list
   if included[current.tag] then
-    local node = self:close_element() -- table.remove(self.unfinished)
-    local parent = self:get_parent()
-    parent:add_child(node)
+    self:pop_element()
     self:generate_implied_endtags(included, ignored)
   end
 end
@@ -2105,9 +2106,7 @@ function HtmlParser:finish()
     self:start_tag("html")
   end
   while #self.unfinished > 0 do
-    local node = self:close_element()
-    local parent = self:get_parent()
-    parent:add_child(node)
+    self:pop_element()
   end
   -- return root element
   return self.Document -- self:close_element()
