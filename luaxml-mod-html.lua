@@ -1892,7 +1892,7 @@ function HtmlParser:pop_element()
   return el
 end
 
-local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul", "pre", "listing", "form"}
+local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul", "pre", "listing", "form", "table", "xmp"}
 
 local close_headers = hash_from_array {"h1", "h2", "h3", "h4", "h5", "h6"}
 
