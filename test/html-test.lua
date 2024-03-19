@@ -328,10 +328,33 @@ describe("Parse special elements", function()
 
 end)
 
-local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
--- local p = HtmlParser:init("<html><HEAD><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><h1>This is my webpage &amp;</h1><img src='hello' />")
--- local p = HtmlParser:init("Hello <čau> text, hello <img src='hello \"quotes\"' alt=\"sample <worldik> 'hello'\" id=image title=<!this-comment /> image")
--- local p = HtmlParser:init("<i>Hello <čau> text</i>")
-local dom = p:parse()
-print_tree(dom)
+
+describe("Parse unclosed and wrongly nested elements", function()
+
+  local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><p>this is uncloded paragraph <h1>This is my webpage &amp; <h2>nested header</h2></h1><img src='hello' />")
+  local dom = p:parse()
+
+  local html, head, body
+  -- print_tree(dom)
+  it("should create a correct dom", function()
+    assert.same(type(dom.children), "table")
+    -- there should be space, doctype and <html>
+    assert.same(#dom.children, 3)
+    html = dom.children[3]
+    assert.same(html.tag, "html")
+  end)
+  it("should parse unclosed and wrongly nested tags", function()
+    local head = html.children[1]
+    local body = html.children[2]
+    assert.same(head.tag, "head")
+    -- only <meta> should be a child
+    assert.same(#head.children, 1)
+    assert.same(body.tag, "body")
+    assert.same(#body.children, 4)
+    assert.same(body.children[1].tag, "p")
+    assert.same(body.children[2].tag, "h1")
+    assert.same(body.children[3].tag, "h2")
+    assert.same(body.children[4].tag, "img")
+  end)
+end)
 
