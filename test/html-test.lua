@@ -331,7 +331,7 @@ end)
 
 describe("Parse unclosed and wrongly nested elements", function()
 
-  local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><p>this is uncloded paragraph <h1>This is my webpage &amp; <h2>nested header</h2></h1><img src='hello' />")
+  local p = HtmlParser:init("  <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=yes'></head><body><p>this is uncloded paragraph <h1>This is my webpage &amp; <h2>nested header</h2></h1><p><img src='hello' /><p>another paragraph")
   local dom = p:parse()
 
   local html, head, body
@@ -350,11 +350,13 @@ describe("Parse unclosed and wrongly nested elements", function()
     -- only <meta> should be a child
     assert.same(#head.children, 1)
     assert.same(body.tag, "body")
-    assert.same(#body.children, 4)
+    assert.same(#body.children, 5)
     assert.same(body.children[1].tag, "p")
     assert.same(body.children[2].tag, "h1")
     assert.same(body.children[3].tag, "h2")
-    assert.same(body.children[4].tag, "img")
+    assert.same(body.children[4].tag, "p")
+    assert.same(body.children[4].children[1].tag, "img")
+    assert.same(body.children[5].tag, "p")
   end)
 end)
 
