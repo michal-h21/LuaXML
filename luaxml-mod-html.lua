@@ -1546,7 +1546,6 @@ local function hash_from_array(tbl)
   return t
 end
 
-local special_elements = {}
 
 local special_elements_list = hash_from_array {"address", "applet", "area", "article", "aside",
 "base", "basefont", "bgsound", "blockquote", "body", "br", "button", "caption",
@@ -1561,13 +1560,9 @@ local special_elements_list = hash_from_array {"address", "applet", "area", "art
 "mi","mo","mn","ms","mtext", "annotation-xml","foreignObject","desc", "title"
 }
 
--- for k,v in ipairs(special_elements_list) do
---   special_elements[v] = true
--- end
-
 
 local function is_special(name)
-  return special_elements[name]
+  return special_elements_list[name]
 end
 
 -- these lists are used in HtmlParser:generate_implied_endtags()
@@ -1930,13 +1925,14 @@ local function handle_list_item(self, name)
   if name == "li" then names = {li=true} end
   for i = #self.unfinished, 1, -1 do
     local current = self.unfinished[i]
-    if names[current.tag] then
+    local current_tag = current.tag
+    if names[current_tag] then
       self:generate_implied_endtags(nil, {current.tag})
       for j = #self.unfinished, i, -1 do
         self:pop_element()
       end
       break
-    elseif is_special(name) and not not_specials[name] then
+    elseif is_special(current_tag) and not not_specials[name] then
       break
     end
   end
