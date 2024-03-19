@@ -1942,21 +1942,22 @@ local function handle_list_item(self, name)
   end
 end
 
+local close_paragraph = function(self)
+  if is_in_button_scope(self, "p") then
+    self:close_paragraph()
+  end
+end
+
 function HtmlParser:handle_insertion_mode(token)
   -- simple handling of https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
   -- we don't support most rules, just the most important for avoiding mismatched tags
-  local close_paragraph = function()
-    if is_in_button_scope(self, "p") then
-      self:close_paragraph()
-    end
-  end
 
   if body_modes[self.insertion_mode] then
     if token.type == "start_tag" then
       local name = table.concat(token.name)
-      if close_p_at_start[name] then close_paragraph() end
+      if close_p_at_start[name] then close_paragraph(self) end
       if close_headers[name] then
-        close_paragraph()
+        close_paragraph(self)
         -- close current element if it is already header 
         if close_headers[self:current_element_name()] then
           self:pop_element()
@@ -1965,7 +1966,7 @@ function HtmlParser:handle_insertion_mode(token)
         -- we should ignore next "\n" char token
       elseif list_items[name] then
         handle_list_item(self, name)
-        close_paragraph()
+        close_paragraph(self)
       end
     end
   end
