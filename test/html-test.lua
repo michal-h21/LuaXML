@@ -370,5 +370,24 @@ describe("Parse unclosed and wrongly nested elements", function()
     assert.same(body.children[4].children[1].tag, "img")
     assert.same(body.children[5].tag, "p")
   end)
+  it("should parse lists", function()
+    local p = HtmlParser:init "<!doctype html><html><head></head><body><p>this is uncloded paragraph <ul><li>hello<li>another<ol><li>this is nested list</ol></ul>"
+    local dom = p:parse()
+    -- print_tree(dom)
+    local html = dom.children[2]
+    assert.same(type(html), "table")
+    assert.same(html.tag, "html")
+    local body = html.children[2]
+    assert.same(body.tag, "body")
+    local ul = body.children[2]
+    assert.same(ul.tag, "ul")
+    assert.same(#ul.children, 2)
+    local second li = ul.children[2]
+    assert.same(li.tag, "li")
+    local ol = li.children[2]
+    assert.same(ol.tag, "ol")
+    assert.same(#ol.children, 1)
+
+  end)
 end)
 
