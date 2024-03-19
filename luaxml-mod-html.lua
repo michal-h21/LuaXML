@@ -1897,11 +1897,14 @@ function HtmlParser:pop_element()
   return el
 end
 
-local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul"}
+local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul", "pre", "listing", "form"}
 
 local close_headers = hash_from_array {"h1", "h2", "h3", "h4", "h5", "h6"}
 
 local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select", "in_table", "in_table_body", "in_frameset"}
+
+local list_items = hash_from_array {"li", "dt", "dd"}
+
 
 
 function HtmlParser:close_paragraph()
@@ -1919,24 +1922,50 @@ function HtmlParser:current_element_name()
   return self:get_parent().tag
 end
 
+local not_specials = hash_from_array { "address", "div", "p"}
+
+local function handle_list_item(self, name)
+  -- we handle li, dt and dd. dt and dd should close each other, li closes only itself
+  local names = {dt = true, dd = true}
+  if name == "li" then names = {li=true} end
+  for i = #self.unfinished, 1, -1 do
+    local current = self.unfinished[i]
+    if names[current.tag] then
+      self:generate_implied_endtags(nil, {current.tag})
+      for j = #self.unfinished, i, -1 do
+        self:pop_element()
+      end
+      break
+    elseif is_special(name) and not not_specials[name] then
+      break
+    end
+  end
+end
+
 function HtmlParser:handle_insertion_mode(token)
   -- simple handling of https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
   -- we don't support most rules, just the most important for avoiding mismatched tags
+  local close_paragraph = function()
+    if is_in_button_scope(self, "p") then
+      self:close_paragraph()
+    end
+  end
+
   if body_modes[self.insertion_mode] then
     if token.type == "start_tag" then
       local name = table.concat(token.name)
-      if close_p_at_start[name] and
-         is_in_button_scope(self, "p") 
-      then
-        self:close_paragraph()
-      elseif close_headers[name] then
-        if is_in_button_scope(self, "p") then
-          self:close_paragraph()
-        end
+      if close_p_at_start[name] then close_paragraph() end
+      if close_headers[name] then
+        close_paragraph()
         -- close current element if it is already header 
         if close_headers[self:current_element_name()] then
           self:pop_element()
         end
+      elseif name == "pre" or name == "listing" then
+        -- we should ignore next "\n" char token
+      elseif list_items[name] then
+        handle_list_item(self, name)
+        close_paragraph()
       end
     end
   end
@@ -1944,10 +1973,10 @@ end
 
 function HtmlParser:start_tag()
   local token = self.current_token
+  self:handle_insertion_mode(token)
   if token.type == "start_tag" then
     -- close all currently opened attributes
     self:start_attribute()
-    self:handle_insertion_mode(token)
     -- initiate Element object, pass attributes and info about self_closing
     local name = table.concat(token.name)
     local parent = self:get_parent()
@@ -1977,6 +2006,7 @@ end
 function HtmlParser:end_tag()
   -- close current opened element
   local token = self.current_token
+  self:handle_insertion_mode(token)
   if token.type == "end_tag" then
     if #self.unfinished==0 then return nil end
     -- close the current element only if the token is in the current scope
