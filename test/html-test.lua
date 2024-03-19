@@ -235,7 +235,7 @@ local function build_simple_tree(str, options)
   end
   -- allow setting of extra options
   for k,v in pairs(options) do
-    print(k,tree[k], v)
+    -- print(k,tree[k], v)
     tree[k] = v
   end
   return tree
@@ -261,7 +261,6 @@ describe("Insertion mode switching", function()
   it("Should handle head", function()
     assert.same(get_insertion_node("html/head", {head_pointer = nil}), "before_head")
     assert.same(get_insertion_node("html/head", {head_pointer = true}), "after_head")
-    print(get_insertion_node("html/body/p"))
   end)
   it("Should handle body", function()
     assert.same(get_insertion_node("html/body/p"), "in_body")
@@ -303,7 +302,7 @@ describe("Parse special elements", function()
   -- local p = HtmlParser:init("<title>hello <world> &amp'</title>")
   -- local p = HtmlParser:init("<style type='text/css'>p > a:before{xxxx: 'hello <world> &amp';}</STYLE>")
   -- local p = HtmlParser:init("<script><!-- if(a<2){let x=3;} else {print('</section>');}</SCRIPT>")
-  print "***************************************"
+  -- this doesn't parse correctly
   local p = HtmlParser:init(
   [[<!DOCTYPE html>
   Before
@@ -324,7 +323,20 @@ describe("Parse special elements", function()
       // And if you forget to close your comment here, things go funnny
   </script>]])
   local dom = p:parse()
-  print_tree(dom)
+  -- print_tree(dom)
+  -- for k,v in pairs(dom.children) do
+  --   print(k,v)
+  -- end
+  local trim = function(text) 
+    local str = text.text
+    return str:gsub("^%s*", ""):gsub("%s*$", "") 
+  end
+
+  assert.same(trim(dom.children[2]), "Before")
+  assert.same(trim(dom.children[4]), "fine")
+  assert.same(trim(dom.children[6]), "still fine")
+  assert.same(trim(dom.children[8]), "fine again")
+  -- print(dom.children[3])
 
 end)
 
