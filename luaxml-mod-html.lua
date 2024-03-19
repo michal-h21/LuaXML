@@ -1916,7 +1916,7 @@ end
 
 function HtmlParser:current_element_name()
   -- return name of the current element
-  return self.unfinished[#self.unfinished].tag
+  return self:get_parent().tag
 end
 
 function HtmlParser:handle_insertion_mode(token)
@@ -1947,6 +1947,7 @@ function HtmlParser:start_tag()
   if token.type == "start_tag" then
     -- close all currently opened attributes
     self:start_attribute()
+    self:handle_insertion_mode(token)
     -- initiate Element object, pass attributes and info about self_closing
     local name = table.concat(token.name)
     local parent = self:get_parent()
@@ -1955,11 +1956,10 @@ function HtmlParser:start_tag()
     node.self_closing = token.self_closing
     self:set_xmlns(node)
     -- in this handler we should close <p> or <li> elements without explicit closing tags
-    self:handle_insertion_mode(token)
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
     then
-      parent:add_child(node)
+      parent:add_child(node, node.tag)
     else
       -- add to the unfinished list
       table.insert(self.unfinished, node)
@@ -1979,7 +1979,10 @@ function HtmlParser:end_tag()
   local token = self.current_token
   if token.type == "end_tag" then
     if #self.unfinished==0 then return nil end
-    self:pop_element()
+    -- close the current element only if the token is in the current scope
+    if is_in_scope(self, table.concat(token.name), {}) then
+      self:pop_element()
+    end
   end
 end
 
