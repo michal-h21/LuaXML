@@ -1892,7 +1892,7 @@ function HtmlParser:pop_element()
   return el
 end
 
-local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul", "pre", "listing", "form", "table", "xmp"}
+local close_p_at_start = hash_from_array {"address", "article", "aside", "blockquote", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "main", "menu", "nav", "ol", "p", "search", "section", "summary", "ul", "pre", "listing", "form", "table", "xmp", "hr"}
 
 local close_headers = hash_from_array {"h1", "h2", "h3", "h4", "h5", "h6"}
 
@@ -1900,7 +1900,7 @@ local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select",
 
 local list_items = hash_from_array {"li", "dt", "dd"}
 
-local close_address_at_end = hash_from_array{"address", "article", "aside", "blockquote", "button", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "listing", "main", "menu", "nav", "ol", "pre", "search", "section", "summary", "ul"}
+local close_address_at_end = hash_from_array{"address", "article", "aside", "blockquote", "button", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "listing", "main", "menu", "nav", "ol", "pre", "search", "section", "summary", "ul", "form"}
 
 
 function HtmlParser:close_unfinished(name)
@@ -1973,14 +1973,33 @@ function HtmlParser:handle_insertion_mode(token)
       end
     elseif token.type == "end_tag" then
       local name = table.concat(token.name)
-      if close_address_at_end[name] then
+      if close_address_at_end[name]  then
         if is_in_scope(self, name, {}) then
           self:close_unfinished(name)
-
         else
           token.type = "ignore"
         end
-
+      elseif name == "p" then
+        if not is_in_button_scope(self, "p") then
+          local parent = self:get_parent()
+          local node = Element:init("p", parent)
+          table.insert(self.unfinished, node)
+        end
+        -- use self:close_paragraph() instead of close_paragraph() because we don't need to check scope at this point
+        self:close_paragraph()
+      elseif close_headers[name] then
+        local header_in_scope = false
+        for el, _ in pairs(close_headers) do 
+          if is_in_scope(self, el, {}) then
+            header_in_scope = el 
+            break
+          end
+        end
+        if not header_in_scope then
+          token.type = "ignore"
+        else
+          self:close_unfinished(header_in_scope)
+        end
       end
     end
   end
