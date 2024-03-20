@@ -1900,16 +1900,23 @@ local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select",
 
 local list_items = hash_from_array {"li", "dt", "dd"}
 
+local close_address_at_end = hash_from_array{"address", "article", "aside", "blockquote", "button", "center", "details", "dialog", "dir", "div", "dl", "fieldset", "figcaption", "figure", "footer", "header", "hgroup", "listing", "main", "menu", "nav", "ol", "pre", "search", "section", "summary", "ul"}
+
+
+function HtmlParser:close_unfinished(name)
+  -- close all unfinished elements until the element with the given name is found
+  for i = #self.unfinished, 1, -1 do
+    local el = self:pop_element()
+    if el.tag == name then
+      break
+    end
+  end
+end
 
 
 function HtmlParser:close_paragraph()
   -- close currently open <p> elements
-  for i = #self.unfinished, 1, -1 do
-    local el = self:pop_element()
-    if el.tag == "p" then
-      break
-    end
-  end
+  self:close_unfinished("p")
 end
 
 function HtmlParser:current_element_name()
@@ -1963,6 +1970,17 @@ function HtmlParser:handle_insertion_mode(token)
       elseif list_items[name] then
         handle_list_item(self, name)
         close_paragraph(self)
+      end
+    elseif token.type == "end_tag" then
+      local name = table.concat(token.name)
+      if close_address_at_end[name] then
+        if is_in_scope(self, name, {}) then
+          self:close_unfinished(name)
+
+        else
+          token.type = "ignore"
+        end
+
       end
     end
   end
