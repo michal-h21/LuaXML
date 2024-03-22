@@ -99,6 +99,67 @@ end
 \end{luacode*}
 \end{framed}
 
+\subsection{HTML parsing}
+
+You can parse HTML documents using the \verb|DOM_Object.html_parse| function. This parser is slower
+than the default XML parser, but it can load files that would cause errors in the XML mode. 
+It can handle wrongly nested HTML tags, inline JavaScript and CSS styles, and other HTML features
+that would cause XML errors.
+
+\begin{verbatim}
+dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello
+<p>another paragraph
+<ul>
+<li>first
+<li>second
+</ul>
+</body>
+</html>
+  ]]
+
+-- dom.html_parse returns the DOM_Object
+obj = dom.html_parse(document)
+-- print names of all elements contained in body
+for _, x in ipairs(obj:query_selector("body  *")) do
+  tex.print(x:get_element_name().. "\\par")
+end
+\end{verbatim}
+
+
+\begin{framed}
+\begin{luacode*}
+dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello
+<p>another paragraph
+<ul>
+<li>first
+<li>second
+</ul>
+</body>
+</html>
+  ]]
+
+-- dom.html_parse returns the DOM_Object
+obj = dom.html_parse(document)
+-- print names of all elements contained in body
+for _, x in ipairs(obj:query_selector("body  *")) do
+  tex.print(x:get_element_name().. "\\par")
+end
+\end{luacode*}
+\end{framed}
+
+
 \subsection{Void elements}
 
 The \verb|DOM_Object.parse| function tries to support the HTML void elements,
