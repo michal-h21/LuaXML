@@ -1967,6 +1967,9 @@ function HtmlParser:handle_insertion_mode(token)
         end
       elseif name == "pre" or name == "listing" then
         -- we should ignore next "\n" char token
+      elseif name == "image" then
+        -- image tag is an error, change to <img>
+        token.name = {"img"}
       elseif list_items[name] then
         handle_list_item(self, name)
         close_paragraph(self)
@@ -1987,8 +1990,11 @@ function HtmlParser:handle_insertion_mode(token)
         end
         -- use self:close_paragraph() instead of close_paragraph() because we don't need to check scope at this point
         self:close_paragraph()
+      elseif name == "br" then
+        token.type = "start_tag"
       elseif close_headers[name] then
         local header_in_scope = false
+        -- detect, if there are any open h1-h6 tag and close it
         for el, _ in pairs(close_headers) do 
           if is_in_scope(self, el, {}) then
             header_in_scope = el 
@@ -2004,6 +2010,9 @@ function HtmlParser:handle_insertion_mode(token)
     end
   end
 end
+
+local rawtext_elements = hash_from_array {"style", "textarea", "xmp"}
+
 
 function HtmlParser:start_tag()
   local token = self.current_token
@@ -2029,7 +2038,7 @@ function HtmlParser:start_tag()
     end
     if name == "title" then 
       self.element_state = "rcdata" 
-    elseif name == "style" then
+    elseif rawtext_elements[name] then
       self.element_state = "rawtext" 
     elseif name == "script" then
       self.element_state = "script_data"
