@@ -197,12 +197,15 @@ css:add_selector("a ~ span", function(obj)
   number_of_spans = number_of_spans + 1
 end)
 
+local span_after_b = 0
 css:add_selector("b + span", function(obj)
-  print("sibling", obj:get_text())
+  span_after_b = span_after_b + 1
 end)
 
+local deep_child = ""
+
 css:add_selector("p i", function(obj)
-  print("deep child", obj:get_text())
+  deep_child =  obj:get_text()
 end)
 
 it("Should match combinators", function()
@@ -210,7 +213,15 @@ it("Should match combinators", function()
     local querylist = css:match_querylist(el)
     css:apply_querylist(el, querylist)
   end)
-  print("matched spans", number_of_spans)
+  assert.same(number_of_spans, 3)
+  assert.same(span_after_b, 1)
+  assert.same(deep_child, "ignore this")
+end)
+
+it("Should support selector removing", function()
+  assert.same(#css.querylist, 3)
+  css:remove_selector("a ~ span")
+  assert.same(#css.querylist, 2)
 end)
 
 end)
