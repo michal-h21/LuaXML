@@ -198,6 +198,10 @@ local function add_action(selector, template, parameters, csspar)
 end
 
 
+local function reset_actions(selector, csspar)
+  local css = csspar or css
+  css:remove_selector(selector)
+end
 
 
 --- Transform XML string
@@ -243,7 +247,7 @@ end
 local Transformer 
 
 --- Make new Transformer object
--- @return Tranformer object
+-- @return Transformer object
 local function new()
   local self = setmetatable({}, Transformer)
   self.css = cssquery()
@@ -287,6 +291,11 @@ end
 -- @see add_custom_action
 function Transformer:add_custom_action(selector, fn )
   add_custom_action(selector, fn, self.css)
+end
+
+--- Reset 
+function Transformer:reset_actions(selector)
+  reset_actions(selector, self.css)
 end
 
 -- all methods that use transformation functions must 
