@@ -347,6 +347,7 @@ local M = {
   print_tex = print_tex,
   add_action = add_action,
   add_custom_action = add_custom_action,
+  reset_actions = reset_actions,
   simple_content = simple_content,
   load_file = load_file,
   process_dom = process_dom,
