@@ -434,13 +434,13 @@ local function cssquery()
     return querylist
   end
 
-  --- Remove selector from the CSS list object
+  --- Remove selector from the CSS list object.
+  --  All actions that literaly match the given selector will be removed.
   function CssQuery:remove_selector(
     selector -- CSS selector to be removed
     )
     for pos, obj in ipairs(self.querylist) do
       if obj.source == selector then
-        print("remove selector", pos, selector)
         table.remove(self.querylist, pos)
       end
     end
