@@ -134,3 +134,17 @@ describe("children transformation", function()
   
 end)
 
+describe("remove action", function()
+  local transformer = transform.new()
+  local dom = domobject.parse "<x><a>first</a>, <b>second</b></x>"
+  transformer:add_action("a", "hello")
+  transformer:add_action("b", "world")
+  it("should change words", function()
+    assert.same("hello, world", transformer:process_dom(dom))
+  end)
+  it("should change only the first word", function()
+    -- remove action for the <b> element
+    transformer:reset_actions("b")
+    assert.same("hello, second", transformer:process_dom(dom))
+  end)
+end)
