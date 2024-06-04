@@ -156,7 +156,7 @@ local function cssquery()
     -- make sure we deal with a string
     value = tostring(value)
     -- make the search string safe for pattern matching
-    local escaped_search = search:gsub("([%(%)%.%%%+%–%*%?%[%^%$])", "%%%1")
+    local escaped_search = search:gsub("([%(%)%.%%%+%-%#%*%?%[%^%$])", "%%%1")
     if modifier == "" then
       return value == search
     elseif modifier == "|" then
