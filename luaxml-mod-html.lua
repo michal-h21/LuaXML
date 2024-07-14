@@ -1,3 +1,6 @@
+--- HTML parsing module for LuaXML
+-- @module luaxml-mod-html
+-- @author Michal Hoftich <michal.h21@gmail.com
 -- Copyright Michal Hoftich, 2022
 -- HTML parser inspired by https://browser.engineering/html.html
 -- but then redone using https://html.spec.whatwg.org/multipage/parsing.html
@@ -1650,8 +1653,12 @@ local HtmlTreeStates = {}
 
 
 
+---  @type HtmlParser
 local HtmlParser = {}
 
+--- Initialize the HTML Object
+---@param body string HTML to be parsed
+---@return table initialized object
 function HtmlParser:init(body)
   local o ={}
   setmetatable(o, self)
@@ -1687,7 +1694,8 @@ for _,v in ipairs(self_closing_tags_list) do self_closing_tags[v] = true end
 
 
 
-
+--- Execute the HTML parser
+--- @return table Root node of the HTML DOM
 function HtmlParser:parse()
   -- we assume utf8 input, you must convert it yourself if the source is 
   -- in a different encoding. for example using luaxml-encodings library

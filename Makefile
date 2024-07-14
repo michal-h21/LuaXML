@@ -13,7 +13,7 @@ SYSTEM_BIN = /usr/local/bin
 BUILD_DIR = build
 BUILD_LUAXML = $(BUILD_DIR)/$(name)
 API_DOC = doc/api.tex
-API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua luaxml-transform.lua luaxml-mod-html.lua
+API_SOURCES = luaxml-domobject.lua luaxml-cssquery.lua luaxml-transform.lua luaxml-mod-html.lua luaxml-encodings.lua
 LDOC_FILTER = ldoc-latex.lua
 LDOC = ldoc --all --filter ldoc-latex.filter
 ENTITIES_SOURCE = data/entities.json
@@ -36,6 +36,8 @@ $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	$(LDOC) luaxml-domobject.lua > $(API_DOC)
 	$(LDOC) luaxml-cssquery.lua  >> $(API_DOC)
 	$(LDOC) luaxml-transform.lua >> $(API_DOC)
+	$(LDOC) luaxml-mod-html.lua >> $(API_DOC)
+	$(LDOC) luaxml-encodings.lua >> $(API_DOC)
 
 $(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
 	lua data/jsontolua.lua < $< > $(ENTITIES_MODULE)

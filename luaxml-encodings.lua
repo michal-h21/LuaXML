@@ -1,3 +1,5 @@
+--- Convert 8-bit encodings to UTF-8
+--- @module luaxml-encodings
 -- this table is  generated automatically by this command:
 -- texlua encodings/make_encodings.lua
 local encodings = {
@@ -33,16 +35,20 @@ local encodings = {
 
 local utfchar = utf8.char
 
+--- Try to find an encoding in HTML string
+---@param str string HTML document
+---@param len number count of characters from the start of the string where it should search for the encoding metadata
+---@return string encoding identifier, or nil and message if no encoding was found
 local function find_html_encoding(str, len)
   -- try to find encoding in the html document
   -- we limit search length, because encoding should be in the document head, ideally near the start
-  local len = 4096
+  local len = len or 4096
   local sub = str:sub(1, len)
   for meta in sub:gmatch("<meta (.-)>") do
     local charset = meta:match("charset%s*=%s*[\"']?(.-)[\"']")
     if charset then return string.lower(charset) end
   end
-
+  return nil, "Cannot find the document encoding"
 end
 
 local function load_mapping(enc_name)
@@ -57,6 +63,10 @@ local function load_mapping(enc_name)
   return mapping
 end
 
+--- Convert string to utf-8
+---@param text string for converting
+---@param mapping table 
+---@return string converted string 
 local function recode(text, mapping)
    return text:gsub("(.)", function(char)
      local charpoint = string.byte(char)
