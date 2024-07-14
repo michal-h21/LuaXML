@@ -293,7 +293,8 @@ function Transformer:add_custom_action(selector, fn )
   add_custom_action(selector, fn, self.css)
 end
 
---- Reset 
+--- Remove all actions that match the given selector
+---@param selector string 
 function Transformer:reset_actions(selector)
   reset_actions(selector, self.css)
 end
