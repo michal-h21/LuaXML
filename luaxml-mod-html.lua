@@ -1986,7 +1986,9 @@ function HtmlParser:handle_insertion_mode(token)
       local name = table.concat(token.name)
       if close_address_at_end[name]  then
         if is_in_scope(self, name, {}) then
+          self:generate_implied_endtags()
           self:close_unfinished(name)
+          return false
         else
           token.type = "ignore"
         end
@@ -2017,6 +2019,7 @@ function HtmlParser:handle_insertion_mode(token)
       end
     end
   end
+  return true
 end
 
 local rawtext_elements = hash_from_array {"style", "textarea", "xmp"}
@@ -2057,12 +2060,15 @@ end
 function HtmlParser:end_tag()
   -- close current opened element
   local token = self.current_token
-  self:handle_insertion_mode(token)
+  local should_pop = self:handle_insertion_mode(token)
   if token.type == "end_tag" then
     if #self.unfinished==0 then return nil end
-    -- close the current element only if the token is in the current scope
-    if is_in_scope(self, table.concat(token.name), {}) then
-      self:pop_element()
+    -- we shouldn't close elements if handle_insertion_mode() already closed them
+    if should_pop then
+      -- close the current element only if the token is in the current scope
+      if is_in_scope(self, table.concat(token.name), {}) then
+        self:pop_element()
+      end
     end
   end
 end
