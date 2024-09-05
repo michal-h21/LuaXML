@@ -356,6 +356,43 @@ body:replace_node(oldbody)
 \end{framed}
 
 
+\subsubsection{Setting raw XML and HTML using \texttt{DOM\_Object:innerHTML}}
+
+You can also set XML or HTML markup from a string to an element using the \texttt{DOM\_Object:innerHTML} function. 
+Pass true as the second argument to parse string as XML, it is parsed as HTML otherwise.
+
+
+\begin{verbatim}
+local document = [[
+<html><p>hello</p>
+</html>
+]]
+local tree = dom.html_parse(document)
+local p = tree:query_selector("p")[1]
+-- insert innerHTML as XML
+p:innerHTML("hello <b>this</b> should be the new content")
+print(tree:serialize())
+\end{verbatim}
+
+In this example, we replace contents of the first \verb|<p>| element by new content. 
+
+\begin{framed}
+  \ttfamily
+  \begin{luacode*}
+local document = [[
+<html><p>hello</p>
+</html>
+]]
+local tree = dom.html_parse(document)
+local p = tree:query_selector("p")[1]
+-- insert innerHTML as XML
+p:innerHTML("hello <b>this</b> should be the new content")
+tex.print(tree:serialize())
+  \end{luacode*}
+\end{framed}
+
+
+
 \section{The \texttt{CssQuery} library}
 \label{sec:cssquery_library}
 
