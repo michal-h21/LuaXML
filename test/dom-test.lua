@@ -169,5 +169,28 @@ some another text. More <b>text</b>.
     local metas = newobj:query_selector("meta")
     test_metas(metas,"Should support configuration of the void elements")
   end)
+  describe("Inner HTML", function()
+    local document = [[
+    <html><p>hello</p>
+    </html>
+    ]]
+    local dom = dom.html_parse(document)
+    local p = dom:query_selector("p")[1]
+    -- insert innerHTML as XML
+    p:innerHTML("hello <b>this</b> should be the new content", true)
+    it("Should support innerHTML", function()
+      local children = p:get_children()
+      assert.same(#children, 3)
+      assert.truthy(children[1]:is_text())
+      assert.same(children[1]._text,"hello ")
+      assert.truthy(children[2]:is_element())
+      assert.same(children[2]._name,"b")
+      -- now insert innerHTML as HTML
+      p:innerHTML("hello <b>this</b> should be the new content")
+      children = p:get_children()
+      assert.same(#children, 3)
+    end)
+
+  end)
 
 end)

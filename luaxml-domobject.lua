@@ -35,6 +35,13 @@ local escapes = {
   ["`"] = "&#x60;"
 }
 
+-- declarations of local functions
+local html_to_dom
+local html_parse
+local parse
+
+
+
 local function escape(search, text)
   return text:gsub(search, function(ch)
     return escapes[ch] or ""
@@ -162,7 +169,7 @@ end
 --- XML parsing function
 -- Parse the XML text and create the DOM object.
 -- @return DOM_Object
-local parse = function(
+parse = function(
   xmltext --- String to be parsed
   ,voidElements --- hash table with void elements
  )
@@ -618,6 +625,21 @@ local parse = function(
   end
 
 
+  --- parse string as HTML or XML and insert it as a child of the current node
+  -- @param str HTML or XML to be inserted
+  -- @param [optional] is_xml Pass true to parse as XML, otherwise parse as HTML
+  function DOM_Object:innerHTML(str, is_xml)
+    local el = self
+    -- <> is a dummy element, we just need to wrap everything in some element 
+    local str = "<>" .. (str or "") .. "</>"
+    local dom = is_xml and parse(str) or parse(str)
+    -- replace original children of the current element with children of the dummy element created by parsing
+    local root = dom:root_node()._children[1]
+    el._children = root._children
+    return el
+  end
+
+
   -- include the methods to all xml nodes
   save_methods(parser._handler.root)
   -- parser:
@@ -627,7 +649,7 @@ end
 -- table of elements that should be kept without XML escaping in the DOM serialization
 local verbatim_elements = {script=true, style=true}
 
-local function html_to_dom(html_object)
+function html_to_dom(html_object)
   -- convert parsed HTML DOM to the XML DOM
   local dom, DOM_Object = parse("") -- use empty text to just initialize the DOM object
   -- use root of the DOM object as the original parent
@@ -687,7 +709,7 @@ end
 --  It supports all methods as the object returned by the parse() function.
 -- @param html_str  string with the HTML code to be parsed
 -- @return DOM_Object
-local function html_parse(html_str)
+function html_parse(html_str)
   local html_obj = HtmlParser:init(html_str)
   local html_dom = html_obj:parse()
   return html_to_dom(html_dom)
