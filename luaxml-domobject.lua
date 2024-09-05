@@ -626,9 +626,10 @@ parse = function(
 
 
   --- parse string as HTML or XML and insert it as a child of the current node
-  -- @param str HTML or XML to be inserted
-  -- @param [optional] is_xml Pass true to parse as XML, otherwise parse as HTML
-  function DOM_Object:innerHTML(str, is_xml)
+  function DOM_Object:innerHTML(
+    str, --- HTML or XML to be inserted
+    is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
+  )
     local el = self
     -- <> is a dummy element, we just need to wrap everything in some element 
     local str = "<>" .. (str or "") .. "</>"
