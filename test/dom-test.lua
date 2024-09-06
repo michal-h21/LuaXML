@@ -174,21 +174,53 @@ some another text. More <b>text</b>.
     <html><p>hello</p>
     </html>
     ]]
-    local dom = dom.html_parse(document)
-    local p = dom:query_selector("p")[1]
-    -- insert innerHTML as XML
-    p:innerHTML("hello <b>this</b> should be the new content", true)
-    it("Should support innerHTML", function()
+    local newdom = dom.html_parse(document)
+    local p = newdom:query_selector("p")[1]
+    -- insert inner_html as XML
+    p:inner_html("hello <b>this</b> should be the new content", true)
+    it("Should support inner_html", function()
       local children = p:get_children()
       assert.same(#children, 3)
       assert.truthy(children[1]:is_text())
       assert.same(children[1]._text,"hello ")
       assert.truthy(children[2]:is_element())
       assert.same(children[2]._name,"b")
-      -- now insert innerHTML as HTML
-      p:innerHTML("hello <b>this</b> should be the new content")
+      -- now insert inner_html as HTML
+      p:inner_html("hello <b>this</b> should be the new content")
       children = p:get_children()
       assert.same(#children, 3)
+    end)
+    local text = [[ 
+    <html><p>hello, <b>here <i>are some</i> tags</b></p>
+    </html>
+    ]]
+    local newdom = dom.html_parse(text)
+    local b = newdom:query_selector("b")[1]
+    it("Should support insert_before_begin", function()
+      b:insert_before_begin("here <x>are more tags</x>")
+      local siblings = b:get_siblings()
+      local pos = b:find_element_pos()
+      assert.same(siblings[pos - 2]._text, "here ")
+      assert.same(siblings[pos - 1]._name, "x")
+    end)
+    it("Should support insert_after_end", function()
+      b:insert_after_end(", here are even <y>more</y> tags")
+      local siblings = b:get_siblings()
+      local pos = b:find_element_pos()
+      assert.same(siblings[pos + 1]._text, ", here are even ")
+      assert.same(siblings[pos + 2]._name, "y")
+    end)
+    it("Should support insert_after_begin", function()
+      b:insert_after_begin("try <i>even</i> more, ")
+      local children = b:get_children()
+      assert.same(children[1]._text, "try ")
+      assert.same(children[2]._name, "i")
+    end)
+    it("Should support insert_before_end", function()
+      b:insert_before_end(", some <i>tags</i> at the end")
+      local children = b:get_children()
+      assert.same(children[#children-1]._name, "i")
+      assert.same(children[#children]._text, " at the end")
     end)
 
   end)

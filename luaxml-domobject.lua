@@ -624,20 +624,86 @@ parse = function(
     return el:get_sibling_node(-1)
   end
 
+  --- parse string as HTML or XML and return created elements
+  --- @return table elements
+  function DOM_Object:create_template(
+    str,
+    is_xml
+    )
+    -- <> is a dummy element, we just need to wrap everything in some element 
+    str = "<>" .. (str or "") .. "</>"
+    local template = is_xml and parse(str) or parse(str)
+    local root = template:root_node()._children[1]
+    return root
+  end
 
   --- parse string as HTML or XML and insert it as a child of the current node
-  function DOM_Object:innerHTML(
+  function DOM_Object:inner_html(
     str, --- HTML or XML to be inserted
     is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
   )
     local el = self
-    -- <> is a dummy element, we just need to wrap everything in some element 
-    local str = "<>" .. (str or "") .. "</>"
-    local dom = is_xml and parse(str) or parse(str)
+    local root = self:create_template(str, is_xml)
     -- replace original children of the current element with children of the dummy element created by parsing
-    local root = dom:root_node()._children[1]
     el._children = root._children
     return el
+  end
+
+
+  ---  parse string as HTML or XML and insert it before current the element
+  function DOM_Object:insert_before_begin(
+    str, --- HTML or XML to be inserted
+    is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
+  )
+    local el = self 
+    local root = self:create_template(str, is_xml)
+    local parent = el:get_parent()
+    local current_pos = el:find_element_pos()
+    local children = root:get_children()
+    for i = 1,  #children do
+      parent:add_child_node(children[i], current_pos + i - 1)
+    end
+  end
+
+  ---  parse string as HTML or XML and insert it at the beginning of the current the element
+  function DOM_Object:insert_after_begin(
+    str, --- HTML or XML to be inserted
+    is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
+  )
+    local el = self 
+    local root = self:create_template(str, is_xml)
+    local children = root:get_children()
+    for i = 1,  #children do
+      el:add_child_node(children[i], i)
+    end
+  end
+
+  ---  parse string as HTML or XML and insert it at the end of the current the element
+  function DOM_Object:insert_before_end(
+    str, --- HTML or XML to be inserted
+    is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
+  )
+    local el = self 
+    local root = self:create_template(str, is_xml)
+    local children = root:get_children()
+    for i = 1,  #children do
+      el:add_child_node(children[i])
+    end
+  end
+
+  ---  parse string as HTML or XML and insert it after current the element
+  function DOM_Object:insert_after_end(
+    str, --- HTML or XML to be inserted
+    is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
+    )
+    local el = self
+    local root = self:create_template(str, is_xml)
+    local parent = el:get_parent()
+    local current_pos = el:find_element_pos()
+    local children = root:get_children()
+    for i = 1,  #children do
+      parent:add_child_node(children[i], current_pos + i)
+    end
   end
 
 
