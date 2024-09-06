@@ -356,9 +356,9 @@ body:replace_node(oldbody)
 \end{framed}
 
 
-\subsubsection{Setting raw XML and HTML using \texttt{DOM\_Object:innerHTML}}
+\subsubsection{Adding raw XML and HTML string}
 
-You can also set XML or HTML markup from a string to an element using the \texttt{DOM\_Object:innerHTML} function. 
+You can also set XML or HTML markup from a string to an element using the \texttt{DOM\_Object:inner\_html} function. 
 Pass true as the second argument to parse string as XML, it is parsed as HTML otherwise.
 
 
@@ -369,8 +369,8 @@ local document = [[
 ]]
 local tree = dom.html_parse(document)
 local p = tree:query_selector("p")[1]
--- insert innerHTML as XML
-p:innerHTML("hello <b>this</b> should be the new content")
+-- insert inner_html as XML
+p:inner_html("hello <b>this</b> should be the new content")
 print(tree:serialize())
 \end{verbatim}
 
@@ -385,12 +385,21 @@ local document = [[
 ]]
 local tree = dom.html_parse(document)
 local p = tree:query_selector("p")[1]
--- insert innerHTML as XML
-p:innerHTML("hello <b>this</b> should be the new content")
+-- insert inner_html as XML
+p:inner_html("hello <b>this</b> should be the new content")
 tex.print(tree:serialize())
   \end{luacode*}
 \end{framed}
 
+There are more variants of raw string methods that add the new content at specific places in the element instead of replacing contents 
+of the element:
+
+\begin{description}
+  \item[\texttt{DOM\_Object:insert\_before\_begin}] -- before element.
+  \item[\texttt{DOM\_Object:insert\_after\_begin}] -- just inside the element, before its first child.
+  \item[\texttt{DOM\_Object:insert\_before\_end}] -- just inside the element, after its last child.
+  \item[\texttt{DOM\_Object:insert\_after\_end}] -- after the element.
+\end{description}
 
 
 \section{The \texttt{CssQuery} library}
