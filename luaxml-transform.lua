@@ -238,7 +238,7 @@ end
 local function print_tex(content)
   -- we need to replace "\n" characters with calls to tex.sprint
   for s in content:gmatch("([^\n]*)") do
-    tex.sprint(s)
+    tex.print(s)
   end
 end
 
