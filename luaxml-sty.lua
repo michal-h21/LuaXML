@@ -31,9 +31,9 @@ function luaxml_sty.add_rule(current, selector, rule)
   end
   -- the +v parameter type in LaTeX replaces newlines with \obeyedline. we need to replace it back to newlines
   rule = rule:gsub("\\obeyedline", "\n")
-  luaxml_sty.debug("************* haha: " .. selector, rule, current)
+  luaxml_sty.debug("************* luaxml_sty rule: " .. selector, rule, current)
   local transform = luaxml_sty.transformations[current]
-  if not transform then 
+  if not transform then
     luaxml_sty.error("Cannot find LuaXML transform object: " .. (current or ""))
     return nil, "Cannot find LuaXML transform object: " .. (current or "")
   end
@@ -65,7 +65,6 @@ function luaxml_sty.parse_snippet(current, xml_string)
   else
     dom = domobject.html_parse(xml_string)
   end
-  transform:add_action(".ahoj", "xxx: %s")
   print(dom:serialize())
   local result = transform:process_dom(dom)
   luaxml_sty.packages.transform.print_tex(result)
@@ -73,9 +72,9 @@ end
 
 function luaxml_sty.parse_file(current, filename)
   local f = io.open(filename, "r")
-  if not f then 
+  if not f then
     luaxml_sty.packages.transform.print_tex("\\textbf{LuaXML error}: cannot find file " .. filename)
-    return nil, "Cannot find file " .. filename 
+    return nil, "Cannot find file " .. filename
   end
   local content = f:read("*a")
   f:close()
