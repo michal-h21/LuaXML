@@ -52,5 +52,17 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
+
+\NewDocumentCommand\LXMLInputFile{s O{} m}{
+  \IfBooleanTF{#1}{
+    \directlua{luaxml_sty.use_html()}
+  }{
+    \directlua{luaxml_sty.use_xml()}
+  }
+  \directlua{
+    luaxml_sty.parse_file("\luaescapestring{#2}", "\luaescapestring{#3}")
+  }
+}
+
 \ExplSyntaxOff
 \endinput

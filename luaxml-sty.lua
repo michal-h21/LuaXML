@@ -47,10 +47,12 @@ function luaxml_sty.use_xml()
   luaxml_sty.use_xml = true
 end
 
+
 function luaxml_sty.use_html()
   luaxml_sty.use_xml = false
 end
 
+--- transform XML string
 function luaxml_sty.parse_snippet(current, xml_string)
   local domobject = luaxml_sty.packages.domobject
   if current == "" then
@@ -67,6 +69,17 @@ function luaxml_sty.parse_snippet(current, xml_string)
   print(dom:serialize())
   local result = transform:process_dom(dom)
   luaxml_sty.packages.transform.print_tex(result)
+end
+
+function luaxml_sty.parse_file(current, filename)
+  local f = io.open(filename, "r")
+  if not f then 
+    luaxml_sty.packages.transform.print_tex("\\textbf{LuaXML error}: cannot find file " .. filename)
+    return nil, "Cannot find file " .. filename 
+  end
+  local content = f:read("*a")
+  f:close()
+  luaxml_sty.parse_snippet(current, content)
 end
 
 return luaxml_sty
