@@ -66,7 +66,7 @@ function luaxml_sty.parse_snippet(current, xml_string)
   else
     dom = domobject.html_parse(xml_string)
   end
-  print(dom:serialize())
+  luaxml_sty.debug(dom:serialize())
   local result = transform:process_dom(dom)
   luaxml_sty.packages.transform.print_tex(result)
 end
@@ -80,6 +80,31 @@ function luaxml_sty.parse_file(current, filename)
   local content = f:read("*a")
   f:close()
   luaxml_sty.parse_snippet(current, content)
+end
+
+--- parse environment contents using Lua
+-- idea from https://tex.stackexchange.com/a/574323/2891
+function luaxml_sty.store_lines(env_name, callback_name)
+  return function(str)
+    print("str", str)
+    local env_str = [[\end{]] .. env_name .. "}"
+    if string.find (str , env_str:gsub("%*", "%%*")) then
+      print("end of environment")
+      luatexbase.remove_from_callback ( "process_input_buffer" , callback_name)
+      return env_str -- str
+    else
+      table.insert(luaxml_sty.verb_table, str)
+    end
+    return ""
+  end
+end
+
+function luaxml_sty.register_verbatim(env_name)
+  luaxml_sty.verb_table = {}
+  local callback_name = "luaxml_store_lines_".. env_name
+  local fn = luaxml_sty.store_lines(env_name, callback_name)
+  luatexbase.add_to_callback(
+    "process_input_buffer" , fn , callback_name)
 end
 
 return luaxml_sty

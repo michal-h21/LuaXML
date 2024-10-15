@@ -80,5 +80,33 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
+\NewDocumentEnvironment{LXMLCode}{O{} }{
+  \directlua{
+    luaxml_sty.set_xml()
+    luaxml_sty.register_verbatim("LXMLCode")
+    %luaxml_sty.parse_snippet("\luaescapestring{#1}", [[\detokenize{#2}]])
+  }
+}{}
+
+%\NewDocumentEnvironment{LXMLCode*}{}{
+% I couldn't process the first line in the environment using the Lua callback with \NewDocumentEnvironment,
+% so \newenvironment is used instead.
+\newenvironment{LXMLCode*}{
+  \directlua{
+    luaxml_sty.set_html()
+    luaxml_sty.register_verbatim("LXMLCode*")
+    %luaxml_sty.parse_snippet("\luaescapestring{#1}", [[\detokenize{#2}]])
+  }
+  %\tl_set:Nn\l_luaxml_transformer{#1}
+}{
+  \directlua{
+    print(table.concat(luaxml_sty.verb_table, ":"))
+    % workaround for \n, which cannot be used here
+    print(table.concat(luaxml_sty.verb_table, string.char(13)))
+    luaxml_sty.parse_snippet("\l_luaxml_transformer", table.concat(luaxml_sty.verb_table, string.char(13)))
+  }
+}
+
+
 \ExplSyntaxOff
 \endinput
