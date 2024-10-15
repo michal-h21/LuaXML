@@ -12,6 +12,17 @@ luaxml_sty = require "luaxml-sty"
 
 \ExplSyntaxOn
 
+\bool_new:N\l_luaxml_verbatim
+\tl_new:N \l_luaxml_transformer
+
+\keys_define:nn{luaxml}{
+  verbatim .bool_set:N = \l_luaxml_verbatim ,
+  verbatim .initial:n = false,
+  unknown .code:n = \tl_set_eq:NN\l_luaxml_transformer\l_keys_key_str,
+  transformer .tl_set:N = \l_luaxml_transformer
+}
+
+
 % select current transformer object
 \NewDocumentCommand\LXMLUseTransformer{m}{
   \directlua{
@@ -26,12 +37,17 @@ luaxml_sty.current.transformation = "#1",
 }
 
 % add transformer rule
-% #1 transformer object name -- empty = default
+% #1 options (verbatim, transformer, unknown key = transformer)
 % #2 CSS selector 
 % #3 transformer rule
 \NewDocumentCommand\LXMLRule{O{} m +v}{
+  \group_begin:
+  \keys_set:nn {luaxml} { #1 }
+  \directlua{luaxml_sty.current.parameters = {}}
+  \bool_if:NT \l_luaxml_verbatim {\directlua{luaxml_sty.current.parameters.verbatim = true}}
+  \group_end:
   \directlua{
-    luaxml_sty.add_rule("#1", "#2", "\luaescapestring{#3}")
+    luaxml_sty.add_rule("\l_luaxml_transformer", "#2", "\luaescapestring{#3}")
     %luaxml_sty.add_rule("#1", "#2", "#3")
   }
 }
@@ -39,13 +55,13 @@ luaxml_sty.current.transformation = "#1",
 
 % \LXMLSnippet* - parse using XML parser
 % \LXMLSnippet  - parse using HTML parser
-% #2 transformer name -- empty = default
+% #2 transformer object name -- empty = default
 % #3 XML string
 \NewDocumentCommand\LXMLSnippet{s O{} m}{
   \IfBooleanTF{#1}{
-    \directlua{luaxml_sty.use_html()}
+    \directlua{luaxml_sty.set_html()}
   }{
-    \directlua{luaxml_sty.use_xml()}
+    \directlua{luaxml_sty.set_xml()}
   }
   \directlua{
     luaxml_sty.parse_snippet("\luaescapestring{#2}", [[\detokenize{#3}]])
@@ -55,9 +71,9 @@ luaxml_sty.current.transformation = "#1",
 
 \NewDocumentCommand\LXMLInputFile{s O{} m}{
   \IfBooleanTF{#1}{
-    \directlua{luaxml_sty.use_html()}
+    \directlua{luaxml_sty.set_html()}
   }{
-    \directlua{luaxml_sty.use_xml()}
+    \directlua{luaxml_sty.set_xml()}
   }
   \directlua{
     luaxml_sty.parse_file("\luaescapestring{#2}", "\luaescapestring{#3}")

@@ -2,6 +2,7 @@
 luaxml_sty = {
   current = {
     transformation = "default",
+    parameters = {}, -- "parameters" argument for transform:add_action
   },
   packages = {},
   -- we want to support multiple transformation objects, they will be stored here
@@ -31,24 +32,24 @@ function luaxml_sty.add_rule(current, selector, rule)
   end
   -- the +v parameter type in LaTeX replaces newlines with \obeyedline. we need to replace it back to newlines
   rule = rule:gsub("\\obeyedline", "\n")
-  luaxml_sty.debug("************* luaxml_sty rule: " .. selector, rule, current)
+  luaxml_sty.debug("************* luaxml_sty rule: " .. selector, rule, current, (luaxml_sty.current.parameters.verbatim and "verbatim" or "not verbatim"))
   local transform = luaxml_sty.transformations[current]
   if not transform then
     luaxml_sty.error("Cannot find LuaXML transform object: " .. (current or ""))
     return nil, "Cannot find LuaXML transform object: " .. (current or "")
   end
-  transform:add_action(selector, rule)
+  transform:add_action(selector, rule, luaxml_sty.current.parameters)
 end
 
 -- by default, we will use XML parser, so use_xml is set to true
 luaxml_sty.use_xml = true
 
-function luaxml_sty.use_xml()
+function luaxml_sty.set_xml()
   luaxml_sty.use_xml = true
 end
 
 
-function luaxml_sty.use_html()
+function luaxml_sty.set_html()
   luaxml_sty.use_xml = false
 end
 
