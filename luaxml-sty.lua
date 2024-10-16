@@ -32,6 +32,13 @@ function luaxml_sty.debug(...)
   end
 end
 
+--- Declare new transformer
+---@param name string transformer name
+---@return table transformer object
+function luaxml_sty.declare_transformer(name)
+  luaxml_sty.transformations[name] = luaxml_sty.packages.transform.new()
+  return luaxml_sty.transformations[name]
+end
 
 
 --- Add luaxml-transform rule
@@ -45,7 +52,7 @@ function luaxml_sty.add_rule(current, selector, rule)
   -- the +v parameter type in LaTeX replaces newlines with \obeyedline. we need to replace it back to newlines
   rule = rule:gsub("\\obeyedline", "\n")
   luaxml_sty.debug("************* luaxml_sty rule: " .. selector, rule, current, (luaxml_sty.current.parameters.verbatim and "verbatim" or "not verbatim"))
-  local transform = luaxml_sty.transformations[current]
+  local transform = luaxml_sty.transformations[current] or luaxml_sty.declare_transformer(current)
   if not transform then
     luaxml_sty.error("Cannot find LuaXML transform object: " .. (current or ""))
     return nil, "Cannot find LuaXML transform object: " .. (current or "")

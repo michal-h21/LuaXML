@@ -32,7 +32,8 @@ luaxml_sty.current.transformation = "#1",
 % declare new transformer object
 \NewDocumentCommand\LXMLDeclareTransformer{m}{
   \directlua{
-    luaxml_sty.transformations["#1"] = luaxml_sty.packages.transform.new()
+    % luaxml_sty.transformations["#1"] = luaxml_sty.packages.transform.new()
+    luaxml_sty.declare_transformer("#1")
   }
 }
 
