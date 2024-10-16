@@ -80,6 +80,7 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
+
 \newenvironment{LXMLCode}[1]{
   \directlua{
     luaxml_sty.set_xml()
@@ -88,8 +89,7 @@ luaxml_sty.current.transformation = "#1",
   \tl_set:Nn\l_luaxml_transformer{#1}
 }{
   \directlua{
-    % workaround for \n, which cannot be used here
-    luaxml_sty.parse_snippet("\l_luaxml_transformer", table.concat(luaxml_sty.verb_table, string.char(13)))
+    luaxml_sty.print_verbatim("\l_luaxml_transformer")
   }
 }
 
@@ -104,8 +104,7 @@ luaxml_sty.current.transformation = "#1",
   \tl_set:Nn\l_luaxml_transformer{#1}
 }{
   \directlua{
-    % workaround for \n, which cannot be used here
-    luaxml_sty.parse_snippet("\l_luaxml_transformer", table.concat(luaxml_sty.verb_table, string.char(13)))
+    luaxml_sty.print_verbatim("\l_luaxml_transformer")
   }
 }
 

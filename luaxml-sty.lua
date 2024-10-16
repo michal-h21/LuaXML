@@ -20,10 +20,16 @@ function luaxml_sty.error(...)
   print("LuaXML error: " .. table.concat(arg, " "))
 end
 
+luaxml_sty.do_debug = false
+
 function luaxml_sty.debug(...)
-  local arg = {...}
-  print("LuaXML: " .. table.concat(arg, " "))
+  if luaxml_sty.do_debug then
+    local arg = {...}
+    print("LuaXML: " .. table.concat(arg, " "))
+  end
 end
+
+
 
 -- add luaxml-transform rule
 function luaxml_sty.add_rule(current, selector, rule)
@@ -86,10 +92,10 @@ end
 -- idea from https://tex.stackexchange.com/a/574323/2891
 function luaxml_sty.store_lines(env_name, callback_name)
   return function(str)
-    print("str", str)
+    luaxml_sty.debug("str", str)
     local env_str = [[\end{]] .. env_name .. "}"
     if string.find (str , env_str:gsub("%*", "%%*")) then
-      print("end of environment")
+      luaxml_sty.debug("end of environment")
       luatexbase.remove_from_callback ( "process_input_buffer" , callback_name)
       return env_str -- str
     else
@@ -105,6 +111,10 @@ function luaxml_sty.register_verbatim(env_name)
   local fn = luaxml_sty.store_lines(env_name, callback_name)
   luatexbase.add_to_callback(
     "process_input_buffer" , fn , callback_name)
+end
+
+function luaxml_sty.print_verbatim(transformer)
+  luaxml_sty.parse_snippet(transformer, table.concat(luaxml_sty.verb_table, "\n"))
 end
 
 return luaxml_sty
