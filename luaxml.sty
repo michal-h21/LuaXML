@@ -45,11 +45,11 @@ luaxml_sty.current.transformation = "#1",
   \keys_set:nn {luaxml} { #1 }
   \directlua{luaxml_sty.current.parameters = {}}
   \bool_if:NT \l_luaxml_verbatim {\directlua{luaxml_sty.current.parameters.verbatim = true}}
-  \group_end:
   \directlua{
     luaxml_sty.add_rule("\l_luaxml_transformer", "#2", "\luaescapestring{#3}")
     %luaxml_sty.add_rule("#1", "#2", "#3")
   }
+  \group_end:
 }
 
 
@@ -80,29 +80,31 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
-\NewDocumentEnvironment{LXMLCode}{O{} }{
+\newenvironment{LXMLCode}[1]{
   \directlua{
     luaxml_sty.set_xml()
     luaxml_sty.register_verbatim("LXMLCode")
-    %luaxml_sty.parse_snippet("\luaescapestring{#1}", [[\detokenize{#2}]])
   }
-}{}
+  \tl_set:Nn\l_luaxml_transformer{#1}
+}{
+  \directlua{
+    % workaround for \n, which cannot be used here
+    luaxml_sty.parse_snippet("\l_luaxml_transformer", table.concat(luaxml_sty.verb_table, string.char(13)))
+  }
+}
 
 %\NewDocumentEnvironment{LXMLCode*}{}{
 % I couldn't process the first line in the environment using the Lua callback with \NewDocumentEnvironment,
 % so \newenvironment is used instead.
-\newenvironment{LXMLCode*}{
+\newenvironment{LXMLCode*}[1]{
   \directlua{
     luaxml_sty.set_html()
     luaxml_sty.register_verbatim("LXMLCode*")
-    %luaxml_sty.parse_snippet("\luaescapestring{#1}", [[\detokenize{#2}]])
   }
-  %\tl_set:Nn\l_luaxml_transformer{#1}
+  \tl_set:Nn\l_luaxml_transformer{#1}
 }{
   \directlua{
-    print(table.concat(luaxml_sty.verb_table, ":"))
     % workaround for \n, which cannot be used here
-    print(table.concat(luaxml_sty.verb_table, string.char(13)))
     luaxml_sty.parse_snippet("\l_luaxml_transformer", table.concat(luaxml_sty.verb_table, string.char(13)))
   }
 }
