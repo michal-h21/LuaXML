@@ -1,3 +1,6 @@
+--- Helper functions for the luaxml.sty package
+--- @module luaxml-sty
+--- @author Michal Hoftich <michal.h21@gmail.com
 -- provide global object with all variables we will use
 luaxml_sty = {
   current = {
@@ -31,7 +34,10 @@ end
 
 
 
--- add luaxml-transform rule
+--- Add luaxml-transform rule
+--- @param current string transformer name, empty for the default object
+--- @param selector string CSS selector to be used
+--- @param rule string luaxml-transform rule 
 function luaxml_sty.add_rule(current, selector, rule)
   if current == "" then
    current = luaxml_sty.current.transformation
@@ -50,23 +56,29 @@ end
 -- by default, we will use XML parser, so use_xml is set to true
 luaxml_sty.use_xml = true
 
+--- Use XML parser for parsing of next snippets
 function luaxml_sty.set_xml()
   luaxml_sty.use_xml = true
 end
 
 
+--- Use HTML parser for parsing of next snippets
 function luaxml_sty.set_html()
   luaxml_sty.use_xml = false
 end
 
---- transform XML string
+--- transform XML string and print it to the output
+---@param current string transformer name, empty for the default object
+---@param xml_string string to be transformed 
 function luaxml_sty.parse_snippet(current, xml_string)
   local domobject = luaxml_sty.packages.domobject
+  -- get the current  transformer object
   if current == "" then
     current = luaxml_sty.current.transformation
   end
   local transform = luaxml_sty.transformations[current]
   local dom
+  -- decide if we  should use XML or HTML parser
   if luaxml_sty.use_xml then
     dom = domobject.parse(xml_string)
   else
@@ -77,6 +89,9 @@ function luaxml_sty.parse_snippet(current, xml_string)
   luaxml_sty.packages.transform.print_tex(result)
 end
 
+--- Transform file
+---@param current string transformer name, empty for the default object
+---@param filename string file to be transformed
 function luaxml_sty.parse_file(current, filename)
   local f = io.open(filename, "r")
   if not f then
@@ -89,6 +104,9 @@ function luaxml_sty.parse_file(current, filename)
 end
 
 --- parse environment contents using Lua
+---@param env_name string environment name
+---@param callback_name string name which will be used in the callback registration
+---@return function 
 -- idea from https://tex.stackexchange.com/a/574323/2891
 function luaxml_sty.store_lines(env_name, callback_name)
   return function(str)
@@ -105,6 +123,8 @@ function luaxml_sty.store_lines(env_name, callback_name)
   end
 end
 
+--- require line grabbing for an environment
+---@param env_name string environment name
 function luaxml_sty.register_verbatim(env_name)
   luaxml_sty.verb_table = {}
   local callback_name = "luaxml_store_lines_".. env_name
@@ -113,6 +133,9 @@ function luaxml_sty.register_verbatim(env_name)
     "process_input_buffer" , fn , callback_name)
 end
 
+--- parse content of the previous environment registered using luaxml_sty.register_verbatim() 
+--- and print the transformed content
+---@param transformer string transformer name, empty for the default object
 function luaxml_sty.print_verbatim(transformer)
   luaxml_sty.parse_snippet(transformer, table.concat(luaxml_sty.verb_table, "\n"))
 end
