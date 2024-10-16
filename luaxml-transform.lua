@@ -1,5 +1,5 @@
 --- XML transformation module for LuaXML
--- @module luaxml-tranform
+-- @module luaxml-transform
 -- @author Michal Hoftich <michal.h21@gmail.com
 
 -- code originaly comes from from https://github.com/michal-h21/luaxml-mathml
@@ -198,6 +198,9 @@ local function add_action(selector, template, parameters, csspar)
 end
 
 
+--- Remove actions for a given selector
+-- @param selector CSS selector for the matching element
+-- @param csspar cssquery object. Default is set by the library, so it is not necessary to use.
 local function reset_actions(selector, csspar)
   local css = csspar or css
   css:remove_selector(selector)
