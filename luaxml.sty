@@ -41,18 +41,19 @@ luaxml_sty.current.transformation = "#1",
 % #2 CSS selector 
 % #3 transformer rule
 \NewDocumentCommand\LXMLRule{O{} m +v}{
+  % handle keyval options
   \group_begin:
   \keys_set:nn {luaxml} { #1 }
   \directlua{luaxml_sty.current.parameters = {}}
   \bool_if:NT \l_luaxml_verbatim {\directlua{luaxml_sty.current.parameters.verbatim = true}}
   \directlua{
     luaxml_sty.add_rule("\l_luaxml_transformer", "#2", "\luaescapestring{#3}")
-    %luaxml_sty.add_rule("#1", "#2", "#3")
   }
   \group_end:
 }
 
 
+% Transform code snippet
 % \LXMLSnippet* - parse using XML parser
 % \LXMLSnippet  - parse using HTML parser
 % #2 transformer object name -- empty = default
@@ -68,7 +69,11 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
-
+% Transform file
+% \LXMLInputFile* - parse using XML parser
+% \LXMLInputFile  - parse using HTML parser
+% #2 transformer object name -- empty = default
+% #3 XML string
 \NewDocumentCommand\LXMLInputFile{s O{} m}{
   \IfBooleanTF{#1}{
     \directlua{luaxml_sty.set_html()}
@@ -81,6 +86,8 @@ luaxml_sty.current.transformation = "#1",
 }
 
 
+% Transform XML contained in the environment
+% #1 transformer object name -- empty = default
 \newenvironment{LXMLCode}[1]{
   \directlua{
     luaxml_sty.set_xml()
@@ -93,7 +100,9 @@ luaxml_sty.current.transformation = "#1",
   }
 }
 
-%\NewDocumentEnvironment{LXMLCode*}{}{
+% Transform HTML contained in the environment
+% #1 transformer object name -- empty = default
+%
 % I couldn't process the first line in the environment using the Lua callback with \NewDocumentEnvironment,
 % so \newenvironment is used instead.
 \newenvironment{LXMLCode*}[1]{
