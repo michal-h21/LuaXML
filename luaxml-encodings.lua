@@ -1,5 +1,6 @@
 --- Convert 8-bit encodings to UTF-8
 --- @module luaxml-encodings
+
 -- this table is  generated automatically by this command:
 -- texlua encodings/make_encodings.lua
 local encodings = {
