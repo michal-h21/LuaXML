@@ -17,6 +17,7 @@
 \newcommand\functionsummary[1]{#1\\\textbf{Parameters:}\\}
 \newcommand\functionparam[2]{\texttt{#1}: #2\\}
 \newcommand\functionreturn[1]{\textbf{Return: }\\#1\\}
+\usepackage{luaxml}
 
 \begin{document}
 	\title{The \textsc{LuaXML} library}
@@ -775,6 +776,140 @@ if enc then
   end
 end
 \end{verbatim}
+
+\section{The \texttt{luaxml.sty} package}
+
+The \texttt{luaxml.sty} package is designed to provide an interface for defining
+transformation rules for XML and HTML documents using Lua and \LaTeX\ commands.
+It allows users to declare transformation objects, apply transformation rules
+based on CSS selectors, and process XML or HTML from files or code snippets
+within \LaTeX\ documents.
+
+XML and HTML documents can be inserted from files or directly via commands and environments.
+All commands and environments intended for code input have two variants: with
+an asterisk for inputting HTML documents and without an asterisk for inputting
+XML documents.
+
+\subsection{Example of transformation using \LaTeX\ commands}
+
+\begin{verbatim}
+\LXMLRule[sample]{h1}|\par\noindent{\large\bfseries %s\par}|
+\LXMLRule[sample]{p}|%s\par|
+\LXMLRule[sample]{a[href]}|\href{@{href}}{%s}|
+ %% process HTML code
+\begin{LXMLCode*}{sample}
+<html>
+<h1>Hello</h1>
+<p>Here is a link to <a href="https://tex.stackexchange.com/">TeX.sx</a>
+</p>
+</html>
+\end{LXMLCode*}
+\end{verbatim}
+\begin{framed}
+
+\LXMLRule[sample]{h1}|\par\noindent{\large\bfseries %s\par}|
+\LXMLRule[sample]{p}|%s\par|
+\LXMLRule[sample]{a[href]}|\href{@{href}}{%s}|
+% process HTML code
+\begin{LXMLCode*}{sample}
+<html>
+<h1>Hello</h1>
+<p>Here is a link to <a href="https://tex.stackexchange.com/">TeX.sx</a>
+</p>
+</html>
+\end{LXMLCode*}
+\end{framed}
+
+
+\subsection*{\texttt{luaxml.sty} Commands}
+
+\paragraph{\texttt{\textbackslash LXMLUseTransformer\{<name>\}}}
+Selects the current transformer object. The parameter \texttt{<name>} is the identifier of the transformer object that will be used for subsequent transformations.
+
+\textbf{Example:}
+\begin{verbatim}
+\LXMLUseTransformer{myTransformer}
+\end{verbatim}
+
+\paragraph{\texttt{\textbackslash LXMLDeclareTransformer\{<name>\}}}
+Declares a new transformer object. The parameter \texttt{<name>} is the identifier of the new transformer that can later be referenced for transformations.
+
+\textbf{Example:}
+\begin{verbatim}
+\LXMLDeclareTransformer{newTransformer}
+\end{verbatim}
+
+\paragraph{\texttt{\textbackslash LXMLRule[<options>]\{<CSS selector>\}\{<transformation rule>\}}}
+Defines a transformation rule for the current transformer. The transformation is applied to elements matching the given CSS selector. The \texttt{<options>} parameter can include:
+\begin{itemize}
+    \item \texttt{verbatim}: Whether to process the rule in verbatim mode.
+    \item \texttt{transformer}: Specifies a transformer.
+    \item \texttt{unknown key}: Used for handling unknown options.
+\end{itemize}
+
+\textbf{Example:}
+\begin{verbatim}
+\LXMLRule[verbatim=true]{div.title}{\textbf{#content}}
+\end{verbatim}
+
+\paragraph{\texttt{\textbackslash LXMLSnippet* [<options>]\{<transformer>\}\{<XML or HTML code>\}}}
+Processes a code snippet as XML or HTML. Use the \texttt{*} variant for HTML input. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty). The code to be transformed is passed in the third argument.
+
+\textbf{Example (XML):}
+\begin{verbatim}
+\LXMLSnippet{myTransformer}{<root><title>Hello</title></root>}
+\end{verbatim}
+
+\textbf{Example (HTML):}
+\begin{verbatim}
+\LXMLSnippet*{myTransformer}{<div><h1>Header</h1></div>}
+\end{verbatim}
+
+\paragraph{\texttt{\textbackslash LXMLInputFile* [<options>]\{<transformer>\}\{<file path>\}}}
+Processes a file as XML or HTML. Use the \texttt{*} variant for HTML input. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty). The file path is passed in the third argument.
+
+\textbf{Example (XML):}
+\begin{verbatim}
+\LXMLInputFile{myTransformer}{path/to/file.xml}
+\end{verbatim}
+
+\textbf{Example (HTML):}
+\begin{verbatim}
+\LXMLInputFile*{myTransformer}{path/to/file.html}
+\end{verbatim}
+
+\subsection*{Environments}
+
+\paragraph{\texttt{\textbackslash begin\{LXMLCode\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode\}}}
+Processes XML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
+
+\textbf{Usage:}
+\begin{verbatim}
+\begin{LXMLCode}{myTransformer}
+<root>
+  <element>Some content</element>
+</root>
+\end{LXMLCode}
+\end{verbatim}
+
+\paragraph{\texttt{\textbackslash begin\{LXMLCode*\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode*\}}}
+Processes HTML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
+
+\textbf{Usage:}
+\begin{verbatim}
+\begin{LXMLCode*}{myTransformer}
+<div>
+  <p>Some HTML content</p>
+</div>
+\end{LXMLCode*}
+\end{verbatim}
+
+\subsection*{Options}
+
+\begin{itemize}
+  \item \texttt{verbatim}: If set to \texttt{true}, the transformation rule will be processed in verbatim mode, which is useful for handling preformatted text.
+\end{itemize}
+
 
 
 
