@@ -84,6 +84,10 @@ function luaxml_sty.parse_snippet(current, xml_string)
     current = luaxml_sty.current.transformation
   end
   local transform = luaxml_sty.transformations[current]
+  if not transform then 
+    luaxml_sty.error("Cannot load transformer: " .. current) 
+    return nil, "Cannot load transformer: " .. current
+  end
   local dom
   -- decide if we  should use XML or HTML parser
   if luaxml_sty.use_xml then
