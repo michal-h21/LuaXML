@@ -544,7 +544,7 @@ is placed to the output string.
 There are two methods for action specification, \verb|add_action| for 
 text templates, and \verb|add_custom_action| for Lua functions.
 
-\subsubsection{Transforming using templates}
+\subsubsection{Transforming using templates}\label{sec:transform-templates}
 
 Template actions can be added using the \verb|add_action| method:
 
@@ -564,6 +564,7 @@ attributes.
 \begin{description}
   \item[\verb|@\{attribute name\}|] insert value of an attribute
   \item[\verb|@<.>|] insert transformed content of the element
+  \item[\texttt{\%s}] insert transformed content of the element. Shortcut for \verb|@<.>|.
   \item[\verb|@<number>|] insert transformed content of the child element
     selected by it's number in the list of children
   \item[\verb|@<element name>|] insert transformed content of the named child element
@@ -777,7 +778,7 @@ if enc then
 end
 \end{verbatim}
 
-\section{The \texttt{luaxml.sty} package}
+\section{The \texttt{luaxml.sty} Package}
 
 The \texttt{luaxml.sty} package is designed to provide an interface for defining
 transformation rules for XML and HTML documents using Lua and \LaTeX\ commands.
@@ -821,98 +822,162 @@ XML documents.
 \end{framed}
 
 
-\subsection*{\texttt{luaxml.sty} Commands}
+\subsection{Declaring Transformation Rules}
 
-\paragraph{\texttt{\textbackslash LXMLUseTransformer\{<name>\}}}
-Selects the current transformer object. The parameter \texttt{<name>} is the identifier of the transformer object that will be used for subsequent transformations.
 
-\textbf{Example:}
+
 \begin{verbatim}
-\LXMLUseTransformer{myTransformer}
+\LXMLRule[<options>]\{<CSS selector>\}|<transformation rule>|
 \end{verbatim}
 
-\paragraph{\texttt{\textbackslash LXMLDeclareTransformer\{<name>\}}}
-Declares a new transformer object. The parameter \texttt{<name>} is the identifier of the new transformer that can later be referenced for transformations.
+\noindent Defines a transformation rule for the current transformer. The transformation
+is applied to elements matching the given CSS selector. You can define multiple transformers, 
+for example if you want to support multiple XML syntaxes and HTML at the same time.
 
-\textbf{Example:}
-\begin{verbatim}
-\LXMLDeclareTransformer{newTransformer}
-\end{verbatim}
+\medskip
 
-\paragraph{\texttt{\textbackslash LXMLRule[<options>]\{<CSS selector>\}\{<transformation rule>\}}}
-Defines a transformation rule for the current transformer. The transformation is applied to elements matching the given CSS selector. The \texttt{<options>} parameter can include:
+\noindent The \texttt{<options>} parameter can include:
+
 \begin{itemize}
     \item \texttt{verbatim}: Whether to process the rule in verbatim mode.
     \item \texttt{transformer}: Specifies a transformer.
-    \item \texttt{unknown key}: Used for handling unknown options.
 \end{itemize}
 
-\textbf{Example:}
+Any unknown key acts as a name of the transformer. In the following code, both
+examples add a rule to a transformer named \texttt{sample}.
+
 \begin{verbatim}
-\LXMLRule[verbatim=true]{div.title}{\textbf{#content}}
+\LXMLRule[transformer=sample]{b}|\textbf{%s}|
+\LXMLRule[sample]{i}|\textit{%s}|
 \end{verbatim}
 
-\paragraph{\texttt{\textbackslash LXMLSnippet* [<options>]\{<transformer>\}\{<XML or HTML code>\}}}
-Processes a code snippet as XML or HTML. Use the \texttt{*} variant for HTML input. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty). The code to be transformed is passed in the third argument.
+If you want to support only one syntax though, you don't need to specify the transformer name at all,
+a default object will be used.
 
-\textbf{Example (XML):}
+By default, spaces are collapsed. If you want to support elements where white spaces 
+should be preserved, such as HTML \verb|<pre>| element, use the \verb|verbatim| option:
+
 \begin{verbatim}
-\LXMLSnippet{myTransformer}{<root><title>Hello</title></root>}
+\LXMLRule[verbatim]{pre}|\begin{verbatim}
+ %s
+\end{verbatim}
+% trick to print \end{verbatim}|
+\verb+\end{verbatim}|+
+
+\bigskip
+
+The \texttt{transformation rule} must be delimited by a pair of characters that are not used in the 
+text of the rule. We use \verb+|+ in our examples, but you can use other characters if you like. 
+This is similar to how the \verb|\verb| command works. You can use the syntax 
+shown in the section~\ref{sec:transform-templates} (page~\pageref{sec:transform-templates}).
+
+The following code defines rule that transforms the \verb|<h1>| element to a \verb|\section| command, 
+and \verb|<a>| element which has a \verb|href| attribute to \verb|\href|. URL of the link is used 
+thanks to the \verb|@{href}| rule. 
+
+\begin{verbatim}
+\LXMLRule{h1}|{\section{%s}|
+\LXMLRule{a[href]}|\href{@{href}}{%s}|
 \end{verbatim}
 
-\textbf{Example (HTML):}
+\subsection{Content Transformation}
+
 \begin{verbatim}
-\LXMLSnippet*{myTransformer}{<div><h1>Header</h1></div>}
+\LXMLSnippet[<transformer name>]{<XML code>}
+\LXMLSnippet*[<transformer name>]{<HTML code>}
 \end{verbatim}
 
-\paragraph{\texttt{\textbackslash LXMLInputFile* [<options>]\{<transformer>\}\{<file path>\}}}
-Processes a file as XML or HTML. Use the \texttt{*} variant for HTML input. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty). The file path is passed in the third argument.
+\noindent The \verb|\LXMLSnippet| command processes a code snippet as XML or HTML. 
+Use the starred variant for HTML
+input. The \texttt{<transformer name>} argument specifies the transformer object to apply
+(default is used if empty). The code to be transformed is passed in the second
+argument.
 
-\textbf{Example (XML):}
+\medskip
+
+\noindent{XML snippet transformation:}
 \begin{verbatim}
-\LXMLInputFile{myTransformer}{path/to/file.xml}
+\LXMLRule[xmlsnippet]{title}|title: %s|
+\LXMLSnippet{<root><title>Hello</title></root>}
 \end{verbatim}
 
-\textbf{Example (HTML):}
+\begin{framed}
+\LXMLRule[xmlsnippet]{title}|title: %s|
+\LXMLSnippet[xmlsnippet]{<root><title>Hello</title></root>}
+\end{framed}
+
+\noindent{HTML snippet transformation:}
 \begin{verbatim}
-\LXMLInputFile*{myTransformer}{path/to/file.html}
+\LXMLRule[htmlsnippet]{h1}|title: %s|
+\LXMLSnippet*[htmlsnippet]{<div><h1>Header</h1></div>}
 \end{verbatim}
 
-\subsection*{Environments}
+\begin{framed}
+\LXMLRule[htmlsnippet]{h1}|title: %s|
+\LXMLSnippet*[htmlsnippet]{<div><h1>Header</h1></div>}
+\end{framed}
 
-\paragraph{\texttt{\textbackslash begin\{LXMLCode\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode\}}}
-Processes XML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
-
-\textbf{Usage:}
+\vtop\bgroup
 \begin{verbatim}
-\begin{LXMLCode}{myTransformer}
+\LXMLInputFile[<transformer>]{<XML file path>}
+\LXMLInputFile*[<transformer>]{<HTML file path>}
+\end{verbatim}
+
+\noindent Processes a file as XML or HTML. Use the starred variant for HTML input. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty). The file path is passed in the second argument.
+\egroup
+
+\noindent\textbf{Environments}
+
+\medskip
+\noindent \textbf{\texttt{\textbackslash begin\{LXMLCode\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode\}}}
+
+
+\noindent Processes XML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
+
+\begin{verbatim}
+\LXMLRule[xmlenv]{element}|hello: %s|
+\begin{LXMLCode}{xmlenv}
 <root>
   <element>Some content</element>
 </root>
 \end{LXMLCode}
 \end{verbatim}
 
-\paragraph{\texttt{\textbackslash begin\{LXMLCode*\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode*\}}}
-Processes HTML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
+\begin{framed}
+\LXMLRule[xmlenv]{element}|hello: %s|
+\begin{LXMLCode}{xmlenv}
+<root>
+  <element>Some content</element>
+</root>
+\end{LXMLCode}
+\end{framed}
 
-\textbf{Usage:}
+\medskip
+\noindent\textbf{\texttt{\textbackslash begin\{LXMLCode*\}\{<transformer>\}} ... \texttt{\textbackslash end\{LXMLCode*\}}}
+
+\noindent Processes HTML code inside the environment. The \texttt{<transformer>} specifies the transformer object to apply (default is used if empty).
+
 \begin{verbatim}
-\begin{LXMLCode*}{myTransformer}
+\LXMLRule[htmlenv]{p}|paragraph: %s|
+\begin{LXMLCode*}{htmlenv}
 <div>
   <p>Some HTML content</p>
 </div>
 \end{LXMLCode*}
 \end{verbatim}
 
-\subsection*{Options}
+\begin{framed}
+\LXMLRule[htmlenv]{p}|paragraph: %s|
+\begin{LXMLCode*}{htmlenv}
+<div>
+  <p>Some HTML content</p>
+</div>
+\end{LXMLCode*}
+\end{framed}
 
-\begin{itemize}
-  \item \texttt{verbatim}: If set to \texttt{true}, the transformation rule will be processed in verbatim mode, which is useful for handling preformatted text.
-\end{itemize}
 
 
-
-
+\clearpage
 \section{The API documentation}
 
 \input{doc/api.tex}
