@@ -97,6 +97,7 @@ function luaxml_sty.parse_snippet(current, xml_string)
   end
   luaxml_sty.debug(dom:serialize())
   local result = transform:process_dom(dom)
+  luaxml_sty.debug(result)
   luaxml_sty.packages.transform.print_tex(result)
 end
 
