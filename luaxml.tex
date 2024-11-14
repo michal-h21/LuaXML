@@ -791,7 +791,14 @@ All commands and environments intended for code input have two variants: with
 an asterisk for inputting HTML documents and without an asterisk for inputting
 XML documents.
 
-\subsection{Example of transformation using \LaTeX\ commands}
+\subsection{Package Options}
+
+\begin{description}
+  \item[default] -- load HTML templates. They will be available as \verb|html|
+  option in \verb|luaxml.sty| commands and environments.
+\end{description}
+
+\subsection{Example of Transformation Using \LaTeX\ Commands}
 
 \begin{verbatim}
 \LXMLRule[sample]{h1}|\par\noindent{\large\bfseries %s\par}|

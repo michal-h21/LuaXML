@@ -1,4 +1,5 @@
-\ProvidesPackage{luaxml}[{{DATE}} LuaXML package]
+\ProvidesExplPackage{luaxml}{{{DATE}}}{{{VERSION}}}{LuaXML package}
+% \ProvidesPackage{luaxml}[{{DATE}} LuaXML package]
 
 \RequirePackage{luacode}
 
@@ -12,14 +13,23 @@ luaxml_sty = require "luaxml-sty"
 
 \ExplSyntaxOn
 
+% package options
+\bool_new:N\l_luaxml_use_defaults
+\keys_define:nn {luaxml}{
+  default .bool_set:N = \l_luaxml_use_defaults,
+  default .initial:n = false
+}
+\ProcessKeyOptions
+
+% options used in \LXMLRule
 \bool_new:N\l_luaxml_verbatim
 \tl_new:N \l_luaxml_transformer
 
-\keys_define:nn{luaxml}{
+\keys_define:nn{luaxmlrule}{
   verbatim .bool_set:N = \l_luaxml_verbatim ,
   verbatim .initial:n = false,
   unknown .code:n = \tl_set_eq:NN\l_luaxml_transformer\l_keys_key_str,
-  transformer .tl_set:N = \l_luaxml_transformer
+  transformer .tl_set:N = \l_luaxml_transformer,
 }
 
 
@@ -44,7 +54,7 @@ luaxml_sty.current.transformation = "#1",
 \NewDocumentCommand\LXMLRule{O{} m +v}{
   % handle keyval options
   \group_begin:
-  \keys_set:nn {luaxml} { #1 }
+  \keys_set:nn {luaxmlrule} { #1 }
   \directlua{luaxml_sty.current.parameters = {}}
   \bool_if:NT \l_luaxml_verbatim {\directlua{luaxml_sty.current.parameters.verbatim = true}}
   \directlua{
@@ -116,6 +126,15 @@ luaxml_sty.current.transformation = "#1",
   \directlua{
     luaxml_sty.print_verbatim("\l_luaxml_transformer")
   }
+}
+
+% load default transformation rules
+\NewDocumentCommand\LXMLLoadDefaults{}{
+  \directlua{require "luaxml-htmltemplates"}
+}
+
+\AtBeginDocument{
+  \bool_if:NT \l_luaxml_use_defaults {\LXMLLoadDefaults}
 }
 
 
