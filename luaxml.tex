@@ -17,7 +17,7 @@
 \newcommand\functionsummary[1]{#1\\\textbf{Parameters:}\\}
 \newcommand\functionparam[2]{\texttt{#1}: #2\\}
 \newcommand\functionreturn[1]{\textbf{Return: }\\#1\\}
-\usepackage{luaxml}
+\usepackage[default]{luaxml}
 
 \begin{document}
 	\title{The \textsc{LuaXML} library}
@@ -797,6 +797,22 @@ XML documents.
   \item[default] -- load HTML templates. They will be available as \verb|html|
   option in \verb|luaxml.sty| commands and environments.
 \end{description}
+
+\begin{verbatim}
+\usepackage[default]{luaxml}
+... 
+
+\begin{LXMLCode*}{html}
+  <p>Hello <b>world</b> and some text in <i>italics</i>.</p>
+\end{LXMLCode*}
+\end{verbatim}
+
+\begin{framed}
+\begin{LXMLCode*}{html}
+  <p>Hello <b>world</b> and some text in <i>italics</i>.</p>
+\end{LXMLCode*}
+\end{framed}
+
 
 \subsection{Example of Transformation Using \LaTeX\ Commands}
 
