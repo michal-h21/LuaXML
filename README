@@ -3,7 +3,7 @@ Introduction
 
 LuaXML is pure lua library for reading and serializing of the XML files. Current release is aimed mainly as support 
 for the odsfile package. The documentation was created by automatic conversion of original documentation in the source code. 
-In this version, some files not useful for luaTeX were droped. 
+In this version, some files not useful for luaTeX were dropped.
 
 
 Install
@@ -14,11 +14,11 @@ then clone this repository and run
 
     make install
 
-Please note that you will need [LDoc](http://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) and 
-[dkjson](http://dkolf.de/src/dkjson-lua.fsl/home) Lua modules installed on your system. You can install them using:
+Please note that you will need [LDoc](https://stevedonovan.github.io/ldoc/manual/doc.md.html#Processing_Single_Modules) and 
+[dkjson](http://dkolf.de/dkjson-lua/) Lua modules installed on your system. You can install them using:
 
     $ luarocks install --local ldoc
-    $ luarocks install --local dkjso
+    $ luarocks install --local dkjson
 
 
 License:
@@ -34,7 +34,7 @@ Michal Hoftich
 Email: michal.h21@gmail.com
 Version: {{VERSION}}, {{DATE}}
 
-Original authors: Paul Chakravarti and Manoel Campos (http://manoelcampos.com)
+Original authors: Paul Chakravarti and Manoel Campos (https://about.me/manoelcampos)
 
 If you are interested in the process of development you may observe
 

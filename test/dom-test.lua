@@ -103,7 +103,7 @@ describe("Basic DOM functions", function()
     it("Should return table", function()
       assert.same(type(matched), "table")
     end)
-    it("Should match two elemetns", function()
+    it("Should match two elements", function()
       assert.same(#matched, 2)
     end)
     local el = matched[2]

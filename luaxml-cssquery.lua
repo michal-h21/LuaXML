@@ -41,7 +41,7 @@ local function cssquery()
   end
   --- Calculate CSS specificity of the query
   -- @param query table created by CssQuery:prepare_selector() function
-  -- @return integer speficity value
+  -- @return integer specificity value
   function CssQuery:calculate_specificity(query)
     local query = query or {}
     local specificity = 0
@@ -435,7 +435,7 @@ local function cssquery()
   end
 
   --- Remove selector from the CSS list object.
-  --  All actions that literaly match the given selector will be removed.
+  --  All actions that literally match the given selector will be removed.
   function CssQuery:remove_selector(
     selector -- CSS selector to be removed
     )
@@ -446,8 +446,8 @@ local function cssquery()
     end
   end
 
-  --- It tests list of queries agaings a DOM element and executes the
-  --- coresponding function that is saved for the matched query.
+  --- It tests list of queries against a DOM element and executes the
+  --- corresponding function that is saved for the matched query.
   -- @return nothing
   function CssQuery:apply_querylist(
     domobj, -- DOM element

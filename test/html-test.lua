@@ -86,15 +86,15 @@ describe("Test entities", function()
     local random = html.search_entity_tree {"r", "a", "n", "d", "o","m"}
     assert.same(type(random), "nil")
   end)
-  it("Should support named entites", function()
-    -- support named entites
+  it("Should support named entities", function()
+    -- support named entities
     local first  = tostring(get_first_element("Hello &lt; world"))
     assert.same(first, "'Hello < world'")
-    -- return unknown named entites as text
+    -- return unknown named entities as text
     local second = tostring(get_first_element("Hello &nonexistent; world"))
     assert.same(second, "'Hello &nonexistent; world'")
-    -- match partial named entites
-    -- &amp is translated to &, rest is returend as text
+    -- match partial named entities
+    -- &amp is translated to &, rest is returned as text
     local third  = tostring(get_first_element("hello &amperesand; world"))
     assert.same(third, "'hello &eresand; world'")
     -- in attribute values, &amp isn't matched 
@@ -189,7 +189,7 @@ end
 describe("Special scope detection", function()
   it("Should support basic scoping", function()
     -- we cannot just parse HTML, because it has closed unfinished table,
-    -- so we just recreate similar strcture to test scoping
+    -- so we just recreate similar structure to test scoping
     local element = html.Element
     local html_el = element:init("html", {})
     local body = element:init("body", {})
@@ -202,7 +202,7 @@ describe("Special scope detection", function()
     assert.truthy(html.is_in_button_scope(x, "p"))
     -- b is not in scope
     assert.falsy(html.is_in_button_scope(x, "b"))
-    -- caption is in list of elemetns which should return false for the scoping function
+    -- caption is in list of elements which should return false for the scoping function
     local notp = {unfinished = {html, body, p, table, caption, span}}
     assert.falsy(html.is_in_button_scope(notp, "p"))
     -- table scope ignores only table, template and html

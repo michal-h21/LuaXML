@@ -44,9 +44,9 @@ local M = {}
 -- SciTE editors. Finally there are comments on lexer performance and
 -- limitations.
 --
--- [LPeg library]: http://www.inf.puc-rio.br/~roberto/lpeg/lpeg.html
--- [Textadept]: http://foicica.com/textadept
--- [SciTE]: http://scintilla.org/SciTE.html
+-- [LPeg library]: https://www.inf.puc-rio.br/~roberto/lpeg/
+-- [Textadept]: https://orbitalquark.github.io/textadept/
+-- [SciTE]: https://scintilla.org/SciTE.html
 --
 -- ## Lexer Basics
 --
@@ -59,7 +59,7 @@ local M = {}
 -- the name *lua.lua*.
 --
 -- Note: Try to refrain from using one-character language names like "b", "c",
--- or "d". For example, Scintillua uses "b_lang", "cpp", and "dmd",
+-- or "d". For example, Scintilla uses "b_lang", "cpp", and "dmd",
 -- respectively.
 --
 -- ### New Lexer Template
@@ -420,7 +420,7 @@ local M = {}
 --       custom_whitespace = custom_style
 --     }
 --
--- Notice that the lexer peforms Scintilla/SciTE-style "$()" property expansion.
+-- Notice that the lexer performs Scintilla/SciTE-style "$()" property expansion.
 -- You may also use "%()". Remember to refrain from assigning specific colors in
 -- styles, but in this case, all user color themes probably define the
 -- "color.grey" property.
@@ -546,7 +546,7 @@ local M = {}
 -- match is a beginning fold point and `-1` indicates the match is an ending
 -- fold point. Likewise, the second assignment states that any "/\*" or "\*/"
 -- that the lexer recognizes as part of a `lexer.COMMENT` token is a fold point.
--- The lexer does not consider any occurences of these characters outside their
+-- The lexer does not consider any occurrences of these characters outside their
 -- defined tokens (such as in a string) as fold points. Finally, every
 -- `_foldsymbols` table must have a `_patterns` field that contains a list of
 -- [Lua patterns][] that match fold points. If the lexer encounters text that
@@ -597,7 +597,7 @@ local M = {}
 -- the current line's text, the position in the current line the matched text
 -- starts at, and the matched text itself.
 --
--- [Lua patterns]: http://www.lua.org/manual/5.2/manual.html#6.4.1
+-- [Lua patterns]: https://www.lua.org/manual/5.4/manual.html#6.4.1
 --
 -- ### Fold by Indentation
 --
@@ -1208,7 +1208,7 @@ function M.fold(lexer, text, start_pos, start_line, start_level)
     end
     -- Find the first non-blank line before start_line. If the current line is
     -- indented, make that previous line a header and update the levels of any
-    -- blank lines inbetween. If the current line is blank, match the level of
+    -- blank lines in between. If the current line is blank, match the level of
     -- the previous non-blank line.
     local current_level = start_level
     for i = start_line - 1, 0, -1 do
@@ -1294,7 +1294,7 @@ M.word = (M.alpha + '_') * (M.alnum + '_')^0
 -- If *name* is not a predefined token name, its style must be defined in the
 -- lexer's `_tokenstyles` table.
 -- @param name The name of token. If this name is not a predefined token name,
---   then a style needs to be assiciated with it in the lexer's `_tokenstyles`
+--   then a style needs to be associated with it in the lexer's `_tokenstyles`
 --   table.
 -- @param patt The LPeg pattern associated with the token.
 -- @return pattern

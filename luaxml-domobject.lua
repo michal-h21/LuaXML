@@ -371,7 +371,7 @@ parse = function(
   end
 
   --- Execute function on the current element and all it's children nodes.
-  -- The differenct to DOM_Object:traverse_elements() is that it executes the function 
+  -- The difference to DOM_Object:traverse_elements() is that it executes the function 
   -- also on text nodes and all other kinds of XML nodes.
   -- The traversing of child elements of a given node can be disabled when the executed
   -- function returns false.
