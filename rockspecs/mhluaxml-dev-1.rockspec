@@ -12,7 +12,7 @@ description = {
    detailed = [[
 LuaXML is pure lua library for reading and serializing of the XML files. Current release is aimed mainly as support 
 for the odsfile package. The documentation was created by automatic conversion of original documentation in the source code. 
-In this version, some files not useful for luaTeX were droped. ]],
+In this version, some files not useful for luaTeX were dropped. ]],
    homepage = "https://github.com/michal-h21/LuaXML",
    license = "MIT"
 }

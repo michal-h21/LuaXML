@@ -2,7 +2,7 @@
 -- @module luaxml-transform
 -- @author Michal Hoftich <michal.h21@gmail.com
 
--- code originaly comes from from https://github.com/michal-h21/luaxml-mathml
+-- code originally comes from from https://github.com/michal-h21/luaxml-mathml
 --
 local domobject
 local cssquery
@@ -91,7 +91,7 @@ local function process_children(element, parameters)
       -- concat text
       t[#t+1] = process_text(elem:get_text(), parameters)
     elseif elem:is_element() then
-      -- recursivelly process child elements
+      -- recursively process child elements
       t[#t+1] = process_tree(elem)
     end
   end
@@ -139,7 +139,7 @@ local function simple_content(s,parameters)
   return function(element)
     local content = process_children(element,parameters)
     local parameters = parameters or {}
-    -- process attrubutes
+    -- process attributes
     -- attribute should be marked as @{name}
     local expanded = s:gsub("@{(.-)}", function(name)
       return process_text(element:get_attribute(name) or "", parameters)
@@ -246,7 +246,7 @@ local function print_tex(content)
 end
 
 
--- make Transformer objec
+-- make Transformer object
 local Transformer 
 
 --- Make new Transformer object

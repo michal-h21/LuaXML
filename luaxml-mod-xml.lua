@@ -36,7 +36,7 @@
 --  ====
 --
 --  The parser provides a partially object-oriented API with 
---  functionality split into tokeniser and hanlder components.
+--  functionality split into tokeniser and handler components.
 --  
 --  The handler instance is passed to the tokeniser and receives
 --  callbacks for each XML element processed (if a suitable handler
@@ -102,7 +102,7 @@
 --        numeric entities only currently - could be extended 
 --        at runtime if suitable DTD parser added elements
 --        to table (see obj._ENTITIES). May also be possible
---        to expand multibyre entities for UTF-8 only
+--        to expand multibyte entities for UTF-8 only
 --  
 --      * errorHandler
 --  
@@ -148,7 +148,7 @@
 --
 --  Added parameter parseAttributes (boolean) in xmlParser.parse method
 --  If true, tag attributtes are parsed. The default value is true.
---  by Manoel Campos (http://manoelcampos.com)
+--  by Manoel Campos (https://about.me/manoelcampos)
 --
 --  $Id: xml.lua,v 1.1.1.1 2001/11/28 06:11:33 paulc Exp $
 --
@@ -319,7 +319,7 @@ local xmlParser = function(handler)
                     -- End tag
                     if self._handler.endtag then
                         if attrs then
-                            -- Shouldnt have any attributes in endtag
+                            -- Shouldn't have any attributes in endtag
                             self:_err(format("%s (/%s)",
                                              self._errstr.endTagErr,
                                              tagname)
