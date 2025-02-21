@@ -5,7 +5,8 @@ source = {
 }
 dependencies = {
    "lua >= 5.3",
-   "lpeg >= 1.0.2"
+   "lpeg >= 1.0.2",
+   "dkjson"
 }
 description = {
    summary = "LuaXML is pure lua library for reading and serializing of the XML files.",
@@ -32,5 +33,8 @@ build = {
       ["luaxml.stack"] = "luaxml-stack.lua",
       ["luaxml.testxml"] = "luaxml-testxml.lua",
       ["luaxml.transform"] = "luaxml-transform.lua"
-   }
+   },
+   build_command = [[
+      lua data/jsontolua.lua < data/entities.json > luaxml-namedentities.lua
+   ]]
 }
