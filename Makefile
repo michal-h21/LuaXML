@@ -23,7 +23,9 @@ ENTITIES_MODULE = luaxml-namedentities.lua
 
 all: doc $(ENTITIES_MODULE)
 
-.PHONY: test 
+.PHONY: test $(ENTITIES_MODULE)
+
+
 
 doc: api $(doc_file) 
 
@@ -42,8 +44,8 @@ $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	$(LDOC) luaxml-encodings.lua >> $(API_DOC)
 	$(LDOC) luaxml-sty.lua >> $(API_DOC)
 
-$(ENTITIES_MODULE): $(ENTITIES_SOURCE) data/jsontolua.lua
-	lua data/jsontolua.lua < $< > $(ENTITIES_MODULE)
+$(ENTITIES_MODULE): 
+	lua data/jsontolua.lua < $(ENTITIES_SOURCE)  > $(ENTITIES_MODULE)
 
 test: 
 	texlua test/dom-test.lua
