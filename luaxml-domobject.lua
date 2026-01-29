@@ -510,7 +510,7 @@ parse = function(
     local element = element or self
     local t = {}
     for k, v in pairs(element) do
-      if type(v) == "table" and k~="_parent" then
+      if type(v) == "table" and (k~="_parent" and k~="__index") then
         t[k] = self:copy_node(v)
       else
         t[k] = v
