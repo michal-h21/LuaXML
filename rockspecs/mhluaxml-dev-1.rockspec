@@ -32,7 +32,8 @@ build = {
       ["luaxml.pretty"] = "luaxml-pretty.lua",
       ["luaxml.stack"] = "luaxml-stack.lua",
       ["luaxml.testxml"] = "luaxml-testxml.lua",
-      ["luaxml.transform"] = "luaxml-transform.lua"
+      ["luaxml.transform"] = "luaxml-transform.lua",
+      ["luaxml.lxpath"] = "luaxml-lxpath.lua"
    },
    build_command = [[
       lua data/jsontolua.lua < data/entities.json > luaxml-namedentities.lua
