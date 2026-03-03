@@ -27,6 +27,8 @@ License:
 This code is freely distributable under the terms of the Lua license
     (http://www.lua.org/copyright.html)
 
+luaxml-parse-query.lua authored by Leaf Corcoran is licensed under the MIT license
+luaxml-xpath.lua authored by Patrick Gundlach is licensed under the modified BSD license
 
 Author
 ------
