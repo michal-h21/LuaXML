@@ -37,6 +37,7 @@ api: $(API_DOC)
 
 $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	mkdir -p doc
+	luarocks install --local ldoc
 	$(LDOC) luaxml-domobject.lua > $(API_DOC)
 	$(LDOC) luaxml-cssquery.lua  >> $(API_DOC)
 	$(LDOC) luaxml-transform.lua >> $(API_DOC)
@@ -45,6 +46,7 @@ $(API_DOC): $(API_SOURCES) $(LDOC_FILTER)
 	$(LDOC) luaxml-sty.lua >> $(API_DOC)
 
 $(ENTITIES_MODULE): 
+	luarocks install --local dkjson
 	lua data/jsontolua.lua < $(ENTITIES_SOURCE)  > $(ENTITIES_MODULE)
 
 test: 
