@@ -202,6 +202,19 @@ parse = function(
     return self._handler.root
   end
 
+  --- Update version of the DOM_Object. It is used to track changes in the DOM tree, for example to invalidate cached Xpath results.
+  -- @return nothing
+  function DOM_Object:bump_version()
+    local root = self:root_node()
+    root.version = (root.version or 0) + 1
+  end
+
+  --- Get current version of the DOM_Object. It is used to track changes in the DOM tree, for example to invalidate cached Xpath results.
+  -- @return number
+  function DOM_Object:get_version()
+    local root = self:root_node()
+    return root.version or 0
+  end
 
   --- Get current node type
   -- @param  el [optional] node to get the type of
@@ -265,6 +278,7 @@ parse = function(
     if self:is_element(el) then
       el._attr = el._attr or {}
       el._attr[name] = value
+      self:bump_version()
       return true
     end
   end
@@ -470,6 +484,7 @@ parse = function(
     local id,msg = self:find_element_pos( old)
     if id then
       parent._children[id] = new
+      self:bump_version()
       return true
     end
     return false, msg
@@ -494,6 +509,7 @@ parse = function(
     local parent = self
     child._parent = parent
     fix_parents(child)
+    self:bump_version()
     if position then
       table.insert(parent._children, position, child)
     else
@@ -555,6 +571,7 @@ parse = function(
   end
 
   --- Delete current node
+  -- return boolean
   function DOM_Object:remove_node(
     element -- [optional] element to be removed
     )
@@ -564,8 +581,12 @@ parse = function(
     -- if pos then table.remove(parent._children, pos) end
     if pos then 
       -- table.remove(parent._children, pos) 
+      -- we don't permanently remove the element from the children list, because it can be used for example to restore the element later. Instead we mark the element as removed and ignore it in all methods that return children of a given node.
       parent._children[pos] = setmetatable({_type = "removed"}, DOM_Object)
+      self:bump_version()
+      return true
     end
+    return false
   end
 
   --- Find the element position in the current node list
@@ -638,14 +659,17 @@ parse = function(
   end
 
   --- parse string as HTML or XML and insert it as a child of the current node
+  -- @return DOM_Object current element
   function DOM_Object:inner_html(
     str, --- HTML or XML to be inserted
     is_xml --- [optional] Pass true to parse as XML, otherwise parse as HTML
   )
     local el = self
+    -- create dummy element and parse the string as its content
     local root = self:create_template(str, is_xml)
     -- replace original children of the current element with children of the dummy element created by parsing
     el._children = root._children
+    self:bump_version()
     return el
   end
 
@@ -660,6 +684,9 @@ parse = function(
     local parent = el:get_parent()
     local current_pos = el:find_element_pos()
     local children = root:get_children()
+    if children and #children > 0 then
+      self:bump_version()
+    end
     for i = 1,  #children do
       parent:add_child_node(children[i], current_pos + i - 1)
     end
@@ -673,6 +700,9 @@ parse = function(
     local el = self 
     local root = self:create_template(str, is_xml)
     local children = root:get_children()
+    if children and #children > 0 then
+      self:bump_version()
+    end
     for i = 1,  #children do
       el:add_child_node(children[i], i)
     end
@@ -686,6 +716,9 @@ parse = function(
     local el = self 
     local root = self:create_template(str, is_xml)
     local children = root:get_children()
+    if children and #children > 0 then
+      self:bump_version()
+    end
     for i = 1,  #children do
       el:add_child_node(children[i])
     end
@@ -701,6 +734,9 @@ parse = function(
     local parent = el:get_parent()
     local current_pos = el:find_element_pos()
     local children = root:get_children()
+    if children and #children > 0 then
+      self:bump_version()
+    end
     for i = 1,  #children do
       parent:add_child_node(children[i], current_pos + i)
     end
