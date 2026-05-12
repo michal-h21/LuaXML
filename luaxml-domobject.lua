@@ -7,16 +7,19 @@ local xml
 local handler
 local css_query
 local html
+local lxpath
 if kpse then
   xml = require("luaxml-mod-xml")
   handler = require("luaxml-mod-handler")
   css_query = require("luaxml-cssquery")
   html = require("luaxml-mod-html")
+  lxpath = require("luaxml-lxpath")
 else
   xml = require("luaxml.mod-xml")
   handler = require("luaxml.mod-handler")
   css_query = require("luaxml.cssquery")
   html = require("luaxml.mod-html")
+  lxpath = require("luaxml.lxpath")
 end
 
 local HtmlParser = html.HtmlParser
@@ -165,6 +168,57 @@ local function serialize_dom(parser, current,level, output)
   stop(xtype, name)
   return output
 end
+
+
+--- This function converts a domobject element to a table that can be used by lxpath. It recursively processes the element and its children, creating a table structure that represents the XML document in a way that lxpath can understand. The function also maintains a mapping between the lxpath __id attribute and the original domobject elements, allowing for later retrieval of the original elements based on their IDs in the lxpath context.
+--- @param element table domobject element to convert.
+--- @param count number counter used to assign unique IDs to elements in the lxpath table.
+--- @param ids table used to map lxpath __id attributes back to the original dom
+--- @return table lxpath_obj converted lxpath table representing the XML document.
+--- @return table ids mapping of lxpath __id attributes to original domobject elements.
+--- @return number count the next available unique ID for lxpath elements.
+local function domobject_to_lxpath_tbl(element, count, ids)
+  -- we recursively convert a domobject element to a table that can be used by lxpath
+  local count = count or 1
+  -- lxpath uses a flat table structure to represent the XML document, where each element is represented as a table 
+  -- with special fields for its name, attributes, and children. The __id field is used to uniquely identify 
+  -- each element in the document, and the ids table is used to map these IDs back to the original 
+  -- domobject elements for later retrieval.
+  local tbl = {}
+  -- this table contains mapping between lxpath __id attribute and LuaXML DOM elements
+  local ids = ids or {}
+  if element:is_element() then
+    -- set lxpath specific fields
+    tbl[".__name"] = element:get_element_name()
+    tbl[".__id"]  = count
+    tbl[".__type"] = "element"
+    tbl[".__local_name"] = element:get_element_name()
+    tbl[".__namespace"] = ""
+    tbl[".__ns"] = {}
+    tbl[".__attributes"] = {}
+    for k, v in pairs(element._attr or {}) do
+      tbl[".__attributes"][k] = v
+    end
+    ids[count] = element
+    element:bump_version()
+  elseif element:get_node_type() == "ROOT" then
+    -- 
+    tbl[".__type"] = "document"
+  end
+  for _, child in ipairs(element:get_children()) do
+    -- process all children of the current element
+    if child:is_element() then
+      count = count + 1
+      -- recursively convert child elements and add them to the current table
+      -- don't forget to update the count for unique IDs and pass the ids table for mapping
+      tbl[#tbl+1], _, count = domobject_to_lxpath_tbl(child, count, ids)
+    elseif child:is_text() then
+      tbl[#tbl+1] = child:get_text()
+    end
+  end
+  return tbl, ids, count + 1
+end
+
 
 --- XML parsing function
 -- Parse the XML text and create the DOM object.
@@ -364,6 +418,8 @@ parse = function(
     local css_parts = css_query:prepare_selector(selector)
     return css_query:get_selector_path(self, css_parts)
   end
+
+
 
   --- Get table with children of the current element
   -- @return table with children of the selected element
