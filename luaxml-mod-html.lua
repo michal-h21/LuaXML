@@ -1769,42 +1769,13 @@ function HtmlParser:set_token_data(name, data)
 end
 
 
--- function HtmlParser:flush_temp_buffer()
---   -- write stuff from the temp buffer back to the document
---   local token = self.current_token
---   if token.type == "start_tag" then
---     -- in start tag, entities can be only in attribute value
---     for _, char in ipairs(self.temp_buffer) do
---       table.insert(token.current_attr_value, char)
---     end
---   elseif self.return_state == "data" then
---     -- handle entities in text
---     for _, char in ipairs(self.temp_buffer) do
---       self:start_token("character", {char=char})
---       self:emit()
---     end
---   end
---   self.temp_buffer = {}
--- end
-
--- function HtmlParser:add_entity(char)
---   local token = self.current_token
---   if token.type == "start_tag" then
---     table.insert(token.current_attr_value, char)
---   else
---     self:start_token("character", {char=char})
---     self:emit()
---   end
---   self.temp_buffer = {}
--- end
-
 function HtmlParser:flush_temp_buffer()
   local token = self.current_token
   if in_attribute(self) then
     for _, char in ipairs(self.temp_buffer) do
       table.insert(token.current_attr_value, char)
     end
-  elseif self.return_state == "data" then
+  elseif self.return_state == "data" or self.return_state == "rcdata" then
     for _, char in ipairs(self.temp_buffer) do
       self:emit_character(char)
     end
