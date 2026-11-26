@@ -380,7 +380,7 @@ HtmlStates.tag_open = function(parser)
     parser:start_token("start_tag", data)
     return parser:tokenize("tag_name")
   elseif codepoint == EOF then
-    parser:emit_character(">")
+    parser:emit_character("<")
     parser:emit_eof()
   else
     -- invalid tag
