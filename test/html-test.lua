@@ -400,7 +400,6 @@ describe("Parse unclosed and wrongly nested elements", function()
   it("should parse mismatched tags", function()
     local p = HtmlParser:init "<!doctype html><html><head></head><body><p><b>bold text <i>italic text</b> bold again"
     local dom = p:parse()
-    -- print_tree(dom)
     local html = dom.children[2]
     assert.same(type(html), "table")
     assert.same(html.tag, "html")
@@ -410,10 +409,11 @@ describe("Parse unclosed and wrongly nested elements", function()
     assert.same(p.tag, "p")
     local b = p.children[1]
     assert.same(b.tag, "b")
-    assert.same(#b.children, 3)
+    assert.same(#b.children, 2)
     assert.same(b.children[1].text, "bold text ")
     assert.same(b.children[2].tag, "i")
-    assert.same(b.children[3].text, " bold again")
+    local normal = p.children[2]
+    assert.same(normal.text, " bold again")
   end)
 end)
 

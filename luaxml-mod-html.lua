@@ -1579,9 +1579,9 @@ local function is_special(name)
 end
 
 -- these lists are used in HtmlParser:generate_implied_endtags()
-local implied_endtags = {dd=true, dt=true, li = true, optgroup = true, option = true, p = true, rb = true, rp = true, rd = true, trc = true}
+local implied_endtags = {dd=true, dt=true, li = true, optgroup = true, option = true, p = true, rb = true, rp = true, rt = true, rtc = true}
 local implied_endtags_thoroughly = {dd=true, dt=true, li = true, optgroup = true, option = true, p = true, 
-      rb = true, rp = true, rd = true, trc = true, caption = true, colgroup = true, tbody = true, td = true, 
+      rb = true, rp = true, rt = true, rtc = true, caption = true, colgroup = true, tbody = true, td = true, 
       tfoot = true, th = true, thead = true, tr = true
 }
 
@@ -2071,8 +2071,10 @@ function HtmlParser:end_tag()
     -- we shouldn't close elements if handle_insertion_mode() already closed them
     if should_pop then
       -- close the current element only if the token is in the current scope
-      if is_in_scope(self, table.concat(token.name), {}) then
-        self:pop_element()
+      local name = table.concat(token.name)
+      if is_in_scope(self, name, {}) then
+        -- self:pop_element()
+        self:close_unfinished(name)
       end
     end
   end
@@ -2185,10 +2187,12 @@ end
 
 -- https://html.spec.whatwg.org/multipage/parsing.html#closing-elements-that-have-implied-end-tags
 function HtmlParser:generate_implied_endtags(included, ignored)
-  local included = included or implied_endtags
-  -- parser can pass list of elements that should be removed from the "included" list
-  local ignored = ignored or {}
-  for _, name in ipairs(ignored) do included[name] = nil end
+  local src = included or implied_endtags
+  -- -- parser can pass list of elements that should be removed from the "included" list
+  local included = {}
+  for k, v in pairs(src) do included[k] = v end
+  for _, name in ipairs(ignored or {}) do included[name] = nil end
+
   local current = self:current_node() or {}
   -- keep removing elements while they are in the "included" list
   if included[current.tag] then
