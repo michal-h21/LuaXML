@@ -2027,8 +2027,8 @@ function HtmlParser:handle_insertion_mode(token)
   return true
 end
 
-local rawtext_elements = hash_from_array {"style", "textarea", "xmp"}
-
+local rcdata_elements  = hash_from_array {"title", "textarea"}
+local rawtext_elements = hash_from_array {"style", "xmp"}
 
 function HtmlParser:start_tag()
   local token = self.current_token
@@ -2043,7 +2043,6 @@ function HtmlParser:start_tag()
     node.attr = token.attr
     node.self_closing = token.self_closing
     self:set_xmlns(node)
-    -- in this handler we should close <p> or <li> elements without explicit closing tags
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
     then
@@ -2051,13 +2050,17 @@ function HtmlParser:start_tag()
     else
       -- add to the unfinished list
       table.insert(self.unfinished, node)
-    end
-    if name == "title" then 
-      self.element_state = "rcdata" 
-    elseif rawtext_elements[name] then
-      self.element_state = "rawtext" 
-    elseif name == "script" then
-      self.element_state = "script_data"
+      -- special tokenizer states only make sense for elements that stay open,
+      -- otherwise nothing would ever end them
+      if node.xmlns == xmlns.HTML then
+        if rcdata_elements[name] then
+          self.element_state = "rcdata"
+        elseif rawtext_elements[name] then
+          self.element_state = "rawtext"
+        elseif name == "script" then
+          self.element_state = "script_data"
+        end
+      end
     end
   end
 end
