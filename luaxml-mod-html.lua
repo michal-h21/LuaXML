@@ -407,6 +407,13 @@ HtmlStates.character_reference = function(parser)
 
 end
 
+local function in_attribute(parser)
+  local s = parser.return_state
+  return s == "attribute_value_quoting"
+      or s == "attribute_value_apostrophe"
+      or s == "attribute_value_unquoted"
+end
+
 HtmlStates.named_character_reference = function(parser)
   -- named entity parsing is pretty complicated 
   -- https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state
@@ -438,8 +445,9 @@ HtmlStates.named_character_reference = function(parser)
     else
       -- here this will be more complicated
       if #search_table > 1 then
-        local token = parser.current_token
-        if token.type == "start_tag" and (codepoint == equals or is_alphanumeric(codepoint)) then
+        -- local token = parser.current_token
+        -- if token.type == "start_tag" and (codepoint == equals or is_alphanumeric(codepoint)) then
+        if in_attribute(parser) and (codepoint == equals or is_alphanumeric(codepoint)) then
           -- in attribute value, flush characters and retokenize  
           parser:flush_temp_buffer()
           return parser:tokenize(parser.return_state)
@@ -529,7 +537,8 @@ HtmlStates.decimal_character_reference = function(parser)
     multiply(10)
     add(codepoint - 0x30)
   elseif codepoint == semicolon then
-    return "numeric_reference_end_state"
+    parser:tokenize("numeric_reference_end_state")
+    return parser.return_state
   else
     -- this adds current entity
     parser:tokenize("numeric_reference_end_state")
@@ -558,7 +567,8 @@ HtmlStates.hexadecimal_character_reference = function(parser)
     multiply(16)
     add(codepoint - 0x57)
   elseif codepoint == semicolon then
-    return "numeric_reference_end_state"
+    parser:tokenize("numeric_reference_end_state")
+    return parser.return_state
   else
     -- this adds current entity
     parser:tokenize("numeric_reference_end_state")
@@ -1758,31 +1768,55 @@ function HtmlParser:set_token_data(name, data)
   token[name] = data
 end
 
+
+-- function HtmlParser:flush_temp_buffer()
+--   -- write stuff from the temp buffer back to the document
+--   local token = self.current_token
+--   if token.type == "start_tag" then
+--     -- in start tag, entities can be only in attribute value
+--     for _, char in ipairs(self.temp_buffer) do
+--       table.insert(token.current_attr_value, char)
+--     end
+--   elseif self.return_state == "data" then
+--     -- handle entities in text
+--     for _, char in ipairs(self.temp_buffer) do
+--       self:start_token("character", {char=char})
+--       self:emit()
+--     end
+--   end
+--   self.temp_buffer = {}
+-- end
+
+-- function HtmlParser:add_entity(char)
+--   local token = self.current_token
+--   if token.type == "start_tag" then
+--     table.insert(token.current_attr_value, char)
+--   else
+--     self:start_token("character", {char=char})
+--     self:emit()
+--   end
+--   self.temp_buffer = {}
+-- end
+
 function HtmlParser:flush_temp_buffer()
-  -- write stuff from the temp buffer back to the document
   local token = self.current_token
-  if token.type == "start_tag" then
-    -- in start tag, entities can be only in attribute value
+  if in_attribute(self) then
     for _, char in ipairs(self.temp_buffer) do
       table.insert(token.current_attr_value, char)
     end
   elseif self.return_state == "data" then
-    -- handle entities in text
     for _, char in ipairs(self.temp_buffer) do
-      self:start_token("character", {char=char})
-      self:emit()
+      self:emit_character(char)
     end
   end
   self.temp_buffer = {}
 end
 
 function HtmlParser:add_entity(char)
-  local token = self.current_token
-  if token.type == "start_tag" then
-    table.insert(token.current_attr_value, char)
+  if in_attribute(self) then
+    table.insert(self.current_token.current_attr_value, char)
   else
-    self:start_token("character", {char=char})
-    self:emit()
+    self:emit_character(char)
   end
   self.temp_buffer = {}
 end
