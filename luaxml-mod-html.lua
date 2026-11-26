@@ -1125,6 +1125,43 @@ local function discard_rcdata_end_tag(parser, text)
     parser:emit_character(text)
 end
 
+-- common implementation of the *_end_tag_name states
+-- fallback_state is the state we return to when the end tag isn't the
+-- appropriate one (i.e. it doesn't match the currently opened element)
+local function make_end_tag_name_state(self_state, fallback_state)
+  return function(parser)
+    local parent = parser:get_parent() or {}
+    local opened_tag = parent.tag
+    local current_tag = table.concat(parser.current_token.name or {})
+    local codepoint = parser.codepoint
+    if is_upper_alpha(codepoint) then
+      parser:append_token_data("name", uchar(codepoint + 0x20))
+      table.insert(parser.temp_buffer, uchar(codepoint))
+      return self_state
+    elseif is_lower_alpha(codepoint) then
+      parser:append_token_data("name", uchar(codepoint))
+      table.insert(parser.temp_buffer, uchar(codepoint))
+      return self_state
+    end
+    local appropriate = opened_tag == current_tag
+    if appropriate and is_space(codepoint) then
+      return "before_attribute_name"
+    elseif appropriate and codepoint == solidus then
+      return "self_closing_tag"
+    elseif appropriate and codepoint == greater_than then
+      parser:emit()
+      return "data"
+    else
+      -- anything else: the "</name" wasn't a real end tag, emit it as text
+      -- and reconsume the current character in the original state
+      discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
+      parser.temp_buffer = {}
+      return parser:tokenize(fallback_state)
+    end
+  end
+end
+
+
 HtmlStates.rcdata_less_than = function(parser)
   local codepoint = parser.codepoint
   if codepoint == solidus then
@@ -1149,36 +1186,8 @@ end
 
 
 
-HtmlStates.rcdata_end_tag_name = function(parser)
-  -- we need to find name of the currently opened tag
-  local parent = parser:get_parent() or {}
-  local opened_tag = parent.tag 
-  local current_tag = table.concat(parser.current_token.name or {})
-  local codepoint = parser.codepoint
-  if is_upper_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint + 0x20))
-    -- insert current char to temp buffer
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "rcdata_end_tag_name"
-  elseif is_lower_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "rcdata_end_tag_name"
-  elseif opened_tag == current_tag then
-    if is_space(codepoint) then
-      return "before_attribute_name"
-    elseif codepoint == solidus then
-      return "self_closing_tag"
-    elseif codepoint == greater_than then
-      parser:emit()
-      return "data"
-    end
-  else
-    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
-    parser.temp_buffer = {}
-    return parser:tokenize("rcdata")
-  end
-end
+HtmlStates.rcdata_end_tag_name
+  = make_end_tag_name_state("rcdata_end_tag_name", "rcdata")
 
 HtmlStates.rawtext = function(parser)
   local codepoint = parser.codepoint
@@ -1215,35 +1224,8 @@ HtmlStates.rawtext_end_tag_open = function(parser)
   end
 end
 
-HtmlStates.rawtext_end_tag_name = function(parser)
-  -- we need to find name of the currently opened tag
-  local parent = parser:get_parent() or {}
-  local opened_tag = parent.tag 
-  local current_tag = table.concat(parser.current_token.name or {})
-  local codepoint = parser.codepoint
-  if is_upper_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint + 0x20))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "rawtext_end_tag_name"
-  elseif is_lower_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "rawtext_end_tag_name"
-  elseif opened_tag == current_tag then
-    if is_space(codepoint) then
-      return "before_attribute_name"
-    elseif codepoint == solidus then
-      return "self_closing_tag"
-    elseif codepoint == greater_than then
-      parser:emit()
-      return "data"
-    end
-  else
-    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
-    parser.temp_buffer = {}
-    return parser:tokenize("rawtext")
-  end
-end
+HtmlStates.rawtext_end_tag_name
+  = make_end_tag_name_state("rawtext_end_tag_name", "rawtext")
 
 HtmlStates.script_data = function(parser)
   local codepoint = parser.codepoint
@@ -1283,36 +1265,9 @@ HtmlStates.script_data_end_tag_open = function(parser)
   end
 end
 
-HtmlStates.script_data_end_tag_name = function(parser)
-  -- we need to find name of the currently opened tag
-  local parent = parser:get_parent() or {}
-  local opened_tag = parent.tag 
-  local current_tag = table.concat(parser.current_token.name or {})
-  local codepoint = parser.codepoint
-  if is_upper_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint + 0x20))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "script_data_end_tag_name"
-  elseif is_lower_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "script_data_end_tag_name"
-  elseif opened_tag == current_tag then
-    if is_space(codepoint) then
-      return "before_attribute_name"
-    elseif codepoint == solidus then
-      return "self_closing_tag"
-    elseif codepoint == greater_than then
-      parser:emit()
-      return "data"
-    end
-  else
-    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
-    parser.temp_buffer = {}
-    return parser:tokenize("script_data")
-  end
 
-end
+HtmlStates.script_data_end_tag_name
+  = make_end_tag_name_state("script_data_end_tag_name", "script_data")
 
 HtmlStates.script_data_escape_start = function(parser)
   local codepoint = parser.codepoint
@@ -1415,35 +1370,9 @@ HtmlStates.script_data_escaped_end_tag_open = function(parser)
   end
 end
 
-HtmlStates.script_data_escaped_end_tag_name = function(parser)
-  -- we need to find name of the currently opened tag
-  local parent = parser:get_parent() or {}
-  local opened_tag = parent.tag 
-  local current_tag = table.concat(parser.current_token.name or {})
-  local codepoint = parser.codepoint
-  if is_upper_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint + 0x20))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "script_data_escaped_end_tag_name"
-  elseif is_lower_alpha(codepoint) then
-    parser:append_token_data("name", uchar(codepoint))
-    table.insert(parser.temp_buffer, uchar(codepoint))
-    return "script_data_escaped_end_tag_name"
-  elseif opened_tag == current_tag then
-    if is_space(codepoint) then
-      return "before_attribute_name"
-    elseif codepoint == solidus then
-      return "self_closing_tag"
-    elseif codepoint == greater_than then
-      parser:emit()
-      return "data"
-    end
-  else
-    discard_rcdata_end_tag(parser, "</" .. table.concat(parser.temp_buffer))
-    parser.temp_buffer = {}
-    return parser:tokenize("script_data_escaped")
-  end
-end
+
+HtmlStates.script_data_escaped_end_tag_name
+  = make_end_tag_name_state("script_data_escaped_end_tag_name", "script_data_escaped")
 
 HtmlStates.script_data_double_escape_start = function(parser)
   local codepoint = parser.codepoint
