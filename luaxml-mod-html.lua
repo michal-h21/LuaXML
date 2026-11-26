@@ -687,7 +687,7 @@ HtmlStates.comment_start_dash = function(parser)
     return "comment_end"
   elseif codepoint == greater_than then
     parser:emit()
-    return data
+    return "data"
   elseif codepoint == EOF then
     parser:emit()
     parser:emit_eof()
