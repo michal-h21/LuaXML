@@ -1275,7 +1275,7 @@ HtmlStates.script_data_escape_start = function(parser)
     parser:emit_character("-")
     return "script_data_escape_start_dash"
   else
-    parser:tokenize("script_data")
+    return parser:tokenize("script_data")
   end
 end
 
@@ -1285,9 +1285,8 @@ HtmlStates.script_data_escape_start_dash = function(parser)
     parser:emit_character("-")
     return "script_data_escaped_dash_dash"
   else
-    parser:tokenize("script_data")
+    return parser:tokenize("script_data")
   end
-
 end
 
 
