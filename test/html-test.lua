@@ -452,6 +452,19 @@ describe("Parse unclosed and wrongly nested elements", function()
     local last_ol = body.children[3]
     assert.same(last_ol.tag, "ol")
   end)
+  it("should parse mismatched lists", function() 
+    local p = HtmlParser:init [[<ul><li><div>a<li>b</ul>]]
+    local dom = p:parse()
+    -- print_tree(dom)
+    local ul = dom.children[1]
+    local li1 = ul.children[1]
+    local li2 = ul.children[2]
+    assert.same(li1.tag, "li")
+    assert.same(li1.children[1].tag, "div")
+    assert.same(li1.children[1].children[1].text, "a")
+    assert.same(li2.tag, "li")
+    assert.same(li2.children[1].text, "b")
+  end)
   it("should parse mismatched tags", function()
     local p = HtmlParser:init "<!doctype html><html><head></head><body><p><b>bold text <i>italic text</b> bold again"
     local dom = p:parse()
