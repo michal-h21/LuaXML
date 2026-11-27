@@ -497,6 +497,14 @@ describe("Parse unclosed and wrongly nested elements", function()
     assert.same(tr1.children[2].children[1].text, "b")
     assert.same(tr2.tag, "tr")
   end)
+  it("should remove newlines at start of <pre>", function()
+    local pre = HtmlParser:init "<pre>\nHello\nWorld</pre>"
+    local dom = pre:parse()
+    local pre = dom.children[1]
+    assert.same(pre.tag, "pre")
+    assert.same(#pre.children, 1)
+    assert.same(pre.children[1].text, "Hello\nWorld")
+  end)
 end)
 
 describe("Handle svg", function()
