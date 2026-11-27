@@ -301,7 +301,7 @@ local function is_surrogate(codepoint)
 end
 
 
-character_entity_replace_table = {
+local character_entity_replace_table = {
 [0x80] =  0x20AC,  
 [0x82] =  0x201A,  
 [0x83] =  0x0192,  
