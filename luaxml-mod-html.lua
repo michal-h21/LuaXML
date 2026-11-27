@@ -821,7 +821,7 @@ HtmlStates.end_tag_open = function(parser)
     parser:emit_character("</")
     parser:emit_eof()
   else
-    data = {
+    local data = {
       data = {}
     }
     parser:start_token("comment", data)
