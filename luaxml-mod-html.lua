@@ -1896,12 +1896,12 @@ local function handle_list_item(self, name)
     local current = self.unfinished[i]
     local current_tag = current.tag
     if names[current_tag] then
-      self:generate_implied_endtags(nil, {current.tag})
+      self:generate_implied_endtags(nil, {current_tag})
       for j = #self.unfinished, i, -1 do
         self:pop_element()
       end
       break
-    elseif is_special(current_tag) and not not_specials[name] then
+    elseif is_special(current_tag) and not not_specials[current_tag] then
       break
     end
   end
