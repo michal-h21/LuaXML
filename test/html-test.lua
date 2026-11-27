@@ -352,6 +352,30 @@ describe("Parse special elements", function()
     assert.same(dom.children[1].children[1].text, 'document.write("<!DOCTYPE html>");')
     assert.same(dom.children[2].children[1].text, "after")
   end)
+  it ("should parse script that writes comment", function()
+    local script = HtmlParser:init [[<script><!-- document.write("<!-- comment -->"); --></script><p>after</p>]]
+    local dom = script:parse()
+    -- print_tree(dom)
+    assert.same(dom.children[1].tag, "script")
+    assert.same(dom.children[2].tag, "p")
+    assert.same(dom.children[1].children[1].text, '<!-- document.write("<!-- comment -->"); -->')
+    assert.same(dom.children[2].children[1].text, "after")
+  end)
+  it("should parse script that writes script", function()
+    local script = HtmlParser:init [[<body><script><!--
+document.write("<script>alert(1)</script>");
+-->
+</script><p>after</p></body>]]
+    local dom = script:parse()
+    -- print_tree(dom)
+    local body = dom.children[1]
+    local script = body.children[1]
+    local p = body.children[2]
+    assert.same(script.tag, "script")
+    assert.same(p.tag, "p")
+    assert.same(script.children[1].text, '<!--\ndocument.write("<script>alert(1)</script>");\n-->\n')
+    assert.same(p.children[1].text, "after")
+  end)
 
 end)
 
