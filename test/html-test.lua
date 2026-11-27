@@ -505,21 +505,44 @@ describe("Parse unclosed and wrongly nested elements", function()
     assert.same(#pre.children, 1)
     assert.same(pre.children[1].text, "Hello\nWorld")
   end)
+  it("should parse select and option", function()
+    local select = HtmlParser:init "<select><option>hello<option>world</select>"
+    local dom = select:parse()
+    local select = dom.children[1]
+    assert.same(select.tag, "select")
+    assert.same(#select.children, 2)
+    local option1 = select.children[1]
+    local option2 = select.children[2]
+    assert.same(option1.tag, "option")
+    assert.same(option1.children[1].text, "hello")
+    assert.same(option2.tag, "option")
+    assert.same(option2.children[1].text, "world")
+  end)
+  it("should parse <br> tags", function()
+    local p = HtmlParser:init "<p>a<br>b<br>c</p>"
+    local dom = p:parse()
+    local p = dom.children[1]
+    assert.same(p.tag, "p")
+    assert.same(#p.children, 5)
+    assert.same(p.children[1].text, "a")
+    assert.same(p.children[2].tag, "br")
+    assert.same(p.children[3].text, "b")
+    assert.same(p.children[4].tag, "br")
+    assert.same(p.children[5].text, "c")
+  end)
 end)
 
 describe("Handle svg", function()
   it("Should keep SVG elements and attribute text cases", function()
-    local svg= HtmlParser:init [[<svg xmlns="http://www.w3.org/2000/svg"><textPath calcMode="test />
-      <altGlyph alt="SVG" />
+    local svg= HtmlParser:init [[<svg xmlns="http://www.w3.org/2000/svg"><textPath calcMode="test" />
     </svg>]]
     local dom = svg:parse()
-    print_tree(dom)
+    -- print_tree(dom)
     assert.same(dom.children[1].tag, "svg")
     local textPath = dom.children[1].children[1]
     local altGlyph = dom.children[1].children[2]
     assert.same(textPath.tag, "textPath")
     assert.same(textPath.attr[1].name, "calcMode")
-
   end)
 end)
 
