@@ -343,6 +343,15 @@ describe("Parse special elements", function()
   assert.same(trim(dom.children[6]), "still fine")
   assert.same(trim(dom.children[8]), "fine again")
   -- print(dom.children[3])
+  it("should parse script that writes DOCTYPE", function()
+    local script = HtmlParser:init [[<script>document.write("<!DOCTYPE html>");</script><p>after</p>]]
+    local dom = script:parse()
+    -- print_tree(dom)
+    assert.same(dom.children[1].tag, "script")
+    assert.same(dom.children[2].tag, "p")
+    assert.same(dom.children[1].children[1].text, 'document.write("<!DOCTYPE html>");')
+    assert.same(dom.children[2].children[1].text, "after")
+  end)
 
 end)
 
