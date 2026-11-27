@@ -528,10 +528,10 @@ HtmlStates.decimal_character_reference = function(parser)
   local codepoint = parser.codepoint
   -- helper functions for easier working with the character_reference_code
   local function multiply(number)
-    parser.character_reference_code = parser.character_reference_code * number
+    parser.character_reference_code = math.min(parser.character_reference_code * number, 0x110000)
   end
   local function add(number)
-    parser.character_reference_code = parser.character_reference_code + number
+    parser.character_reference_code = math.min(parser.character_reference_code + number, 0x110000)
   end
   if is_numeric(codepoint) then
     multiply(10)
@@ -552,10 +552,10 @@ HtmlStates.hexadecimal_character_reference = function(parser)
   local codepoint = parser.codepoint
   -- helper functions for easier working with the character_reference_code
   local function multiply(number)
-    parser.character_reference_code = parser.character_reference_code * number
+    parser.character_reference_code = math.min(parser.character_reference_code * number, 0x110000)
   end
   local function add(number)
-    parser.character_reference_code = parser.character_reference_code + number
+    parser.character_reference_code = math.min(parser.character_reference_code + number, 0x110000)
   end
   if is_numeric(codepoint) then
     multiply(16)
