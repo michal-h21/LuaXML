@@ -1899,7 +1899,7 @@ local close_p_at_start = hash_from_array {"address", "article", "aside", "blockq
 
 local close_headers = hash_from_array {"h1", "h2", "h3", "h4", "h5", "h6"}
 
-local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select", "in_table", "in_table_body", "in_frameset"}
+local body_modes = hash_from_array {"in_body", "in_cell", "in_row", "in_select", "in_table", "in_table_body", "in_frameset", "in_select_in_table", "in_caption"}
 
 local list_items = hash_from_array {"li", "dt", "dd"}
 
@@ -1954,6 +1954,26 @@ local close_paragraph = function(self)
   end
 end
 
+local function close_up_to(parser, targets, stoppers)
+  for i = #parser.unfinished, 1, -1 do
+    local tag = parser.unfinished[i].tag
+    if targets[tag] then
+      while #parser.unfinished >= i do parser:pop_element() end
+      return true
+    elseif stoppers[tag] then
+      return false
+    end
+  end
+  return false
+end
+
+local cell_targets    = {td = true, th = true}
+local cell_stoppers   = hash_from_array {"table", "html", "template", "tr", "tbody", "thead", "tfoot"}
+local row_targets     = {tr = true}
+local row_stoppers    = hash_from_array {"table", "html", "template", "tbody", "thead", "tfoot"}
+local section_targets = hash_from_array {"tbody", "thead", "tfoot"}
+local section_stoppers = hash_from_array {"table", "html", "template"}
+
 function HtmlParser:handle_insertion_mode(token)
   -- simple handling of https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
   -- we don't support most rules, just the most important for avoiding mismatched tags
@@ -1977,6 +1997,17 @@ function HtmlParser:handle_insertion_mode(token)
       elseif list_items[name] then
         handle_list_item(self, name)
         close_paragraph(self)
+      elseif name == "td" or name == "th" then
+        close_up_to(self, cell_targets, cell_stoppers)
+      elseif name == "tr" then
+        close_up_to(self, row_targets, row_stoppers)
+      elseif name == "tbody" or name == "thead" or name == "tfoot" then
+        close_up_to(self, section_targets, section_stoppers)
+      elseif name == "option" then
+        if self:current_element_name() == "option" then self:pop_element() end
+      elseif name == "optgroup" then
+        if self:current_element_name() == "option" then self:pop_element() end
+        if self:current_element_name() == "optgroup" then self:pop_element() end
       end
     elseif token.type == "end_tag" then
       local name = table.concat(token.name)

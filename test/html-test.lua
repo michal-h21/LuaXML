@@ -483,6 +483,20 @@ describe("Parse unclosed and wrongly nested elements", function()
     local normal = p.children[2]
     assert.same(normal.text, " bold again")
   end)
+  it("should handle mismatched tables", function()
+    local table = HtmlParser:init "<table><tr><td>a<td>b<tr><td>c</table>"
+    local dom = table:parse()
+    local table = dom.children[1]
+    local tr1 = table.children[1]
+    local tr2 = table.children[2]
+    assert.same(tr1.tag, "tr")
+    assert.same(#tr1.children, 2)
+    assert.same(tr1.children[1].tag, "td")
+    assert.same(tr1.children[1].children[1].text, "a")
+    assert.same(tr1.children[2].tag, "td")
+    assert.same(tr1.children[2].children[1].text, "b")
+    assert.same(tr2.tag, "tr")
+  end)
 end)
 
 describe("Handle svg", function()
