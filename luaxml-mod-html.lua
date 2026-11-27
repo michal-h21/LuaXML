@@ -764,10 +764,11 @@ HtmlStates.comment_end_dash = function(parser)
     parser:emit()
     parser:emit_eof()
   else
-    parser:append_token_data("data", uchar(codepoint))
+    parser:append_token_data("data", "-")
     return parser:tokenize("comment")
   end
 end
+
 
 HtmlStates.comment_end = function(parser)
   local codepoint = parser.codepoint
