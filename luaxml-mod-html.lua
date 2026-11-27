@@ -1744,6 +1744,12 @@ end
 function HtmlParser:emit(token)
   -- state machine functions should use this function to emit tokens
   local token = token or self.current_token
+  -- the flag is valid for the next token only
+  local skip_newline = self.ignore_newline
+  self.ignore_newline = false
+  if skip_newline and token.type == "character" and token.char == "\n" then
+    return
+  end
   -- print("Emit", token.type)
   local token_type = token.type
   if token_type     == "character" then
@@ -1928,7 +1934,8 @@ function HtmlParser:handle_insertion_mode(token)
           self:pop_element()
         end
       elseif name == "pre" or name == "listing" then
-        -- we should ignore next "\n" char token
+        -- the next character token is ignored if it is a newline
+        self.ignore_newline = true
       elseif name == "image" then
         -- image tag is an error, change to <img>
         token.name = {"img"}
