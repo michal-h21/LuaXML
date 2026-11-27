@@ -983,7 +983,9 @@ HtmlStates.before_attribute_name = function(parser)
     -- reconsume in after_attribute_name
     return parser:tokenize("after_attribute_name")
   elseif codepoint == equals then
-    -- ToDo: handle https://html.spec.whatwg.org/multipage/parsing.html#parse-error-unexpected-equals-sign-before-attribute-name
+    parser:start_attribute()
+    parser:append_token_data("current_attr_name", "=")
+    return "attribute_name"
   else
     -- start new attribute
     parser:start_attribute()
