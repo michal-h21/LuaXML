@@ -1835,21 +1835,54 @@ function HtmlParser:start_attribute()
   end
 end
 
-function HtmlParser:set_xmlns(node, parent)
-  -- handle xmlns
-  local in_attr = false
-  -- try to find xmlns in node's attributes first
+local function lower_map(list)
+  local t = {}
+  for _, name in ipairs(list) do t[name:lower()] = name end
+  return t
+end
+
+local svg_tag_fix = lower_map {"altGlyph", "altGlyphDef", "altGlyphItem", "animateColor",
+  "animateMotion", "animateTransform", "clipPath", "feBlend", "feColorMatrix",
+  "feComponentTransfer", "feComposite", "feConvolveMatrix", "feDiffuseLighting",
+  "feDisplacementMap", "feDistantLight", "feDropShadow", "feFlood", "feFuncA", "feFuncB",
+  "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge", "feMergeNode",
+  "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight",
+  "feTile", "feTurbulence", "foreignObject", "glyphRef", "linearGradient",
+  "radialGradient", "textPath"}
+
+local svg_attr_fix = lower_map {"attributeName", "attributeType", "baseFrequency",
+  "baseProfile", "calcMode", "clipPathUnits", "diffuseConstant", "edgeMode", "filterUnits",
+  "glyphRef", "gradientTransform", "gradientUnits", "kernelMatrix", "kernelUnitLength",
+  "keyPoints", "keySplines", "keyTimes", "lengthAdjust", "limitingConeAngle",
+  "markerHeight", "markerUnits", "markerWidth", "maskContentUnits", "maskUnits",
+  "numOctaves", "pathLength", "patternContentUnits", "patternTransform", "patternUnits",
+  "pointsAtX", "pointsAtY", "pointsAtZ", "preserveAlpha", "preserveAspectRatio",
+  "primitiveUnits", "refX", "refY", "repeatCount", "repeatDur", "requiredExtensions",
+  "requiredFeatures", "specularConstant", "specularExponent", "spreadMethod",
+  "startOffset", "stdDeviation", "stitchTiles", "surfaceScale", "systemLanguage",
+  "tableValues", "targetX", "targetY", "textLength", "viewBox", "viewTarget",
+  "xChannelSelector", "yChannelSelector", "zoomAndPan"}
+
+-- elements inside which the content is HTML again
+local svg_html_integration = {foreignObject = true, desc = true, title = true}
+
+function HtmlParser:set_xmlns(node)
+  -- explicit xmlns attribute wins
   for _, attr in ipairs(node.attr) do
     if attr.name == "xmlns" then
       node.xmlns = attr.value
-      in_attr = true
-      break
+      return
     end
   end
-  if not in_attr then
-    -- if we cannot find xmlns attribute, then use 
-    --  xmlns from the parent element, or the default xmlns 
-    local parent = self:get_parent()
+  local parent = self:get_parent()
+  local name = node.tag
+  if name == "svg" then
+    node.xmlns = xmlns.SVG
+  elseif name == "math" then
+    node.xmlns = xmlns.MathML
+  elseif parent.xmlns == xmlns.SVG and svg_html_integration[parent.tag] then
+    node.xmlns = xmlns.HTML
+  else
     node.xmlns = parent.xmlns or xmlns.HTML
   end
 end
@@ -2005,6 +2038,12 @@ function HtmlParser:start_tag()
     node.attr = token.attr
     node.self_closing = token.self_closing
     self:set_xmlns(node)
+    if node.xmlns == xmlns.SVG then
+      node.tag = svg_tag_fix[node.tag] or node.tag
+      for _, attr in ipairs(node.attr) do
+        attr.name = svg_attr_fix[attr.name] or attr.name
+      end
+    end
     if token.self_closing        -- <img />
       or self_closing_tags[name] -- void elements
     then
@@ -2027,6 +2066,14 @@ function HtmlParser:start_tag()
   end
 end
 
+local function find_open_tag(parser, name)
+  for i = #parser.unfinished, 1, -1 do
+    local tag = parser.unfinished[i].tag
+    if tag == name or tag:lower() == name then return tag end
+  end
+  return name
+end
+
 function HtmlParser:end_tag()
   -- close current opened element
   local token = self.current_token
@@ -2040,9 +2087,8 @@ function HtmlParser:end_tag()
     -- we shouldn't close elements if handle_insertion_mode() already closed them
     if should_pop then
       -- close the current element only if the token is in the current scope
-      local name = table.concat(token.name)
+      local name = find_open_tag(self, table.concat(token.name))
       if is_in_scope(self, name, {}) then
-        -- self:pop_element()
         self:close_unfinished(name)
       end
     end

@@ -485,3 +485,19 @@ describe("Parse unclosed and wrongly nested elements", function()
   end)
 end)
 
+describe("Handle svg", function()
+  it("Should keep SVG elements and attribute text cases", function()
+    local svg= HtmlParser:init [[<svg xmlns="http://www.w3.org/2000/svg"><textPath calcMode="test />
+      <altGlyph alt="SVG" />
+    </svg>]]
+    local dom = svg:parse()
+    print_tree(dom)
+    assert.same(dom.children[1].tag, "svg")
+    local textPath = dom.children[1].children[1]
+    local altGlyph = dom.children[1].children[2]
+    assert.same(textPath.tag, "textPath")
+    assert.same(textPath.attr[1].name, "calcMode")
+
+  end)
+end)
+
