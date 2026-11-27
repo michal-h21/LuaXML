@@ -1965,6 +1965,10 @@ function HtmlParser:handle_insertion_mode(token)
         self:close_paragraph()
       elseif name == "br" then
         token.type = "start_tag"
+        token.attr = {}
+        token.current_attr_name = {}
+        token.current_attr_value = {}
+        token.self_closing = false
       elseif close_headers[name] then
         local header_in_scope = false
         -- detect, if there are any open h1-h6 tag and close it
@@ -2027,6 +2031,10 @@ function HtmlParser:end_tag()
   -- close current opened element
   local token = self.current_token
   local should_pop = self:handle_insertion_mode(token)
+  if token.type == "start_tag" then
+    self:start_tag()
+    return
+  end
   if token.type == "end_tag" then
     if #self.unfinished==0 then return nil end
     -- we shouldn't close elements if handle_insertion_mode() already closed them
