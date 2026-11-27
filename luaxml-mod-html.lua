@@ -952,7 +952,7 @@ HtmlStates.tag_name = function(parser)
     local lower = string.lower(uchar(codepoint))
     parser:append_token_data("name", lower)
   elseif codepoint==EOF then
-    parser:emit()
+    parser:discard_token()
     parser:emit_eof()
   else
     local char = uchar(codepoint)
