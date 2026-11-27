@@ -376,7 +376,25 @@ document.write("<script>alert(1)</script>");
     assert.same(script.children[1].text, '<!--\ndocument.write("<script>alert(1)</script>");\n-->\n')
     assert.same(p.children[1].text, "after")
   end)
-
+  it("should parse scripts with comparison", function()
+    local script = HtmlParser:init [[<script><!-- if (a < b) {} --></script><p>x</p>]]
+    local dom = script:parse()
+    assert.same(dom.children[1].tag, "script")
+    assert.same(dom.children[2].tag, "p")
+    assert.same(dom.children[1].children[1].text, '<!-- if (a < b) {} -->')
+    assert.same(dom.children[2].children[1].text, "x")
+  end)
+  it("should parse scripts with nested wrong tags", function()
+    -- <scripty> is not valid tag, so it is ignored, first </script> closes the element, --> is outside script, second </script> is discarded
+    local script = HtmlParser:init [[<script><!--<scripty>x</script>--></script><p>x</p>]]
+    local dom = script:parse()
+    -- print_tree(dom)
+    assert.same(dom.children[1].tag, "script")
+    assert.same(dom.children[2].text, "-->")
+    assert.same(dom.children[3].tag, "p")
+    assert.same(dom.children[1].children[1].text, '<!--<scripty>x')
+    assert.same(dom.children[3].children[1].text, "x")
+  end)
 end)
 
 
